@@ -1,4 +1,4 @@
-//Inspired by (Coggan & Page, 2022)
+//Inspired by "The role of evolutionary game theory in spatial and non-spatial models of the survival of cooperation in cancer: a review"
 
 package PrisonersDilemma;
 
@@ -10,7 +10,6 @@ import HAL.Util;
 
 public class PrisonersDilemma {
     public static void main(String[] args) {
-        //Initialize parameters
         int x = 100, y = 100;
         int tumorRadius = 10;
         int visScale = 3, msPause = 0;
