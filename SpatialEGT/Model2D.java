@@ -58,7 +58,7 @@ public class Model2D extends AgentGrid2D<Cell2D> {
             if (this.Pop() < this.startingPop/2) {
                 this.drugConcentration = 0;
             }
-            else if (this.Pop() == this.startingPop) {
+            else if (this.Pop() >= this.startingPop) {
                 this.drugConcentration = 1;
             }
         }
