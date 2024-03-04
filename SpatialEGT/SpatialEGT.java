@@ -32,7 +32,7 @@ public class SpatialEGT {
         double proportionResistant = 0.05;
         GridWindow win = new GridWindow("2D adaptive vs continuous therapy", x*2, y, visScale);
         FileIO popsOut = new FileIO("SpatialEGTPopulations.csv", "w");
-        popsOut.Write("adaptive_sensitive, adaptive_resistant, continuous_sensitive, continuous_resistant\n");
+        popsOut.Write("time,adaptive_sensitive,adaptive_resistant,continuous_sensitive,continuous_resistant\n");
 
         Model2D adaptiveModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true);
         adaptiveModel2d.InitTumorRandom(numCells, proportionResistant);
@@ -40,24 +40,24 @@ public class SpatialEGT {
         Model2D continuousModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false);
         continuousModel2d.InitTumorRandom(numCells, proportionResistant);
 
-        for (int tick = 0; tick <= 2000; tick++) {
+        for (int tick = 0; tick <= 5000; tick++) {
             win.TickPause(msPause);
 
             adaptiveModel2d.ModelStep();
-            //adaptiveModel2d.DrawModel(win, 0);
+            adaptiveModel2d.DrawModel(win, 0);
             continuousModel2d.ModelStep();
-            //continuousModel2d.DrawModel(win, 1);
+            continuousModel2d.DrawModel(win, 1);
 
             if (tick % 10 == 0) {
                 int[] adaptivePop = GetPopulationSize(adaptiveModel2d);
                 int[] continuousPop = GetPopulationSize(continuousModel2d);
-                popsOut.Write(adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
+                popsOut.Write(tick + "," + adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
             }
-            if (tick % 250 == 0) {
+            if (tick % 500 == 0) {
                 win.ToPNG("SpatialEGT_2D_" + tick + ".png");
             }
         }
-        
+
         popsOut.Close();
         win.Close();
     }
