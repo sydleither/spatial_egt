@@ -1,3 +1,5 @@
+import sys
+
 from cycler import cycler
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -6,8 +8,9 @@ import pandas as pd
 mpl.rcParams['axes.prop_cycle'] = cycler(color=["#ef7c8e", "#4c956c", "#d68c45"])
 
 
-def main():
-    df = pd.read_csv("SpatialEGTPopulations.csv")
+def main(exp_name):
+    df = pd.read_csv(f"output/{exp_name}/populations.csv")
+    max_pop = df.drop("time", axis=1).max(axis=None)
 
     fig = plt.figure(figsize=(12, 10))
     gs = fig.add_gridspec(2,2)
@@ -17,21 +20,27 @@ def main():
 
     ax1.plot(df["time"], df["adaptive_sensitive"], label="Sensitive")
     ax1.plot(df["time"], df["adaptive_resistant"], label="Resistant")
-    ax1.set(ylim=(0, 3000), xlabel="Time", ylabel="Cells", title="Adaptive Therapy")
+    ax1.set(ylim=(0, max_pop), xlabel="Time", ylabel="Cells", title="Adaptive Therapy")
     ax1.legend()
 
     ax2.plot(df["time"], df["continuous_sensitive"], label="Sensitive")
     ax2.plot(df["time"], df["continuous_resistant"], label="Resistant")
-    ax2.set(ylim=(0, 3000), xlabel="Time", ylabel="Cells", title="Continuous Therapy")
+    ax2.set(ylim=(0, max_pop), xlabel="Time", ylabel="Cells", title="Continuous Therapy")
     ax2.legend()
 
     ax3.plot(df["time"], df["adaptive_sensitive"]+df["adaptive_resistant"], label="Adaptive")
     ax3.plot(df["time"], df["continuous_sensitive"]+df["continuous_resistant"], label="Continuous")
-    ax3.set(ylim=(0, 3000), xlabel="Time", ylabel="Cells", title="Total Cells Over Time")
+    ax3.set(ylim=(0, max_pop), xlabel="Time", ylabel="Cells", title="Total Cells Over Time")
     ax3.legend()
 
+    fig.suptitle(exp_name)
     fig.tight_layout()
-    fig.savefig("SpatialEGTPopOverTime.png")
+    fig.savefig(f"output/{exp_name}/pop_over_time.png")
 
 
-main()
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        main(sys.argv[1])
+    else:
+        print("Please provide an experiment name.")

@@ -1,6 +1,11 @@
 //Based on "Spatial structure impacts adaptive therapy by shaping intra-tumoral competition"
 package SpatialEGT;
 
+import java.nio.file.Paths;
+import java.util.Map; 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import HAL.Gui.GridWindow;
 import HAL.Tools.FileIO;
 import HAL.Rand;
@@ -22,16 +27,29 @@ public class SpatialEGT {
     }
 
     public static void main(String[] args) {
-        int x = 100, y = 100;
+        String exp_name = args[0];
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, ?> params;
+        try{
+            params = mapper.readValue(Paths.get(exp_name+".json").toFile(), Map.class);
+        }
+        catch (Exception e) {
+            return;
+        }
+
         int visScale = 4, msPause = 0;
-        double divRateS = 0.027;
-        double divRateR = 0.6*divRateS;
-        double deathRate = 0.5*divRateS;
-        double drugKillRate = 0.75;
-        int numCells = (int)((x*y)*0.25);
-        double proportionResistant = 0.05;
+        int numDays = (int) params.get("numDays");
+        int x = (int) params.get("x");
+        int y = (int) params.get("y");
+        double divRateS = (double) params.get("divRateS");
+        double divRateR = (double) params.get("divRateR");
+        double deathRate = (double) params.get("deathRate");
+        double drugKillRate = (double) params.get("drugKillRate");
+        int numCells = (int) params.get("numCells");
+        double proportionResistant = (double) params.get("proportionResistant");
+
         GridWindow win = new GridWindow("2D adaptive vs continuous therapy", x*2, y, visScale);
-        FileIO popsOut = new FileIO("SpatialEGTPopulations.csv", "w");
+        FileIO popsOut = new FileIO("output/"+exp_name+"/populations.csv", "w");
         popsOut.Write("time,adaptive_sensitive,adaptive_resistant,continuous_sensitive,continuous_resistant\n");
 
         Model2D adaptiveModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true);
@@ -40,7 +58,7 @@ public class SpatialEGT {
         Model2D continuousModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false);
         continuousModel2d.InitTumorRandom(numCells, proportionResistant);
 
-        for (int tick = 0; tick <= 5000; tick++) {
+        for (int tick = 0; tick <= numDays; tick++) {
             win.TickPause(msPause);
 
             adaptiveModel2d.ModelStep();
@@ -53,8 +71,8 @@ public class SpatialEGT {
                 int[] continuousPop = GetPopulationSize(continuousModel2d);
                 popsOut.Write(tick + "," + adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
             }
-            if (tick % 500 == 0) {
-                win.ToPNG("SpatialEGT_2D_" + tick + ".png");
+            if (tick % (int)(numDays/10) == 0) {
+                win.ToPNG("output/" + exp_name + "/model_tick" + tick + ".png");
             }
         }
 
