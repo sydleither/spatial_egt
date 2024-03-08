@@ -41,21 +41,33 @@ public class SpatialEGT {
         int numDays = (int) params.get("numDays");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
-        double divRateS = (double) params.get("divRateS");
-        double divRateR = (double) params.get("divRateR");
         double deathRate = (double) params.get("deathRate");
         double drugKillRate = (double) params.get("drugKillRate");
         int numCells = (int) params.get("numCells");
         double proportionResistant = (double) params.get("proportionResistant");
+        boolean egt = (boolean) params.get("egt");
+        double divRateS = 0;
+        double divRateR = 0;
+        int[][] payoff = new int[2][2];
+        if (egt) {
+            payoff[0][0] = (int) params.get("A");
+            payoff[0][1] = (int) params.get("B");
+            payoff[1][0] = (int) params.get("C");
+            payoff[1][1] = (int) params.get("D");
+        }
+        else {
+            divRateS = (double) params.get("divRateS");
+            divRateR = (double) params.get("divRateR");
+        }
 
         GridWindow win = new GridWindow("2D adaptive vs continuous therapy", x*2, y, visScale);
         FileIO popsOut = new FileIO("output/"+exp_name+"/populations.csv", "w");
         popsOut.Write("time,adaptive_sensitive,adaptive_resistant,continuous_sensitive,continuous_resistant\n");
 
-        Model2D adaptiveModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true);
+        Model2D adaptiveModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true, egt, payoff);
         adaptiveModel2d.InitTumorRandom(numCells, proportionResistant);
 
-        Model2D continuousModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false);
+        Model2D continuousModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false, egt, payoff);
         continuousModel2d.InitTumorRandom(numCells, proportionResistant);
 
         for (int tick = 0; tick <= numDays; tick++) {

@@ -12,7 +12,7 @@ def main(exp_name):
     df = pd.read_csv(f"output/{exp_name}/populations.csv")
     max_pop = df.drop("time", axis=1).max(axis=None)
 
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(8, 6))
     gs = fig.add_gridspec(2,2)
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[0, 1])
@@ -28,8 +28,12 @@ def main(exp_name):
     ax2.set(ylim=(0, max_pop), xlabel="Time", ylabel="Cells", title="Continuous Therapy")
     ax2.legend()
 
-    ax3.plot(df["time"], df["adaptive_sensitive"]+df["adaptive_resistant"], label="Adaptive")
-    ax3.plot(df["time"], df["continuous_sensitive"]+df["continuous_resistant"], label="Continuous")
+    df["adaptive_total"] = df["adaptive_sensitive"] + df["adaptive_resistant"]
+    df["continuous_total"] = df["continuous_sensitive"] + df["continuous_resistant"]
+    max_pop = df[["adaptive_total", "continuous_total"]].max(axis=None)
+
+    ax3.plot(df["time"], df["adaptive_total"], label="Adaptive")
+    ax3.plot(df["time"], df["continuous_total"], label="Continuous")
     ax3.set(ylim=(0, max_pop), xlabel="Time", ylabel="Cells", title="Total Cells Over Time")
     ax3.legend()
 
