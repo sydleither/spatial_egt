@@ -1,6 +1,7 @@
 //Based on "Spatial structure impacts adaptive therapy by shaping intra-tumoral competition"
 package SpatialEGT;
 
+import java.lang.Math;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -31,6 +32,21 @@ public class SpatialEGT {
         int numResistant = 0;
         int numSensitive = 0;
         for (Cell0D cell : model) {
+            if (cell.type == 0) {
+                numSensitive += 1;
+            }
+            else {
+                numResistant += 1;
+            }
+        }
+        int[] popSize = new int[]{numSensitive, numResistant};
+        return popSize;
+    }
+
+    public static int[] GetPopulationSize(Model3D model) {
+        int numResistant = 0;
+        int numSensitive = 0;
+        for (Cell3D cell : model) {
             if (cell.type == 0) {
                 numSensitive += 1;
             }
@@ -78,9 +94,22 @@ public class SpatialEGT {
         }
     }
 
+    public static void RunModels(String exp_name, String dimension, Model3D adaptiveModel, Model3D continuousModel, FileIO popsOut, int numDays) {
+        for (int tick = 0; tick <= numDays; tick++) {
+            adaptiveModel.ModelStep();
+            continuousModel.ModelStep();
+
+            if (tick % 10 == 0) {
+                int[] adaptivePop = GetPopulationSize(adaptiveModel);
+                int[] continuousPop = GetPopulationSize(continuousModel);
+                popsOut.Write(tick + "," + adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
+            }
+        }
+    }
+
     public static void main(String[] args) {
-        String exp_name = args[0];
-        String dimension = args[1];
+        String exp_name = "suppressionEGT";//args[0];
+        String dimension = "3D";//args[1];
         ObjectMapper mapper = new ObjectMapper();
         Map<String, ?> params;
         try{
@@ -130,6 +159,15 @@ public class SpatialEGT {
             adaptiveModel.InitTumorRandom(numCells, proportionResistant);
             continuousModel.InitTumorRandom(numCells, proportionResistant);    
             RunModels(exp_name, dimension, adaptiveModel, continuousModel, win, popsOut, numDays);
+        }
+        else if (dimension.equals("3D")) {
+            int totalCells = x*y;
+            int z = (int)Math.cbrt(totalCells);
+            Model3D adaptiveModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true, egt, payoff);
+            Model3D continuousModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false, egt, payoff);
+            adaptiveModel.InitTumorRandom(numCells, proportionResistant);
+            continuousModel.InitTumorRandom(numCells, proportionResistant);    
+            RunModels(exp_name, dimension, adaptiveModel, continuousModel, popsOut, numDays);
         }
 
         popsOut.Close();
