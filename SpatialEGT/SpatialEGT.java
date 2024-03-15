@@ -2,13 +2,14 @@
 package SpatialEGT;
 
 import java.nio.file.Paths;
-import java.util.Map; 
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import HAL.Gui.GridWindow;
 import HAL.Tools.FileIO;
 import HAL.Rand;
+import HAL.GridsAndAgents.AgentBaseSpatial;
 
 public class SpatialEGT {
     public static int[] GetPopulationSize(Model2D model) {
@@ -26,8 +27,60 @@ public class SpatialEGT {
         return popSize;
     }
 
+    public static int[] GetPopulationSize(Model0D model) {
+        int numResistant = 0;
+        int numSensitive = 0;
+        for (Cell0D cell : model) {
+            if (cell.type == 0) {
+                numSensitive += 1;
+            }
+            else {
+                numResistant += 1;
+            }
+        }
+        int[] popSize = new int[]{numSensitive, numResistant};
+        return popSize;
+    }
+
+    public static void RunModels(String exp_name, String dimension, Model2D adaptiveModel, Model2D continuousModel, GridWindow win, FileIO popsOut, int numDays) {
+        for (int tick = 0; tick <= numDays; tick++) {
+            adaptiveModel.ModelStep();
+            adaptiveModel.DrawModel(win, 0);
+            continuousModel.ModelStep();
+            continuousModel.DrawModel(win, 1);
+
+            if (tick % 10 == 0) {
+                int[] adaptivePop = GetPopulationSize(adaptiveModel);
+                int[] continuousPop = GetPopulationSize(continuousModel);
+                popsOut.Write(tick + "," + adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
+            }
+            if (tick % (int)(numDays/10) == 0) {
+                win.ToPNG("output/" + exp_name + "/" + dimension + "model_tick" + tick + ".png");
+            }
+        }
+    }
+
+    public static void RunModels(String exp_name, String dimension, Model0D adaptiveModel, Model0D continuousModel, GridWindow win, FileIO popsOut, int numDays) {
+        for (int tick = 0; tick <= numDays; tick++) {
+            adaptiveModel.ModelStep();
+            adaptiveModel.DrawModel(win, 0);
+            continuousModel.ModelStep();
+            continuousModel.DrawModel(win, 1);
+
+            if (tick % 10 == 0) {
+                int[] adaptivePop = GetPopulationSize(adaptiveModel);
+                int[] continuousPop = GetPopulationSize(continuousModel);
+                popsOut.Write(tick + "," + adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
+            }
+            if (tick % (int)(numDays/10) == 0) {
+                win.ToPNG("output/" + exp_name + "/" + dimension + "model_tick" + tick + ".png");
+            }
+        }
+    }
+
     public static void main(String[] args) {
         String exp_name = args[0];
+        String dimension = args[1];
         ObjectMapper mapper = new ObjectMapper();
         Map<String, ?> params;
         try{
@@ -37,7 +90,7 @@ public class SpatialEGT {
             return;
         }
 
-        int visScale = 4, msPause = 0;
+        int visScale = 4;
         int numDays = (int) params.get("numDays");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
@@ -60,32 +113,23 @@ public class SpatialEGT {
             divRateR = (double) params.get("divRateR");
         }
 
-        GridWindow win = new GridWindow("2D adaptive vs continuous therapy", x*2, y, visScale);
-        FileIO popsOut = new FileIO("output/"+exp_name+"/populations.csv", "w");
+        GridWindow win = new GridWindow(dimension+" adaptive vs continuous therapy", x*2, y, visScale);
+        FileIO popsOut = new FileIO("output/"+exp_name+"/"+dimension+"populations.csv", "w");
         popsOut.Write("time,adaptive_sensitive,adaptive_resistant,continuous_sensitive,continuous_resistant\n");
 
-        Model2D adaptiveModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true, egt, payoff);
-        adaptiveModel2d.InitTumorRandom(numCells, proportionResistant);
-
-        Model2D continuousModel2d = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false, egt, payoff);
-        continuousModel2d.InitTumorRandom(numCells, proportionResistant);
-
-        for (int tick = 0; tick <= numDays; tick++) {
-            win.TickPause(msPause);
-
-            adaptiveModel2d.ModelStep();
-            adaptiveModel2d.DrawModel(win, 0);
-            continuousModel2d.ModelStep();
-            continuousModel2d.DrawModel(win, 1);
-
-            if (tick % 10 == 0) {
-                int[] adaptivePop = GetPopulationSize(adaptiveModel2d);
-                int[] continuousPop = GetPopulationSize(continuousModel2d);
-                popsOut.Write(tick + "," + adaptivePop[0] + "," + adaptivePop[1] + "," + continuousPop[0] + "," + continuousPop[1] + "\n");
-            }
-            if (tick % (int)(numDays/10) == 0) {
-                win.ToPNG("output/" + exp_name + "/model_tick" + tick + ".png");
-            }
+        if (dimension.equals("2D")) {
+            Model2D adaptiveModel = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true, egt, payoff);
+            Model2D continuousModel = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false, egt, payoff);
+            adaptiveModel.InitTumorRandom(numCells, proportionResistant);
+            continuousModel.InitTumorRandom(numCells, proportionResistant);    
+            RunModels(exp_name, dimension, adaptiveModel, continuousModel, win, popsOut, numDays);
+        }
+        else if (dimension.equals("0D")) {
+            Model0D adaptiveModel = new Model0D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, true, egt, payoff);
+            Model0D continuousModel = new Model0D(x, y, new Rand(), divRateS, divRateR, deathRate, drugKillRate, false, egt, payoff);
+            adaptiveModel.InitTumorRandom(numCells, proportionResistant);
+            continuousModel.InitTumorRandom(numCells, proportionResistant);    
+            RunModels(exp_name, dimension, adaptiveModel, continuousModel, win, popsOut, numDays);
         }
 
         popsOut.Close();
