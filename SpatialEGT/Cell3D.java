@@ -31,14 +31,11 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
             if (neighbors == 0) {
                 return 0.005;
             }
-            else if (neighbors == 4) {
-                return 0.0;
-            }
             for (int i = 0; i < neighbors; i++) {
                 Cell3D neighborCell = G.GetAgent(G.divHood[i]);
                 total_payoff += G.payoff[this.type][neighborCell.type];
             }
-            return total_payoff/100.0;
+            return total_payoff/150.0;
         }
     }
 

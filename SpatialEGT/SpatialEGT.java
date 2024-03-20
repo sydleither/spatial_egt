@@ -108,8 +108,8 @@ public class SpatialEGT {
     }
 
     public static void main(String[] args) {
-        String exp_name = "suppressionEGT";//args[0];
-        String dimension = "3D";//args[1];
+        String exp_name = args[0];
+        String dimension = args[1];
         ObjectMapper mapper = new ObjectMapper();
         Map<String, ?> params;
         try{

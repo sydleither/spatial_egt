@@ -27,14 +27,17 @@ public class Cell0D extends AgentSQ2Dunstackable<Model0D> {
         }
         else {
             int total_payoff = 0;
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
                 int randCell = G.rng.Int(G.xDim*G.yDim);
                 Cell0D neighborCell = G.GetAgent(randCell);
                 if (neighborCell != null) {
                     total_payoff += G.payoff[this.type][neighborCell.type];
                 }
             }
-            return total_payoff/100.0;
+            if (total_payoff < 0.005) {
+                return 0.005;
+            }
+            return total_payoff/125.0;
         }
     }
 

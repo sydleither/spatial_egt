@@ -31,9 +31,6 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
             if (neighbors == 0) {
                 return 0.005;
             }
-            else if (neighbors == 4) {
-                return 0.0;
-            }
             for (int i = 0; i < neighbors; i++) {
                 Cell2D neighborCell = G.GetAgent(G.divHood[i]);
                 total_payoff += G.payoff[this.type][neighborCell.type];
