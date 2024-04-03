@@ -26,37 +26,31 @@ public class Cell0D extends AgentSQ2Dunstackable<Model0D> {
             return type == 0 ? G.divRateS : G.divRateR;
         }
         else {
-            int total_payoff = 0;
-            for (int i = 0; i < 5; i++) {
-                int randCell = G.rng.Int(G.xDim*G.yDim);
-                Cell0D neighborCell = G.GetAgent(randCell);
-                if (neighborCell != null) {
-                    total_payoff += G.payoff[this.type][neighborCell.type];
-                }
-            }
-            if (total_payoff < 0.005) {
+            double total_payoff = 0;
+            int neighbors = MapOccupiedHood(G.divHood);
+            if (neighbors == 0) {
                 return 0.005;
             }
-            return total_payoff/125.0;
+            for (int i = 0; i < neighbors; i++) {
+                Cell0D neighborCell = G.GetAgent(G.divHood[i]);
+                total_payoff += G.payoff[this.type][neighborCell.type];
+            }
+            return total_payoff/neighbors;
         }
     }
 
     public void CellStep() {
-        //divison + drug death
+        //divison + drug effects
         double divRate = this.GetDivRate();
+        if (G.drugConcentration > 0.0 && this.type == 0) {
+            divRate = divRate * G.drugGrowthReduction;
+        }
         if (G.rng.Double() < divRate) {
             int options = MapEmptyHood(G.divHood);
             if (options > 0) {
-                if (G.rng.Double() < G.drugKillRate * G.drugConcentration * (1-this.type)) {
-                    Dispose();
-                    return;
-                }
-                else {
-                    G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type, this.interacting);
-                }
+                G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type, this.interacting);
             }
         }
-
         //natural death
         if (G.rng.Double() < G.deathRate) {
             Dispose();

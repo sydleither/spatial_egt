@@ -7,22 +7,22 @@ import HAL.Util;
 
 public class Model0D extends AgentGrid2D<Cell0D> {
     Rand rng;
-    double divRateS, divRateR, deathRate, drugKillRate;
+    double divRateS, divRateR, deathRate, drugGrowthReduction;
     boolean adaptiveTherapy, egt;
-    int[][] payoff;
+    double[][] payoff;
 
     public int[] divHood = Util.RectangleHood(false, xDim/2, yDim/2);
     int drugConcentration;
     int startingPop;
 
     public Model0D(int x, int y, Rand rng, double divRateS, double divRateR, double deathRate, 
-                   double drugKillRate, boolean adaptiveTherapy, boolean egt, int[][] payoff) {
+                   double drugGrowthReduction, boolean adaptiveTherapy, boolean egt, double[][] payoff) {
         super(x, y, Cell0D.class);
         this.rng = rng;
         this.divRateS = divRateS;
         this.divRateR = divRateR;
         this.deathRate = deathRate;
-        this.drugKillRate = drugKillRate;
+        this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;
         this.egt = egt;
         this.payoff = payoff;

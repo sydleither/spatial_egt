@@ -7,22 +7,22 @@ import HAL.Util;
 
 public class Model3D extends AgentGrid3D<Cell3D> {
     Rand rng;
-    double divRateS, divRateR, deathRate, drugKillRate;
+    double divRateS, divRateR, deathRate, drugGrowthReduction;
     boolean adaptiveTherapy, egt;
-    int[][] payoff;
+    double[][] payoff;
 
     int[] divHood = Util.VonNeumannHood3D(false);
     int drugConcentration;
     int startingPop;
 
     public Model3D(int x, int y, int z, Rand rng, double divRateS, double divRateR, double deathRate, 
-                   double drugKillRate, boolean adaptiveTherapy, boolean egt, int[][] payoff) {
+                   double drugGrowthReduction, boolean adaptiveTherapy, boolean egt, double[][] payoff) {
         super(x, y, z, Cell3D.class);
         this.rng = rng;
         this.divRateS = divRateS;
         this.divRateR = divRateR;
         this.deathRate = deathRate;
-        this.drugKillRate = drugKillRate;
+        this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;
         this.egt = egt;
         this.payoff = payoff;
