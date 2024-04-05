@@ -26,7 +26,7 @@ def experiment_config(exp_dir, config_name, deathRate, drugGrowthReduction, numC
 
 def initial_games(exp_dir):
     if not os.path.exists("output/"+exp_dir):
-        os.makedirs("output/"+exp_dir)
+        os.mkdir("output/"+exp_dir)
     config_names = []
 
     gw = 0.03
@@ -41,7 +41,9 @@ def initial_games(exp_dir):
         payoff = [gw, round(gw+bwm, 3), round(gm+bmw, 3), gm]
 
         exp_name = names[i]
-        os.makedirs("output/"+exp_dir+"/"+exp_name)
+        os.mkdir("output/"+exp_dir+"/"+exp_name)
+        for i in range(10):
+            os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
         experiment_config(exp_dir, exp_name, 0.0081, 0.5, 8125, 0.001, 20000, payoff)
         config_names.append(exp_name)
 
@@ -50,13 +52,11 @@ def initial_games(exp_dir):
 
 
 def generate_scripts_batch(exp_dir, config_names):
-    run_command = "/usr/bin/env /opt/software/Java/1.8.0_152/bin/java -cp /tmp/cp_ds16usm4x03dkwda919iyg6pd.jar SpatialEGT.SpatialEGT"
-
     submit_output = []
     analysis_output = []
     for config_name in config_names:
         for space in ["WM", "2D", "3D"]:
-            submit_output.append(f"{run_command} {exp_dir} {config_name} {space}\n")
+            submit_output.append(f"sbatch run_config.sb {exp_dir} {config_name} {space}\n")
             analysis_output.append(f"python3 analysis/pop_over_time.py {exp_dir} {config_name} {space}\n")
 
     return submit_output, analysis_output
@@ -84,3 +84,4 @@ if __name__ == "__main__":
         print("Invalid experiment name.")
         exit()
     write_scripts_batch(experiment_name, submit_output, analysis_output)
+    print("Make sure you recompile SpatialEGT before pushing jobs.")
