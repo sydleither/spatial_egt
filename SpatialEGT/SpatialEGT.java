@@ -185,7 +185,7 @@ public class SpatialEGT {
         else if (dimension.equals("3D")) {
             int totalCells = x*y;
             int z = (int)Math.cbrt(totalCells);
-            Model3D nullModel = new Model3D(x, y, z, new Rand(), divRateS, divRateR, deathRate, 1.0, false, egt, payoff);
+            Model3D nullModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, 1.0, false, egt, payoff);
             Model3D adaptiveModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, true, egt, payoff);
             Model3D continuousModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, false, egt, payoff);
             nullModel.InitTumorRandom(numCells, proportionResistant);
