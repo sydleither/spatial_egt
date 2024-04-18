@@ -44,7 +44,7 @@ def initial_games(exp_dir):
         os.mkdir("output/"+exp_dir+"/"+exp_name)
         for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, 0.0081, 0.5, 8125, 0.001, 20000, payoff)
+        experiment_config(exp_dir, exp_name, 0.0081, 0.5, 4375, 0.01, 50000, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -56,7 +56,11 @@ def generate_scripts_batch(exp_dir, config_names):
     analysis_output = []
     for config_name in config_names:
         for space in ["WM", "2D", "3D"]:
-            submit_output.append(f"sbatch run_config.sb {exp_dir} {config_name} {space}\n")
+            if space == "WM":
+                config_type = "long"
+            else:
+                config_type = "short"
+            submit_output.append(f"sbatch run_config_{config_type}.sb {exp_dir} {config_name} {space}\n")
             analysis_output.append(f"python3 analysis/pop_over_time.py {exp_dir} {config_name} {space}\n")
 
     return submit_output, analysis_output
@@ -84,4 +88,5 @@ if __name__ == "__main__":
         print("Invalid experiment name.")
         exit()
     write_scripts_batch(experiment_name, submit_output, analysis_output)
-    print("Make sure you recompile SpatialEGT before pushing jobs.")
+    print("Make sure you recompile SpatialEGT before pushing jobs:")
+    print("javac -d \"build\" -cp \"lib/*\" @sources.txt")
