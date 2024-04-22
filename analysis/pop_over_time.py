@@ -28,7 +28,7 @@ def plot_line(ax, df, generations, condition_name, color, label):
     ax.fill_between(list(generations), lower, upper, color=color, alpha=0.5)
 
 
-def main(exp_dir, exp_name, dimension, transparent=False):
+def main(exp_dir, exp_name, dimension, transparent=True):
     df = pd.DataFrame(columns=["rep","time","null_sensitive","null_resistant",
                                "continuous_sensitive","continuous_resistant"])
     run_path = f"output/{exp_dir}/{exp_name}/"
@@ -42,17 +42,6 @@ def main(exp_dir, exp_name, dimension, transparent=False):
         df_i = pd.read_csv(data_loc)
         df_i["rep"] = int(rep_dir)
         df = pd.concat([df, df_i])
-
-    extinction_times_null = []
-    extinction_times_drug = []
-    for rep in df["rep"].unique():
-        df_rep = df.loc[df["rep"] == rep]
-        extinct_null = df_rep.loc[(df_rep["null_resistant"] == 0) | (df_rep["null_sensitive"] == 0)]["time"].tolist()
-        extinct_drug = df_rep.loc[(df_rep["continuous_resistant"] == 0) | (df_rep["continuous_sensitive"] == 0)]["time"].tolist()
-        extinction_times_null.append(extinct_null[0] if len(extinct_null) > 0 else "NA")
-        extinction_times_drug.append(extinct_drug[0] if len(extinct_drug) > 0 else "NA")
-    mean_ext_time_null = int(np.mean(extinction_times_null))
-    mean_ext_time_drug = int(np.mean(extinction_times_drug))
 
     ymin = 0
     ymax = 16000
@@ -68,30 +57,28 @@ def main(exp_dir, exp_name, dimension, transparent=False):
 
     plot_line(ax1, df, generations, "null_sensitive", "sandybrown", "Sensitive")
     plot_line(ax1, df, generations, "null_resistant", "saddlebrown", "Resistant")
-    ax1.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title=f"Absence of Drug\n{mean_ext_time_null}")
-    ax1.legend()
+    ax1.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title="Absence of Drug")
+    ax1.legend(framealpha=0.33)
     if exp_name == "coexistance" and dimension == "WM":
         ax1.axhline(y=2344, linestyle="dotted", color="black")
 
     plot_line(ax2, df, generations, "continuous_sensitive", "lightgreen", "Sensitive")
     plot_line(ax2, df, generations, "continuous_resistant", "darkgreen", "Resistant")
-    ax2.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title=f"Presence of Drug\n{mean_ext_time_drug}")
-    ax2.legend()
+    ax2.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title="Presence of Drug")
+    ax2.legend(framealpha=0.33)
 
     plot_line(ax3, df, generations, "null_total", "sienna", "Absence of Drug")
     plot_line(ax3, df, generations, "continuous_total", "limegreen", "Presence of Drug")
     ax3.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title="Total Cells Over Time")
-    ax3.legend()
+    ax3.legend(framealpha=0.33)
 
     fig.suptitle(exp_name)
     fig.tight_layout()
-    if transparent:
-        fig.patch.set_alpha(0.0)
-    fig.savefig(f"output/{exp_dir}/{exp_name}/{dimension}pop_over_time.png")
+    fig.savefig(f"output/{exp_dir}/{exp_name}/{dimension}pop_over_time.png", transparent=transparent)
 
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
-        print("Please provide an experiment name and dimension.")
+        print("Please provide an experiment directory, name, and dimension.")
