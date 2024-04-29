@@ -29,7 +29,7 @@ public class Cell0D extends AgentSQ2Dunstackable<Model0D> {
             double total_payoff = 0;
             int neighbors = MapOccupiedHood(G.divHood);
             if (neighbors == 0) {
-                return 0.005;
+                return G.payoff[this.type][this.type];
             }
             for (int i = 0; i < neighbors; i++) {
                 Cell0D neighborCell = G.GetAgent(G.divHood[i]);

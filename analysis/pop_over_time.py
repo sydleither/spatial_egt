@@ -1,5 +1,7 @@
 import os
 import sys
+import warnings
+warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,7 +38,7 @@ def main(exp_dir, exp_name, dimension, transparent=True):
         if os.path.isfile(run_path+rep_dir):
             continue
         data_loc = f"output/{exp_dir}/{exp_name}/{rep_dir}/{dimension}populations.csv"
-        if not os.path.exists(data_loc):
+        if not os.path.exists(data_loc) or os.path.getsize(data_loc) == 0:
             print(f"File not found for rep {rep_dir}")
             continue
         df_i = pd.read_csv(data_loc)
@@ -60,7 +62,7 @@ def main(exp_dir, exp_name, dimension, transparent=True):
     ax1.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title="Absence of Drug")
     ax1.legend(framealpha=0.33)
     if exp_name == "coexistance" and dimension == "WM":
-        ax1.axhline(y=2344, linestyle="dotted", color="black")
+        ax1.axhline(y=2232, linestyle="dotted", color="black")
 
     plot_line(ax2, df, generations, "continuous_sensitive", "lightgreen", "Sensitive")
     plot_line(ax2, df, generations, "continuous_resistant", "darkgreen", "Resistant")

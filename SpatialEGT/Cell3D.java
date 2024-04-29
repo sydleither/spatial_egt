@@ -29,7 +29,7 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
             double total_payoff = 0;
             int neighbors = MapOccupiedHood(G.divHood);
             if (neighbors == 0) {
-                return 0.005;
+                return G.payoff[this.type][this.type];
             }
             for (int i = 0; i < neighbors; i++) {
                 Cell3D neighborCell = G.GetAgent(G.divHood[i]);

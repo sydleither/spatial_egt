@@ -24,7 +24,7 @@ def experiment_config(exp_dir, config_name, deathRate, drugGrowthReduction, numC
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir):
+def initial_games(exp_dir, death_rate, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -32,9 +32,36 @@ def initial_games(exp_dir):
     gw = 0.03
     gm = 0.8*gw
 
-    names = ["competition", "no_game", "coexistance", "bistability"]
-    bmws = [-0.007, 0, 0.007, -0.007]
-    bwms = [0.0, 0.0, 0.0, -0.02]
+    names = ["competition", "no_game", "coexistance"]#, "bistability"]
+    bmws = [-0.007, 0, 0.007]#, -0.007]
+    bwms = [0.0, 0.0, 0.0]#, -0.02]
+    for i in range(len(names)):
+        bmw = bmws[i]
+        bwm = bwms[i]
+        payoff = [gw, round(gw+bwm, 3), round(gm+bmw, 3), gm]
+
+        exp_name = names[i]
+        os.mkdir("output/"+exp_dir+"/"+exp_name)
+        for i in range(10):
+            os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
+        experiment_config(exp_dir, exp_name, death_rate, 0.5, 4375, 0.01, runtime, payoff)
+        config_names.append(exp_name)
+
+    submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
+    return submit_output, analysis_output
+
+
+def coexist_games(exp_dir):
+    if not os.path.exists("output/"+exp_dir):
+        os.mkdir("output/"+exp_dir)
+    config_names = []
+
+    gw = 0.03
+    gm = 0.8*gw
+
+    names = ["low", "med", "high"]
+    bmws = [0.007, 0.014, 0.021]
+    bwms = [0.0, 0.0, 0.0]
     for i in range(len(names)):
         bmw = bmws[i]
         bwm = bwms[i]
@@ -80,8 +107,20 @@ if __name__ == "__main__":
     experiment_name = sys.argv[1]
     submit_output = []
     analysis_output = []
-    if experiment_name == "games":
-        s, a = initial_games(experiment_name)
+    if experiment_name == "games2":
+        s, a = initial_games(experiment_name, 0.0081)
+        submit_output += s
+        analysis_output += a
+    elif experiment_name == "gamesd":
+        s, a = initial_games(experiment_name, 0.015)
+        submit_output += s
+        analysis_output += a
+    elif experiment_name == "coexist":
+        s, a = coexist_games(experiment_name)
+        submit_output += s
+        analysis_output += a
+    elif experiment_name == "test":
+        s, a = initial_games(experiment_name, 0.015, 100)
         submit_output += s
         analysis_output += a
     else:

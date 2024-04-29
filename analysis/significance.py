@@ -1,6 +1,8 @@
 from itertools import combinations
 import os
 import sys
+import warnings
+warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +27,7 @@ def read_all(exp_dir):
                 continue
             for result_file in os.listdir(rep_path):
                 result_path = f"{rep_path}/{result_file}"
-                if not os.path.exists(result_path):
+                if not os.path.exists(result_path) or os.path.getsize(result_path) == 0:
                     print(f"File not found: {result_path}")
                     continue
                 df_i = pd.read_csv(result_path)
