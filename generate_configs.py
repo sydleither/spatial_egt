@@ -24,7 +24,7 @@ def experiment_config(exp_dir, config_name, deathRate, drugGrowthReduction, numC
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir, death_rate, runtime=50000):
+def initial_games(exp_dir, names, bmws, bwms, death_rate=0.0081, prop_res=0.01, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -32,9 +32,6 @@ def initial_games(exp_dir, death_rate, runtime=50000):
     gw = 0.03
     gm = 0.8*gw
 
-    names = ["competition", "no_game", "coexistance"]#, "bistability"]
-    bmws = [-0.007, 0, 0.007]#, -0.007]
-    bwms = [0.0, 0.0, 0.0]#, -0.02]
     for i in range(len(names)):
         bmw = bmws[i]
         bwm = bwms[i]
@@ -44,34 +41,7 @@ def initial_games(exp_dir, death_rate, runtime=50000):
         os.mkdir("output/"+exp_dir+"/"+exp_name)
         for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, death_rate, 0.5, 4375, 0.01, runtime, payoff)
-        config_names.append(exp_name)
-
-    submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
-    return submit_output, analysis_output
-
-
-def coexist_games(exp_dir):
-    if not os.path.exists("output/"+exp_dir):
-        os.mkdir("output/"+exp_dir)
-    config_names = []
-
-    gw = 0.03
-    gm = 0.8*gw
-
-    names = ["low", "med", "high"]
-    bmws = [0.007, 0.014, 0.021]
-    bwms = [0.0, 0.0, 0.0]
-    for i in range(len(names)):
-        bmw = bmws[i]
-        bwm = bwms[i]
-        payoff = [gw, round(gw+bwm, 3), round(gm+bmw, 3), gm]
-
-        exp_name = names[i]
-        os.mkdir("output/"+exp_dir+"/"+exp_name)
-        for i in range(10):
-            os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, 0.0081, 0.5, 4375, 0.01, 50000, payoff)
+        experiment_config(exp_dir, exp_name, death_rate, 0.5, 4375, prop_res, runtime, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -107,22 +77,42 @@ if __name__ == "__main__":
     experiment_name = sys.argv[1]
     submit_output = []
     analysis_output = []
-    if experiment_name == "games2":
-        s, a = initial_games(experiment_name, 0.0081)
+    if experiment_name == "games":
+        names = ["competition", "no_game", "coexistance"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms)
         submit_output += s
         analysis_output += a
     elif experiment_name == "gamesd":
-        s, a = initial_games(experiment_name, 0.015)
+        names = ["competition", "no_game", "coexistance"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms, death_rate=0.015)
         submit_output += s
         analysis_output += a
     elif experiment_name == "coexist":
-        s, a = coexist_games(experiment_name)
+        names = ["14", "25", "33", "40", "45", "50"]
+        bmws = [0.007, 0.008, 0.009, 0.010, 0.011, 0.012]
+        bwms = [0.0]*len(bmws)
+        s, a = initial_games(experiment_name, names, bmws, bwms)
         submit_output += s
         analysis_output += a
     elif experiment_name == "test":
-        s, a = initial_games(experiment_name, 0.015, 100)
+        names = ["coexistance"]
+        bmws = [0.007]
+        bwms = [0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms, death_rate=0.015, runtime=100)
         submit_output += s
         analysis_output += a
+    elif experiment_name == "bistability":
+        names = ["bistability", "no_game"]
+        bmws = [-0.007, 0]
+        bwms = [-0.02, 0]
+        for prop_res in [0.3, 0.5, 0.7]:
+            s, a = initial_games(experiment_name, [x+str(prop_res)[-1] for x in names], bmws, bwms, prop_res=prop_res)
+            submit_output += s
+            analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()
