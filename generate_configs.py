@@ -24,7 +24,7 @@ def experiment_config(exp_dir, config_name, deathRate, drugGrowthReduction, numC
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir, names, bmws, bwms, death_rate=0.0081, prop_res=0.01, runtime=50000):
+def initial_games(exp_dir, names, bmws, bwms, turnover=0.009, drug_reduction= 0.5, prop_res=0.01, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -41,7 +41,7 @@ def initial_games(exp_dir, names, bmws, bwms, death_rate=0.0081, prop_res=0.01, 
         os.mkdir("output/"+exp_dir+"/"+exp_name)
         for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, death_rate, 0.5, 4375, prop_res, runtime, payoff)
+        experiment_config(exp_dir, exp_name, turnover, drug_reduction, 4375, prop_res, runtime, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         names = ["competition", "no_game", "coexistance"]
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, death_rate=0.015)
+        s, a = initial_games(experiment_name, names, bmws, bwms, turnover=0.015)
         submit_output += s
         analysis_output += a
     elif experiment_name == "coexist":
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         names = ["coexistance"]
         bmws = [0.007]
         bwms = [0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, death_rate=0.015, runtime=100)
+        s, a = initial_games(experiment_name, names, bmws, bwms, turnover=0.015, runtime=100)
         submit_output += s
         analysis_output += a
     elif experiment_name == "bistability":
@@ -111,6 +111,14 @@ if __name__ == "__main__":
         bwms = [-0.02, 0]
         for prop_res in [0.3, 0.5, 0.7]:
             s, a = initial_games(experiment_name, [x+str(prop_res)[-1] for x in names], bmws, bwms, prop_res=prop_res)
+            submit_output += s
+            analysis_output += a
+    elif experiment_name == "drug":
+        names = ["no_game"]
+        bmws = [0]
+        bwms = [0]
+        for drug_reduction in [0.5, 0.6, 0.7, 0.8]:
+            s, a = initial_games(experiment_name, [x+str(drug_reduction)[-1] for x in names], bmws, bwms, drug_reduction=drug_reduction)
             submit_output += s
             analysis_output += a
     else:

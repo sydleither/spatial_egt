@@ -43,7 +43,7 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
         //divison + drug effects
         double divRate = this.GetDivRate();
         if (G.drugConcentration > 0.0 && this.type == 0) {
-            divRate = divRate * G.drugGrowthReduction;
+            divRate = divRate * (1 - G.drugGrowthReduction);
         }
         if (G.rng.Double() < divRate) {
             int options = MapEmptyHood(G.divHood);
@@ -51,7 +51,6 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
                 G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type, this.interacting);
             }
         }
-
         //natural death
         if (G.rng.Double() < G.deathRate) {
             Dispose();
