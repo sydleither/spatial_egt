@@ -165,7 +165,7 @@ public class SpatialEGT {
         popsOut.Write("time,null_sensitive,null_resistant,adaptive_sensitive,adaptive_resistant,continuous_sensitive,continuous_resistant\n");
 
         if (dimension.equals("2D")) {
-            Model2D nullModel = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, 1.0, false, egt, payoff);
+            Model2D nullModel = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, 0.0, false, egt, payoff);
             Model2D adaptiveModel = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, true, egt, payoff);
             Model2D continuousModel = new Model2D(x, y, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, false, egt, payoff);
             nullModel.InitTumorRandom(numCells, proportionResistant);
@@ -174,7 +174,7 @@ public class SpatialEGT {
             RunModels(exp_name, exp_dir, rep, dimension, nullModel, adaptiveModel, continuousModel, win, popsOut, numDays, visualize);
         }
         else if (dimension.equals("WM")) {
-            Model0D nullModel = new Model0D(x, y, new Rand(), divRateS, divRateR, deathRate, 1.0, false, egt, payoff);
+            Model0D nullModel = new Model0D(x, y, new Rand(), divRateS, divRateR, deathRate, 0.0, false, egt, payoff);
             Model0D adaptiveModel = new Model0D(x, y, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, true, egt, payoff);
             Model0D continuousModel = new Model0D(x, y, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, false, egt, payoff);
             nullModel.InitTumorRandom(numCells, proportionResistant);
@@ -185,7 +185,7 @@ public class SpatialEGT {
         else if (dimension.equals("3D")) {
             int totalCells = x*y;
             int z = (int)Math.cbrt(totalCells);
-            Model3D nullModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, 1.0, false, egt, payoff);
+            Model3D nullModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, 0.0, false, egt, payoff);
             Model3D adaptiveModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, true, egt, payoff);
             Model3D continuousModel = new Model3D(z, z, z, new Rand(), divRateS, divRateR, deathRate, drugGrowthReduction, false, egt, payoff);
             nullModel.InitTumorRandom(numCells, proportionResistant);
