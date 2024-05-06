@@ -7,24 +7,21 @@ import HAL.Util;
 
 public class Model2D extends AgentGrid2D<Cell2D> {
     Rand rng;
-    double divRateS, divRateR, deathRate, drugGrowthReduction;
-    boolean adaptiveTherapy, egt;
+    double deathRate, drugGrowthReduction, adaptiveTreatmentThreshold;
+    boolean adaptiveTherapy;
     double[][] payoff;
 
     int[] divHood = Util.VonNeumannHood(false);
     int drugConcentration;
     int startingPop;
 
-    public Model2D(int x, int y, Rand rng, double divRateS, double divRateR, double deathRate, 
-                   double drugGrowthReduction, boolean adaptiveTherapy, boolean egt, double[][] payoff) {
+    public Model2D(int x, int y, Rand rng, double deathRate, double drugGrowthReduction,
+                   boolean adaptiveTherapy, double adaptiveTreatmentThreshold, double[][] payoff) {
         super(x, y, Cell2D.class);
         this.rng = rng;
-        this.divRateS = divRateS;
-        this.divRateR = divRateR;
         this.deathRate = deathRate;
         this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;
-        this.egt = egt;
         this.payoff = payoff;
         this.drugConcentration = 1;
     }
@@ -44,10 +41,10 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         int numResistant = (int)(numCells * proportionResistant);
         for (int i = 0; i < numCells; i++) {
             if (i < numResistant) {
-                NewAgentSQ(startingPositions[i]).Init(1, this.egt);
+                NewAgentSQ(startingPositions[i]).Init(1);
             }
             else {
-                NewAgentSQ(startingPositions[i]).Init(0, this.egt);
+                NewAgentSQ(startingPositions[i]).Init(0);
             }
         }
     }
@@ -59,7 +56,7 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         }
 
         if (this.adaptiveTherapy) {
-            if (this.Pop() < this.startingPop/2) {
+            if (this.Pop() < this.startingPop * (1 - this.adaptiveTreatmentThreshold)) {
                 this.drugConcentration = 0;
             }
             else if (this.Pop() >= this.startingPop) {

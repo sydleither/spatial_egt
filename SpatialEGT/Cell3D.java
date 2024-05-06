@@ -7,11 +7,9 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
     int type;
     int color;
     double deathRate;
-    boolean interacting;
 
-    public void Init(int type, boolean interacting) {
+    public void Init(int type) {
         this.type = type;
-        this.interacting = interacting;
         this.deathRate = G.deathRate;
         if (type == 0) {
             this.color = Util.RGB256(76, 149, 108);
@@ -22,21 +20,16 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
     }
 
     public double GetDivRate() {
-        if (!this.interacting) {
-            return type == 0 ? G.divRateS : G.divRateR;
+        double total_payoff = 0;
+        int neighbors = MapOccupiedHood(G.divHood);
+        if (neighbors == 0) {
+            return G.payoff[this.type][this.type];
         }
-        else {
-            double total_payoff = 0;
-            int neighbors = MapOccupiedHood(G.divHood);
-            if (neighbors == 0) {
-                return G.payoff[this.type][this.type];
-            }
-            for (int i = 0; i < neighbors; i++) {
-                Cell3D neighborCell = G.GetAgent(G.divHood[i]);
-                total_payoff += G.payoff[this.type][neighborCell.type];
-            }
-            return total_payoff/neighbors;
+        for (int i = 0; i < neighbors; i++) {
+            Cell3D neighborCell = G.GetAgent(G.divHood[i]);
+            total_payoff += G.payoff[this.type][neighborCell.type];
         }
+        return total_payoff/neighbors;
     }
 
     public void CellStep() {
@@ -48,7 +41,7 @@ public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
         if (G.rng.Double() < divRate) {
             int options = MapEmptyHood(G.divHood);
             if (options > 0) {
-                G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type, this.interacting);
+                G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type);
             }
         }
         //natural death
