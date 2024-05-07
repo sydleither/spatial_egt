@@ -92,8 +92,8 @@ if __name__ == "__main__":
         submit_output += s
         analysis_output += a
     elif experiment_name == "coexist":
-        names = ["14", "25", "33", "40", "45", "50"]
-        bmws = [0.007, 0.008, 0.009, 0.010, 0.011, 0.012]
+        names = ["14", "25", "33", "40", "45", "50", "60", "70", "80", "90"]
+        bmws = [0.007, 0.008, 0.009, 0.010, 0.011, 0.012, 0.015, 0.020, 0.030, 0.060]
         bwms = [0.0]*len(bmws)
         s, a = initial_games(experiment_name, names, bmws, bwms)
         submit_output += s
@@ -126,7 +126,19 @@ if __name__ == "__main__":
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
         for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
-            s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names], bmws, bwms, drug_reduction=0.85, prop_res=0.001, runtime=10000)
+            s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names],
+                                 bmws, bwms, drug_reduction=0.9, prop_res=0.01, 
+                                 adaptiveTreatmentThreshold=threshold, runtime=10000)
+            submit_output += s
+            analysis_output += a
+    elif experiment_name == "threshold001":
+        names = ["competition", "no_game", "coexistance"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
+            s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names],
+                                 bmws, bwms, drug_reduction=0.9, prop_res=0.001, 
+                                 adaptiveTreatmentThreshold=threshold, runtime=10000)
             submit_output += s
             analysis_output += a
     else:

@@ -1,41 +1,16 @@
 from itertools import combinations
-import os
 import sys
 import warnings
 warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from common import read_all, permutation_test
 
-SIM_TYPES = ["null", "continuous"]
 
-
-def read_all(exp_dir):
-    df = pd.DataFrame(columns=["condition","dimension","rep","time","null_sensitive",
-                               "null_resistant","continuous_sensitive","continuous_resistant"])
-    exp_path = f"output/{exp_dir}"
-    for exp_name in os.listdir(exp_path):
-        run_path = f"{exp_path}/{exp_name}"
-        if os.path.isfile(run_path):
-                continue
-        for rep_dir in os.listdir(run_path):
-            rep_path = f"{run_path}/{rep_dir}"
-            if os.path.isfile(rep_path):
-                continue
-            for result_file in os.listdir(rep_path):
-                result_path = f"{rep_path}/{result_file}"
-                if not os.path.exists(result_path) or os.path.getsize(result_path) == 0:
-                    print(f"File not found: {result_path}")
-                    continue
-                df_i = pd.read_csv(result_path)
-                df_i["rep"] = int(rep_dir)
-                df_i["condition"] = exp_name
-                df_i["dimension"] = result_file[0:2]
-                df = pd.concat([df, df_i])
-    return df
+SIM_TYPES = ["null", "adaptive", "continuous"]
 
 
 def get_extinction_times(df, sim_type):
@@ -45,30 +20,6 @@ def get_extinction_times(df, sim_type):
         extinct = df_rep.loc[(df_rep[f"{sim_type}_resistant"] == 0) | (df_rep[f"{sim_type}_sensitive"] == 0)]["time"].tolist()
         extinction_times.append(extinct[0] if len(extinct) > 0 else 0)
     return extinction_times
-
-
-def permutation_test(data1, data2, num_permutations=1000, verbose=False):
-    observed_mean = abs(np.mean(data1) - np.mean(data2))
-    num_reps = len(data1)
-    if num_reps != len(data2):
-        print("Error in permutation test: different number of replicates between groups.")
-        return
-    
-    combined = np.concatenate((data1, data2))
-    permutated_means = []
-    for _ in range(num_permutations):
-        np.random.shuffle(combined)
-        resplit_groups = [combined[:num_reps], combined[num_reps:]]
-        permutated_mean = abs(np.mean(resplit_groups[0]) - np.mean(resplit_groups[1]))
-        permutated_means.append(permutated_mean)
-
-    p = (permutated_means >= observed_mean).sum() / num_permutations
-    if verbose:
-        print(f"{data1.name}  {data2.name}")
-        print(f"\tp-value: {p}")
-        print(f"\tObserved mean diff: {observed_mean}")
-        print(f"\tAverage permutated mean diff: {np.mean(permutated_means)}")
-    return p
 
 
 def significance_table(df, group_type, groups, sim_type):
@@ -107,7 +58,7 @@ def extinction_plot(df, exp_dir, group_type, groups, fixed_var, sim_types):
     x.set(ylabel="Time of Extinction")
     figure.tight_layout(rect=[0, 0.03, 1, 0.95])
     figure.suptitle(f"Time of Extinction of Either Cell Line in {fixed_var} Experiments")
-    plt.savefig(f"output/{exp_dir}/{fixed_var}_extinction_times.png", transparent=True)
+    plt.savefig(f"output/{exp_dir}/{fixed_var}_extinction_times.png", transparent=False)
     plt.close()
 
 
@@ -133,7 +84,7 @@ def extinction_plot_generic(df, exp_dir, group1_type, group2_type, sim_type):
     x.set(ylabel="Time of Extinction")
     figure.tight_layout(rect=[0, 0.03, 1, 0.95])
     figure.suptitle(f"Time of Extinction of Either Cell Line in {sim_type_clean} Experiments")
-    plt.savefig(f"output/{exp_dir}/{group1_type}_{group2_type}_{sim_type}_extinction_times.png", transparent=True)
+    plt.savefig(f"output/{exp_dir}/{group1_type}_{group2_type}_{sim_type}_extinction_times.png", transparent=False)
     plt.close()
 
 

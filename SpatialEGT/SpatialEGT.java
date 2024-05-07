@@ -59,10 +59,6 @@ public class SpatialEGT {
 
     public static void RunModels(String exp_name, String exp_dir, String rep, String dimension, Model2D nullModel, Model2D adaptiveModel, Model2D continuousModel, GridWindow win, FileIO popsOut, int numDays, boolean visualize) {
         for (int tick = 0; tick <= numDays; tick++) {
-            nullModel.ModelStep();
-            adaptiveModel.ModelStep();
-            continuousModel.ModelStep();
-
             if (tick % 10 == 0) {
                 int[] nullPop = GetPopulationSize(nullModel);
                 int[] adaptivePop = GetPopulationSize(adaptiveModel);
@@ -78,15 +74,15 @@ public class SpatialEGT {
                     win.ToPNG("output/"+exp_dir+"/"+exp_name+"/"+rep+"/"+dimension+"model_tick"+tick+".png");
                 }
             }
+
+            nullModel.ModelStep();
+            adaptiveModel.ModelStep();
+            continuousModel.ModelStep();
         }
     }
 
     public static void RunModels(String exp_name, String exp_dir, String rep, String dimension, Model0D nullModel, Model0D adaptiveModel, Model0D continuousModel, GridWindow win, FileIO popsOut, int numDays, boolean visualize) {
         for (int tick = 0; tick <= numDays; tick++) {
-            nullModel.ModelStep();
-            adaptiveModel.ModelStep();
-            continuousModel.ModelStep();
-
             if (tick % 10 == 0) {
                 int[] nullPop = GetPopulationSize(nullModel);
                 int[] adaptivePop = GetPopulationSize(adaptiveModel);
@@ -102,21 +98,25 @@ public class SpatialEGT {
                     win.ToPNG("output/"+exp_dir+"/"+exp_name+"/"+rep+"/"+dimension+"model_tick"+tick+".png");
                 }
             }
+
+            nullModel.ModelStep();
+            adaptiveModel.ModelStep();
+            continuousModel.ModelStep();
         }
     }
 
     public static void RunModels(Model3D nullModel, Model3D adaptiveModel, Model3D continuousModel, FileIO popsOut, int numDays) {
         for (int tick = 0; tick <= numDays; tick++) {
-            nullModel.ModelStep();
-            adaptiveModel.ModelStep();
-            continuousModel.ModelStep();
-
             if (tick % 10 == 0) {
                 int[] nullPop = GetPopulationSize(nullModel);
                 int[] adaptivePop = GetPopulationSize(adaptiveModel);
                 int[] continuousPop = GetPopulationSize(continuousModel);
                 popsOut.Write(tick+","+nullPop[0]+","+nullPop[1]+","+adaptivePop[0]+","+adaptivePop[1]+","+continuousPop[0]+","+continuousPop[1]+"\n");
             }
+
+            nullModel.ModelStep();
+            adaptiveModel.ModelStep();
+            continuousModel.ModelStep();
         }
     }
 
