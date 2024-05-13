@@ -22,6 +22,7 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         this.deathRate = deathRate;
         this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;
+        this.adaptiveTreatmentThreshold = adaptiveTreatmentThreshold;
         this.payoff = payoff;
         this.drugConcentration = 1;
     }

@@ -22,6 +22,7 @@ public class Model3D extends AgentGrid3D<Cell3D> {
         this.deathRate = deathRate;
         this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;
+        this.adaptiveTreatmentThreshold = adaptiveTreatmentThreshold;
         this.payoff = payoff;
         this.drugConcentration = 1;
     }
