@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 from common import read_all, plot_line
 
@@ -46,14 +47,50 @@ def threshold_plot(df, exp_dir, dimension):
     plt.close()
 
 
+def time_increasing(df, exp_dir, dimension):
+    df = df.loc[df["dimension"] == dimension]
+    drug_pct = []
+    for threshold in df["threshold"].unique():
+        df_thr = df.loc[df["threshold"] == threshold]
+        for experiment in df_thr["experiment"].unique():
+            df_exp = df_thr.loc[df_thr["experiment"] == experiment]
+            for rep in df_exp["rep"].unique():
+                df_rep = df_exp.loc[df_exp["rep"] == rep]
+                cycle_end = df_rep.loc[df_rep["adaptive_resistant"] >= df_rep["adaptive_sensitive"]]["time"].tolist()[0]
+                df_cycling = df_rep.loc[df_rep["time"] <= cycle_end]
+                drug_on = df_cycling["adaptive_sensitive"].rolling(window=2).apply(lambda x: x.values[0] >= x.values[1])
+                pct_off = 1 - (drug_on.value_counts()[1.0] / len(drug_on))
+                drug_pct.append({"rep":rep, "threshold":threshold, "experiment":experiment, "pct_off":pct_off})
+    df_drugpct = pd.DataFrame(drug_pct)
+
+    experiments = sorted(df["experiment"].unique())
+    figure, axis = plt.subplots(1, len(experiments), figsize=(18,10), dpi=150)
+    ymin = df_drugpct["pct_off"].min()
+    ymax = df_drugpct["pct_off"].max()
+    colors = ["sienna", "green", "steelblue"]
+    for i,experiment in enumerate(experiments):
+        x = sns.boxplot(data=df_drugpct.loc[df_drugpct["experiment"] == experiment], 
+                        x="threshold", y="pct_off", ax=axis[i], color=colors[i])
+        x.set(title=experiment, ylim=(ymin, ymax), xlabel="Threshold", 
+              ylabel="Percent of Time in Cycle Spent with Treatment Off")
+    figure.tight_layout(rect=[0, 0.03, 1, 0.95])
+    figure.suptitle(dimension)
+    plt.savefig(f"output/{exp_dir}/{dimension}_drug_times.png", transparent=False)
+    plt.close()
+
+
 def main():
-    exp_dir = "threshold"
+    exp_dir = "threshold_d"
     df = read_all(exp_dir)
     df["experiment"] = df["condition"].str[0:-1]
     df["threshold"] = pd.to_numeric(df["condition"].str[-1])
     df["adaptive_total"] = df["adaptive_sensitive"] + df["adaptive_resistant"]
     df["null_total"] = df["null_sensitive"] + df["null_resistant"]
     df["continuous_total"] = df["continuous_sensitive"] + df["continuous_resistant"]
+
+    time_increasing(df, exp_dir, "2D")
+    time_increasing(df, exp_dir, "3D")
+    time_increasing(df, exp_dir, "WM")
 
     threshold_plot(df, exp_dir, "2D")
     threshold_plot(df, exp_dir, "3D")
