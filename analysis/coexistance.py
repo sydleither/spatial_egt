@@ -34,7 +34,11 @@ def diff_between_dim(df, exp_dir):
     figure, axis = plt.subplots(1, 1, figsize=(6,6), dpi=150)
     for i,dimension in enumerate(sorted(df["dimension"].unique())):
         df_dim = df.loc[df["dimension"] == dimension]
-        plot_line(axis, df_dim.loc[df_dim["time"] == df_dim["time"].max()], "condition", "fr", colors[i], dimension)
+        cond_max_times = df_dim[["condition", "time"]].groupby("condition").max().reset_index()
+        cond_max_times.set_index(["condition", "time"], inplace=True)
+        df_dim.set_index(["condition", "time"], inplace=True)
+        df_final = cond_max_times.merge(df_dim, on=["time", "condition"], how="left").reset_index()
+        plot_line(axis, df_final, "condition", "fr", colors[i], dimension)
     axis.set(xlabel="Theoretical Percent Resistant", ylabel="Actual Proportion Resistant", title="End of Coexistence Experiments")
     axis.legend()
     figure.tight_layout()
@@ -42,45 +46,15 @@ def diff_between_dim(df, exp_dir):
     plt.close()
 
 
-def diff_between_dim_noerror(df, exp_dir):
-    fr_2d = {}
-    fr_3d = {}
-    fr_wm = {}
-    for condition in sorted(df["condition"].unique()):
-        print(condition)
-        df_c = df.loc[df["condition"] == condition]
-        for dimension in sorted(df_c["dimension"].unique()):
-            df_cd = df_c.loc[df_c["dimension"] == dimension]
-            avg_end_fr = np.mean(df_cd.loc[df_cd["time"] == df_cd["time"].max()]["null_resistant"].to_list())
-            avg_end_total = np.mean(df_cd.loc[df_cd["time"] == df_cd["time"].max()]["null_total"].to_list())
-            fr = avg_end_fr/avg_end_total
-            if dimension == "2D":
-                fr_2d[int(condition)] = fr
-            elif dimension == "3D":
-                fr_3d[int(condition)] = fr
-            elif dimension == "WM":
-                fr_wm[int(condition)] = fr
-            print(f"\t{dimension}   {round(fr, 3)}")
-
-    fig, ax = plt.subplots(1, 1, figsize=(6,6))
-    ax.plot(fr_2d.keys(), fr_2d.values(), label="2D", color="sienna")
-    ax.plot(fr_3d.keys(), fr_3d.values(), label="3D", color="green")
-    ax.plot(fr_wm.keys(), fr_wm.values(), label="WM", color="steelblue")
-    ax.set(xlim=(10, 95), xlabel="Theoretical Percent Resistant", ylabel="Actual Proportion Resistant", title="End of Coexistence Experiments")
-    ax.legend()
-    fig.tight_layout()
-    plt.savefig(f"output/{exp_dir}/coexist_line2.png", transparent=False)
-    plt.close()
-
-
 def main():
-    df = read_all("coexist")
+    exp_name = "coexist"
+    df = read_all(exp_name)
     df["null_total"] = df["null_resistant"] + df["null_sensitive"]
     df["condition"] = pd.to_numeric(df["condition"])
     df["fr"] = df["null_resistant"]/df["null_total"]
 
-    coexistance_plot(df, "coexist")
-    diff_between_dim(df, "coexist")
+    coexistance_plot(df, exp_name)
+    diff_between_dim(df, exp_name)
 
 
 if __name__ == "__main__":
