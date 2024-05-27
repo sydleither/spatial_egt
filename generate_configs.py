@@ -3,10 +3,11 @@ import os
 import sys
 
 
-def experiment_config(exp_dir, config_name, deathRate, drugGrowthReduction, numCells, proportionResistant, numDays, adaptiveTreatmentThreshold, payoff):
+def experiment_config(exp_dir, config_name, radius, deathRate, drugGrowthReduction, numCells, proportionResistant, numDays, adaptiveTreatmentThreshold, payoff):
     config = {
         "x": 125,
         "y": 125,
+        "neighborhoodRadius": radius,
         "numDays": numDays,
         "deathRate": deathRate,
         "drugGrowthReduction": drugGrowthReduction,
@@ -24,7 +25,7 @@ def experiment_config(exp_dir, config_name, deathRate, drugGrowthReduction, numC
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir, names, bmws, bwms, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, adaptiveTreatmentThreshold=0.5, runtime=50000):
+def initial_games(exp_dir, names, bmws, bwms, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, adaptiveTreatmentThreshold=0.5, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -39,9 +40,9 @@ def initial_games(exp_dir, names, bmws, bwms, turnover=0.009, drug_reduction=0.5
 
         exp_name = names[i]
         os.mkdir("output/"+exp_dir+"/"+exp_name)
-        for i in range(20):
+        for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, turnover, drug_reduction, init_cells, prop_res, runtime, adaptiveTreatmentThreshold, payoff)
+        experiment_config(exp_dir, exp_name, radius, turnover, drug_reduction, init_cells, prop_res, runtime, adaptiveTreatmentThreshold, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -149,6 +150,14 @@ if __name__ == "__main__":
             s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names],
                                  bmws, bwms, drug_reduction=0.9, init_cells=11250, prop_res=0.001, 
                                  adaptiveTreatmentThreshold=threshold, runtime=10000)
+            submit_output += s
+            analysis_output += a
+    if experiment_name == "gameshood":
+        names = ["competition", "no_game", "coexistance"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        for radius in [1, 2, 3, 4, 5]:
+            s, a = initial_games(experiment_name, [x+str(radius) for x in names], bmws, bwms, radius=radius)
             submit_output += s
             analysis_output += a
     else:
