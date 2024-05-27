@@ -1,4 +1,3 @@
-//Based on "Spatial structure impacts adaptive therapy by shaping intra-tumoral competition"
 package SpatialEGT;
 
 import java.lang.Math;
@@ -57,9 +56,9 @@ public class SpatialEGT {
         return popSize;
     }
 
-    public static void RunModels(String exp_name, String exp_dir, String rep, String dimension, Model2D nullModel, Model2D adaptiveModel, Model2D continuousModel, GridWindow win, FileIO popsOut, int numDays, boolean visualize) {
+    public static void RunModels(String exp_name, String exp_dir, String rep, String dimension, Model2D nullModel, Model2D adaptiveModel, Model2D continuousModel, GridWindow win, FileIO popsOut, int numDays, boolean visualize, int granularity) {
         for (int tick = 0; tick <= numDays; tick++) {
-            if (tick % 10 == 0) {
+            if (tick % 2 == 0) {
                 int[] nullPop = GetPopulationSize(nullModel);
                 int[] adaptivePop = GetPopulationSize(adaptiveModel);
                 int[] continuousPop = GetPopulationSize(continuousModel);
@@ -70,7 +69,7 @@ public class SpatialEGT {
                 nullModel.DrawModel(win, 0);
                 adaptiveModel.DrawModel(win, 1);
                 continuousModel.DrawModel(win, 2);
-                if (tick % (int)(numDays/10) == 0) {
+                if (tick % (int)(numDays/granularity) == 0) {
                     win.ToPNG("output/"+exp_dir+"/"+exp_name+"/"+rep+"/"+dimension+"model_tick"+tick+".png");
                 }
             }
@@ -81,9 +80,9 @@ public class SpatialEGT {
         }
     }
 
-    public static void RunModels(String exp_name, String exp_dir, String rep, String dimension, Model0D nullModel, Model0D adaptiveModel, Model0D continuousModel, GridWindow win, FileIO popsOut, int numDays, boolean visualize) {
+    public static void RunModels(String exp_name, String exp_dir, String rep, String dimension, Model0D nullModel, Model0D adaptiveModel, Model0D continuousModel, GridWindow win, FileIO popsOut, int numDays, boolean visualize, int granularity) {
         for (int tick = 0; tick <= numDays; tick++) {
-            if (tick % 10 == 0) {
+            if (tick % 2 == 0) {
                 int[] nullPop = GetPopulationSize(nullModel);
                 int[] adaptivePop = GetPopulationSize(adaptiveModel);
                 int[] continuousPop = GetPopulationSize(continuousModel);
@@ -94,7 +93,7 @@ public class SpatialEGT {
                 nullModel.DrawModel(win, 0);
                 adaptiveModel.DrawModel(win, 1);
                 continuousModel.DrawModel(win, 2);
-                if (tick % (int)(numDays/10) == 0) {
+                if (tick % (int)(numDays/granularity) == 0) {
                     win.ToPNG("output/"+exp_dir+"/"+exp_name+"/"+rep+"/"+dimension+"model_tick"+tick+".png");
                 }
             }
@@ -107,7 +106,7 @@ public class SpatialEGT {
 
     public static void RunModels(Model3D nullModel, Model3D adaptiveModel, Model3D continuousModel, FileIO popsOut, int numDays) {
         for (int tick = 0; tick <= numDays; tick++) {
-            if (tick % 10 == 0) {
+            if (tick % 2 == 0) {
                 int[] nullPop = GetPopulationSize(nullModel);
                 int[] adaptivePop = GetPopulationSize(adaptiveModel);
                 int[] continuousPop = GetPopulationSize(continuousModel);
@@ -126,6 +125,10 @@ public class SpatialEGT {
         String dimension = args[2];
         String rep = args[3];
         boolean visualize = args[4].equals("visualize");
+        int granularity = 10;
+        if (visualize)
+            granularity = Integer.parseInt(args[5]);
+        
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> params;
         try{
@@ -139,6 +142,7 @@ public class SpatialEGT {
         int numDays = (int) params.get("numDays");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
+        int neighborhood = (int) params.get("neighborhoodRadius");
         double deathRate = (double) params.get("deathRate");
         double drugGrowthReduction = (double) params.get("drugGrowthReduction");
         int numCells = (int) params.get("numCells");
@@ -157,13 +161,13 @@ public class SpatialEGT {
         popsOut.Write("time,null_sensitive,null_resistant,adaptive_sensitive,adaptive_resistant,continuous_sensitive,continuous_resistant\n");
 
         if (dimension.equals("2D")) {
-            Model2D nullModel = new Model2D(x, y, new Rand(), deathRate, 0.0, false, 0.0, payoff);
-            Model2D adaptiveModel = new Model2D(x, y, new Rand(), deathRate, drugGrowthReduction, true, adaptiveTreatmentThreshold, payoff);
-            Model2D continuousModel = new Model2D(x, y, new Rand(), deathRate, drugGrowthReduction, false, 0.0, payoff);
+            Model2D nullModel = new Model2D(x, y, new Rand(), neighborhood, deathRate, 0.0, false, 0.0, payoff);
+            Model2D adaptiveModel = new Model2D(x, y, new Rand(), neighborhood, deathRate, drugGrowthReduction, true, adaptiveTreatmentThreshold, payoff);
+            Model2D continuousModel = new Model2D(x, y, new Rand(), neighborhood, deathRate, drugGrowthReduction, false, 0.0, payoff);
             nullModel.InitTumorRandom(numCells, proportionResistant);
             adaptiveModel.InitTumorRandom(numCells, proportionResistant);
             continuousModel.InitTumorRandom(numCells, proportionResistant);    
-            RunModels(exp_name, exp_dir, rep, dimension, nullModel, adaptiveModel, continuousModel, win, popsOut, numDays, visualize);
+            RunModels(exp_name, exp_dir, rep, dimension, nullModel, adaptiveModel, continuousModel, win, popsOut, numDays, visualize, granularity);
         }
         else if (dimension.equals("WM")) {
             Model0D nullModel = new Model0D(x, y, new Rand(), deathRate, 0.0, false, 0.0, payoff);
@@ -172,14 +176,14 @@ public class SpatialEGT {
             nullModel.InitTumorRandom(numCells, proportionResistant);
             adaptiveModel.InitTumorRandom(numCells, proportionResistant);
             continuousModel.InitTumorRandom(numCells, proportionResistant);    
-            RunModels(exp_name, exp_dir, rep, dimension, nullModel, adaptiveModel, continuousModel, win, popsOut, numDays, visualize);
+            RunModels(exp_name, exp_dir, rep, dimension, nullModel, adaptiveModel, continuousModel, win, popsOut, numDays, visualize, granularity);
         }
         else if (dimension.equals("3D")) {
             int totalCells = x*y;
             int z = (int)Math.cbrt(totalCells);
-            Model3D nullModel = new Model3D(z, z, z, new Rand(), deathRate, 0.0, false, 0.0, payoff);
-            Model3D adaptiveModel = new Model3D(z, z, z, new Rand(), deathRate, drugGrowthReduction, true, adaptiveTreatmentThreshold, payoff);
-            Model3D continuousModel = new Model3D(z, z, z, new Rand(), deathRate, drugGrowthReduction, false, 0.0, payoff);
+            Model3D nullModel = new Model3D(z, z, z, new Rand(), neighborhood, deathRate, 0.0, false, 0.0, payoff);
+            Model3D adaptiveModel = new Model3D(z, z, z, new Rand(), neighborhood, deathRate, drugGrowthReduction, true, adaptiveTreatmentThreshold, payoff);
+            Model3D continuousModel = new Model3D(z, z, z, new Rand(), neighborhood, deathRate, drugGrowthReduction, false, 0.0, payoff);
             nullModel.InitTumorRandom(numCells, proportionResistant);
             adaptiveModel.InitTumorRandom(numCells, proportionResistant);
             continuousModel.InitTumorRandom(numCells, proportionResistant);    

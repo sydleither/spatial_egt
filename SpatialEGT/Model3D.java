@@ -7,18 +7,20 @@ import HAL.Util;
 
 public class Model3D extends AgentGrid3D<Cell3D> {
     Rand rng;
+    int neighborhood;
     double deathRate, drugGrowthReduction, adaptiveTreatmentThreshold;
     boolean adaptiveTherapy;
     double[][] payoff;
 
-    int[] divHood = Util.VonNeumannHood3D(false);
+    int[] divHood = Util.SphereHood(false, neighborhood);
     int drugConcentration;
     int startingPop;
 
-    public Model3D(int x, int y, int z, Rand rng, double deathRate, double drugGrowthReduction,
+    public Model3D(int x, int y, int z, Rand rng, int neighborhood, double deathRate, double drugGrowthReduction,
                    boolean adaptiveTherapy, double adaptiveTreatmentThreshold, double[][] payoff) {
         super(x, y, z, Cell3D.class);
         this.rng = rng;
+        this.neighborhood = neighborhood;
         this.deathRate = deathRate;
         this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;

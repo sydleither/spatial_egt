@@ -7,18 +7,20 @@ import HAL.Util;
 
 public class Model2D extends AgentGrid2D<Cell2D> {
     Rand rng;
+    int neighborhood;
     double deathRate, drugGrowthReduction, adaptiveTreatmentThreshold;
     boolean adaptiveTherapy;
     double[][] payoff;
 
-    int[] divHood = Util.VonNeumannHood(false);
+    int[] divHood = Util.CircleHood(false, neighborhood);
     int drugConcentration;
     int startingPop;
 
-    public Model2D(int x, int y, Rand rng, double deathRate, double drugGrowthReduction,
+    public Model2D(int x, int y, Rand rng, int neighborhood, double deathRate, double drugGrowthReduction,
                    boolean adaptiveTherapy, double adaptiveTreatmentThreshold, double[][] payoff) {
         super(x, y, Cell2D.class);
         this.rng = rng;
+        this.neighborhood = neighborhood;
         this.deathRate = deathRate;
         this.drugGrowthReduction = drugGrowthReduction;
         this.adaptiveTherapy = adaptiveTherapy;
