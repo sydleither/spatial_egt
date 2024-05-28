@@ -46,6 +46,22 @@ def diff_between_dim(df, exp_dir):
     plt.close()
 
 
+def slopes(df):
+    for i,dimension in enumerate(sorted(df["dimension"].unique())):
+        df_dim = df.loc[df["dimension"] == dimension]
+        cond_max_times = df_dim[["condition", "time"]].groupby("condition").max().reset_index()
+        cond_max_times.set_index(["condition", "time"], inplace=True)
+        df_dim.set_index(["condition", "time"], inplace=True)
+        df_final = cond_max_times.merge(df_dim, on=["time", "condition"], how="left").reset_index()
+        df_final_avg = df_final[["fr", "condition"]].groupby("condition").mean().reset_index()
+        df_final_avg["condition"] = df_final_avg["condition"]/100
+        df_final_sub = df_final_avg.rolling(window=2).apply(lambda x: x.values[1] - x.values[0])
+        df_final_sub["slope"] = df_final_sub["fr"] / df_final_sub["condition"]
+        print(dimension)
+        print(df_final_sub)
+        print()
+
+
 def main():
     exp_name = "coexist"
     df = read_all(exp_name)
@@ -55,6 +71,7 @@ def main():
 
     coexistance_plot(df, exp_name)
     diff_between_dim(df, exp_name)
+    slopes(df)
 
 
 if __name__ == "__main__":
