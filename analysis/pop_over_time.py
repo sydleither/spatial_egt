@@ -5,7 +5,6 @@ warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
 
 from common import plot_line
 

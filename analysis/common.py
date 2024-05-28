@@ -17,6 +17,8 @@ def read_all(exp_dir):
                 continue
             for result_file in os.listdir(rep_path):
                 result_path = f"{rep_path}/{result_file}"
+                if not result_file.endswith(".csv"):
+                    continue
                 if not os.path.exists(result_path) or os.path.getsize(result_path) == 0:
                     print(f"File not found: {result_path}")
                     continue

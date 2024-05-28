@@ -56,7 +56,8 @@ def time_increasing(df, exp_dir, dimension):
             df_exp = df_thr.loc[df_thr["experiment"] == experiment]
             for rep in df_exp["rep"].unique():
                 df_rep = df_exp.loc[df_exp["rep"] == rep]
-                cycle_end = df_rep.loc[df_rep["adaptive_resistant"] >= df_rep["adaptive_sensitive"]]["time"].tolist()[0]
+                cycle_end = df_rep.loc[df_rep["adaptive_resistant"] >= df_rep["adaptive_sensitive"]]["time"].tolist()
+                cycle_end = cycle_end[0] if len(cycle_end) > 0 else df_rep["time"].max()
                 df_cycling = df_rep.loc[df_rep["time"] <= cycle_end]
                 drug_on = df_cycling["adaptive_sensitive"].rolling(window=2).apply(lambda x: x.values[0] >= x.values[1])
                 pct_off = 1 - (drug_on.value_counts()[1.0] / len(drug_on))
@@ -80,7 +81,7 @@ def time_increasing(df, exp_dir, dimension):
 
 
 def main():
-    exp_dir = "threshold_d"
+    exp_dir = "threshold_dfr"
     df = read_all(exp_dir)
     df["experiment"] = df["condition"].str[0:-1]
     df["threshold"] = pd.to_numeric(df["condition"].str[-1])

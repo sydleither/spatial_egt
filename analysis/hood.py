@@ -4,9 +4,35 @@ warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 from common import read_all, plot_line
 from extinction import get_extinction_times
+
+
+def extinction_plot_fixed_treatment(df, exp_dir, group1_type, group2_type, group3_type, sim_type):
+    for group3 in sorted(df[group3_type].unique()):
+        df_ets = []
+        for group1 in sorted(df[group1_type].unique()):
+            for group2 in sorted(df[group2_type].unique()):
+                df_et_i = pd.DataFrame()
+                df_cond = df.loc[(df[group1_type] == group1) & (df[group2_type] == group2) & (df[group3_type] == group3)]
+                df_et_i["extinction_time"] = get_extinction_times(df_cond, sim_type)
+                df_et_i[group1_type] = group1
+                df_et_i[group2_type] = group2
+                df_ets.append(df_et_i)
+        df_et_all = pd.concat(df_ets)
+
+        figure, axis = plt.subplots(1, 1, figsize=(8,5), dpi=150)
+        x = sns.boxplot(data=df_et_all, x=group1_type, y="extinction_time", hue=group2_type, 
+                        ax=axis, palette="Set2")
+        x.legend(framealpha=0.33, title=group2_type)
+        x.set(xlabel=group1_type)
+        x.set(ylabel="Time of Extinction")
+        figure.tight_layout(rect=[0, 0.03, 1, 0.95])
+        figure.suptitle(f"Time of Extinction of Either Cell Line in {sim_type} {group3} Experiments")
+        plt.savefig(f"output/{exp_dir}/{group3}_{group1_type}_{group2_type}_{sim_type}_extinction_times.png", transparent=False)
+        plt.close()
 
 
 def neighborhood_size(df, exp_dir, group1_type, group2_type, group3_type, sim_type):
@@ -47,6 +73,7 @@ def main(exp_dir, sim_type):
     df = pd.concat([df_2d, df_3d])
     
     neighborhood_size(df, exp_dir, "dimension", "num_neighbors", "game_space", sim_type)
+    extinction_plot_fixed_treatment(df, exp_dir, "hood", "dimension", "game_space", sim_type)
 
 
 if __name__ == "__main__":

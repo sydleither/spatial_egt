@@ -47,7 +47,7 @@ def diff_between_dim(df, exp_dir):
 
 
 def slopes(df):
-    for i,dimension in enumerate(sorted(df["dimension"].unique())):
+    for dimension in sorted(df["dimension"].unique()):
         df_dim = df.loc[df["dimension"] == dimension]
         cond_max_times = df_dim[["condition", "time"]].groupby("condition").max().reset_index()
         cond_max_times.set_index(["condition", "time"], inplace=True)

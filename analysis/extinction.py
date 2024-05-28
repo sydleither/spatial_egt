@@ -74,8 +74,6 @@ def extinction_plot_generic(df, exp_dir, group1_type, group2_type, sim_type):
             df_ets.append(df_et_i)
     df_et_all = pd.concat(df_ets)
 
-    sim_type_clean = "No Drug" if sim_type == "null" else "Drug"
-
     figure, axis = plt.subplots(1, 1, figsize=(8,5), dpi=150)
     x = sns.boxplot(data=df_et_all, x=group1_type, y="extinction_time", hue=group2_type, 
                     ax=axis, palette="Set2")
@@ -83,7 +81,7 @@ def extinction_plot_generic(df, exp_dir, group1_type, group2_type, sim_type):
     x.set(xlabel=group1_type)
     x.set(ylabel="Time of Extinction")
     figure.tight_layout(rect=[0, 0.03, 1, 0.95])
-    figure.suptitle(f"Time of Extinction of Either Cell Line in {sim_type_clean} Experiments")
+    figure.suptitle(f"Time of Extinction of Either Cell Line in {sim_type} Experiments")
     plt.savefig(f"output/{exp_dir}/{group1_type}_{group2_type}_{sim_type}_extinction_times.png", transparent=False)
     plt.close()
 
