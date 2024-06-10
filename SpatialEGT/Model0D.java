@@ -1,23 +1,23 @@
 package SpatialEGT;
 
-import HAL.GridsAndAgents.AgentGrid2D;
+import HAL.GridsAndAgents.AgentGrid0D;
 import HAL.Gui.GridWindow;
 import HAL.Rand;
 import HAL.Util;
 
-public class Model0D extends AgentGrid2D<Cell0D> {
+public class Model0D extends AgentGrid0D<Cell0D> {
     Rand rng;
+    int gridSize;
     double deathRate, drugGrowthReduction, adaptiveTreatmentThreshold;
     boolean adaptiveTherapy;
     double[][] payoff;
-
-    public int[] divHood = Util.RectangleHood(false, xDim/2, yDim/2);
     int drugConcentration;
     int startingPop;
 
-    public Model0D(int x, int y, Rand rng, double deathRate, double drugGrowthReduction,
+    public Model0D(int gridSize, Rand rng, double deathRate, double drugGrowthReduction,
                    boolean adaptiveTherapy, double adaptiveTreatmentThreshold, double[][] payoff) {
-        super(x, y, Cell0D.class);
+        super(Cell0D.class);
+        this.gridSize = gridSize;
         this.rng = rng;
         this.deathRate = deathRate;
         this.drugGrowthReduction = drugGrowthReduction;
@@ -30,22 +30,14 @@ public class Model0D extends AgentGrid2D<Cell0D> {
     public void InitTumorRandom(int numCells, double proportionResistant) {
         this.startingPop = numCells;
 
-        //list of random positions on grid
-        int gridSize = xDim * yDim;
-        int[] startingPositions = new int[gridSize];
-        for (int i = 0; i < gridSize; i++) {
-            startingPositions[i] = i;
-        }
-        rng.Shuffle(startingPositions);
-
-        //create and place cells on random positions in grid
+        //create and place cells
         int numResistant = (int)(numCells * proportionResistant);
         for (int i = 0; i < numCells; i++) {
             if (i < numResistant) {
-                NewAgentSQ(startingPositions[i]).Init(1);
+                NewAgent().Init(1);
             }
             else {
-                NewAgentSQ(startingPositions[i]).Init(0);
+                NewAgent().Init(0);
             }
         }
     }
@@ -62,19 +54,6 @@ public class Model0D extends AgentGrid2D<Cell0D> {
             }
             else if (this.Pop() >= this.startingPop) {
                 this.drugConcentration = 1;
-            }
-        }
-    }
-
-    public void DrawModel(GridWindow win, int iModel) {
-        for (int x = 0; x < xDim; x++) {
-            for (int y = 0; y < yDim; y++) {
-                int color = Util.BLACK;
-                Cell0D cell = GetAgent(x, y);
-                if (cell != null) {
-                    color = cell.color;
-                }
-                win.SetPix(x+iModel*xDim, y, color);
             }
         }
     }

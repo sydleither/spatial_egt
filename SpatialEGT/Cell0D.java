@@ -1,9 +1,9 @@
 package SpatialEGT;
 
-import HAL.GridsAndAgents.AgentSQ2Dunstackable;
+import HAL.GridsAndAgents.Agent0D;
 import HAL.Util;
 
-public class Cell0D extends AgentSQ2Dunstackable<Model0D> {
+public class Cell0D extends Agent0D<Model0D> {
     int type;
     int color;
     double deathRate;
@@ -21,13 +21,17 @@ public class Cell0D extends AgentSQ2Dunstackable<Model0D> {
 
     public double GetDivRate() {
         double total_payoff = 0;
-        int neighbors = MapOccupiedHood(G.divHood);
+        int neighbors = G.Pop();
         if (neighbors == 0) {
             return G.payoff[this.type][this.type];
         }
-        for (int i = 0; i < neighbors; i++) {
-            Cell0D neighborCell = G.GetAgent(G.divHood[i]);
-            total_payoff += G.payoff[this.type][neighborCell.type];
+        boolean skipped_self = false;
+        for (Cell0D cell : G.AllAgents()) {
+            if (cell.type == this.type && skipped_self == false) {
+                skipped_self = true;
+                continue;
+            }
+            total_payoff += G.payoff[this.type][cell.type];
         }
         return total_payoff/neighbors;
     }
@@ -38,11 +42,8 @@ public class Cell0D extends AgentSQ2Dunstackable<Model0D> {
         if (G.drugConcentration > 0.0 && this.type == 0) {
             divRate = divRate * (1 - G.drugGrowthReduction);
         }
-        if (G.rng.Double() < divRate) {
-            int options = MapEmptyHood(G.divHood);
-            if (options > 0) {
-                G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type);
-            }
+        if (G.rng.Double() < divRate && G.Pop() < G.gridSize) {
+            G.NewAgent().Init(this.type);
         }
         //natural death
         if (G.rng.Double() < G.deathRate) {
