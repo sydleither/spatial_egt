@@ -51,7 +51,7 @@ public class SpatialEGT0D {
         HashMap<String,Model0D> models = new HashMap<String,Model0D>();
         if (runNull == 1) {
             Model0D nullModel = new Model0D(x*y, new Rand(seed), deathRate, 0.0, false, 0.0, payoff);
-            models.put("null", nullModel);
+            models.put("nodrug", nullModel);
         }
         if (runContinuous == 1) {
             Model0D continuousModel = new Model0D(x*y, new Rand(seed), deathRate, drugGrowthReduction, false, 0.0, payoff);

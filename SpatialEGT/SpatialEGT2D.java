@@ -78,7 +78,7 @@ public class SpatialEGT2D {
         HashMap<String,Model2D> models = new HashMap<String,Model2D>();
         if (runNull == 1) {
             Model2D nullModel = new Model2D(x, y, new Rand(seed), neighborhood, deathRate, 0.0, false, 0.0, payoff);
-            models.put("null", nullModel);
+            models.put("nodrug", nullModel);
         }
         if (runContinuous == 1) {
             Model2D continuousModel = new Model2D(x, y, new Rand(seed), neighborhood, deathRate, drugGrowthReduction, false, 0.0, payoff);

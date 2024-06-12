@@ -79,7 +79,7 @@ public class SpatialEGT3D {
         HashMap<String,Model3D> models = new HashMap<String,Model3D>();
         if (runNull == 1) {
             Model3D nullModel = new Model3D(z, z, z, new Rand(seed), neighborhood, deathRate, 0.0, false, 0.0, payoff);
-            models.put("null", nullModel);
+            models.put("nodrug", nullModel);
         }
         if (runContinuous == 1) {
             Model3D continuousModel = new Model3D(z, z, z, new Rand(seed), neighborhood, deathRate, drugGrowthReduction, false, 0.0, payoff);

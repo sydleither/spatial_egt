@@ -4,6 +4,25 @@ import numpy as np
 from scipy.stats import sem, t
 
 
+def read_dim(exp_dir, exp_name, dimension):
+    df = pd.DataFrame()
+    run_path = f"output/{exp_dir}/{exp_name}"
+    for rep_dir in os.listdir(run_path):
+        rep_path = f"{run_path}/{rep_dir}"
+        if os.path.isfile(rep_path):
+            continue
+        result_file = f"{rep_path}/{dimension}populations.csv"
+        if not os.path.exists(result_file) or os.path.getsize(result_file) == 0:
+            print(f"File not found for rep {rep_dir}")
+            continue
+        df_i = pd.read_csv(result_file)
+        df_i["rep"] = int(rep_dir)
+        df_i["condition"] = exp_name
+        df_i["dimension"] = result_file[0:2]
+        df = pd.concat([df, df_i])
+    return df
+
+
 def read_all(exp_dir):
     df = pd.DataFrame()
     exp_path = f"output/{exp_dir}"
