@@ -36,7 +36,7 @@ public class SpatialEGT3D {
                         ssPairCounts.put(dist, 1);
                     }
                 }
-                if (cellAtype == 1 && cellBtype == 1) {
+                else if (cellAtype == 1 && cellBtype == 1) {
                     if (rrPairCounts.containsKey(dist)) {
                         rrPairCounts.put(dist, rrPairCounts.get(dist)+1);
                     }

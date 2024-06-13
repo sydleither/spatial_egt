@@ -3,8 +3,16 @@ import os
 import sys
 
 
-def experiment_config(exp_dir, config_name, radius, deathRate, drugGrowthReduction, numCells, proportionResistant, numDays, adaptiveTreatmentThreshold, payoff):
+def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
+                      writePcFrequency, numDays, radius, deathRate, drugGrowthReduction, numCells, 
+                      proportionResistant, adaptiveTreatmentThreshold, payoff):
     config = {
+        "null": runNull,
+        "adaptive": runAdaptive,
+        "continuous": runContinuous,
+        "visualizationFrequency": 0,
+        "writePopFrequency": writePopFrequency,
+        "writePcFrequency": writePcFrequency,
         "x": 125,
         "y": 125,
         "neighborhoodRadius": radius,
@@ -25,7 +33,9 @@ def experiment_config(exp_dir, config_name, radius, deathRate, drugGrowthReducti
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir, names, bmws, bwms, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, adaptiveTreatmentThreshold=0.5, runtime=50000):
+def initial_games(exp_dir, names, bmws, bwms, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1,
+                  writePcFrequency=100, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
+                  adaptiveTreatmentThreshold=0.5, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -42,7 +52,9 @@ def initial_games(exp_dir, names, bmws, bwms, radius=1, turnover=0.009, drug_red
         os.mkdir("output/"+exp_dir+"/"+exp_name)
         for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, radius, turnover, drug_reduction, init_cells, prop_res, runtime, adaptiveTreatmentThreshold, payoff)
+        experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
+                          writePcFrequency, runtime, radius, turnover, drug_reduction, init_cells, 
+                          prop_res, adaptiveTreatmentThreshold, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -60,7 +72,6 @@ def generate_scripts_batch(exp_dir, config_names):
                 config_type = "short"
             submit_output.append(f"sbatch run_config_{config_type}.sb {exp_dir} {config_name} {space}\n")
             analysis_output.append(f"python3 analysis/pop_over_time.py {exp_dir} {config_name} {space}\n")
-
     return submit_output, analysis_output
 
 
@@ -82,7 +93,7 @@ if __name__ == "__main__":
         names = ["competition", "no_game", "coexistance"]
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms)
+        s, a = initial_games(experiment_name, names, bmws, bwms, runtime=10000)
         submit_output += s
         analysis_output += a
     elif experiment_name == "gamesd":
@@ -152,12 +163,20 @@ if __name__ == "__main__":
                                  adaptiveTreatmentThreshold=threshold, runtime=10000)
             submit_output += s
             analysis_output += a
-    if experiment_name == "gameshood":
+    elif experiment_name == "gameshood":
         names = ["competition", "no_game", "coexistance"]
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
         for radius in [1, 2, 3, 4, 5]:
             s, a = initial_games(experiment_name, [x+str(radius) for x in names], bmws, bwms, radius=radius)
+            submit_output += s
+            analysis_output += a
+    elif experiment_name == "gamespc":
+        names = ["competition", "no_game", "coexistance"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        for fr in [0.05, 0.01, 0.002]:
+            s, a = initial_games(experiment_name, [x+str(fr)[2:] for x in names], bmws, bwms, init_cells=2500, prop_res=fr, runtime=500, runContinuous=0)
             submit_output += s
             analysis_output += a
     else:
