@@ -12,28 +12,54 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT3D {
-    //split this between resistant and sensitive
-    public static HashMap<Integer,Integer> GetPairCorrelation(Model3D model) {
+    public static HashMap GetPairCorrelation(Model3D model) {
         List<Cell3D> cells = new ArrayList<Cell3D>();
         for (Cell3D cell : model) {
             cells.add(cell);
         }
 
-        HashMap<Integer,Integer> pairCounts = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> ssPairCounts = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> srPairCounts = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> rrPairCounts = new HashMap<Integer,Integer>();
         for (int a = 0; a < cells.size(); a++) {
             for (int b = a+1; b < cells.size(); b++) {
                 Cell3D cellA = cells.get(a);
                 Cell3D cellB = cells.get(b);
+                int cellAtype = cellA.type;
+                int cellBtype = cellB.type;
                 int dist = (int) Math.round(Util.Dist(cellA.Xsq(), cellA.Ysq(), cellB.Xsq(), cellB.Ysq()));
-                if (pairCounts.containsKey(dist)) {
-                    pairCounts.put(dist, pairCounts.get(dist)+1);
+                if (cellAtype == 0 && cellBtype == 0) {
+                    if (ssPairCounts.containsKey(dist)) {
+                        ssPairCounts.put(dist, ssPairCounts.get(dist)+1);
+                    }
+                    else {
+                        ssPairCounts.put(dist, 1);
+                    }
+                }
+                if (cellAtype == 1 && cellBtype == 1) {
+                    if (rrPairCounts.containsKey(dist)) {
+                        rrPairCounts.put(dist, rrPairCounts.get(dist)+1);
+                    }
+                    else {
+                        rrPairCounts.put(dist, 1);
+                    }
                 }
                 else {
-                    pairCounts.put(dist, 1);
+                    if (srPairCounts.containsKey(dist)) {
+                        srPairCounts.put(dist, srPairCounts.get(dist)+1);
+                    }
+                    else {
+                        srPairCounts.put(dist, 1);
+                    }
                 }
             }
         }
-        return pairCounts;
+
+        HashMap<String, HashMap<Integer,Integer>> returnList = new HashMap<String, HashMap<Integer,Integer>>();
+        returnList.put("SS", ssPairCounts);
+        returnList.put("SR", srPairCounts);
+        returnList.put("RR", rrPairCounts);
+        return returnList;
     }
 
     public static int[] GetPopulationSize(Model3D model) {
@@ -101,7 +127,7 @@ public class SpatialEGT3D {
         FileIO pcOut = null;
         if (writePc) {
             pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
-            pcOut.Write("model,time,distance,count\n");
+            pcOut.Write("model,pair,time,distance,count\n");
         }
         
         // run models
@@ -119,11 +145,15 @@ public class SpatialEGT3D {
                 }
                 if (writePc) {
                     if (tick % writePcFrequency == 0) {
-                        HashMap<Integer,Integer> pairCounts = GetPairCorrelation(model);
-                        for (Map.Entry<Integer,Integer> pcEntry : pairCounts.entrySet()) {
-                            int dist = pcEntry.getKey();
-                            int count = pcEntry.getValue();
-                            pcOut.Write(modelName+","+tick+","+dist+","+count+"\n");
+                        HashMap<String, HashMap<Integer,Integer>> pairCountsList = GetPairCorrelation(model);
+                        for (Map.Entry<String, HashMap<Integer,Integer>> pairCountsEntry : pairCountsList.entrySet()) {
+                            String pcName = pairCountsEntry.getKey();
+                            HashMap<Integer,Integer> pairCounts = pairCountsEntry.getValue();
+                            for (Map.Entry<Integer,Integer> pcEntry : pairCounts.entrySet()) {
+                                int dist = pcEntry.getKey();
+                                int count = pcEntry.getValue();
+                                pcOut.Write(modelName+","+pcName+","+tick+","+dist+","+count+"\n");
+                            }
                         }
                     }
                 }
