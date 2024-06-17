@@ -12,53 +12,49 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static HashMap GetPairCorrelation(Model2D model) {
+    public static List GetPairCorrelation(Model2D model) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
         for (Cell2D cell : model) {
             cells.add(cell);
         }
 
-        HashMap<Integer,Integer> ssPairCounts = new HashMap<Integer,Integer>();
-        HashMap<Integer,Integer> srPairCounts = new HashMap<Integer,Integer>();
-        HashMap<Integer,Integer> rrPairCounts = new HashMap<Integer,Integer>();
+        Map<Integer, List<Integer>> xRows = new Hashmap<>();
+        Map<Integer, List<Integer>> yRows = new Hashmap<>();
+        Map<Integer, List<Integer>> euclideanRows = new Hashmap<>();
+        for (int i = 0; i < 125; i++) {
+            xRows.put(i, {0, 0, 0})
+            yRows.put(i, {0, 0, 0})
+            euclideanRows.put(i, {0, 0, 0})
+        }
+        for (int i = 125; i < 175; i++) {
+            euclideanRows.put(i, {0, 0, 0})
+        }
+
         for (int a = 0; a < cells.size(); a++) {
             for (int b = a+1; b < cells.size(); b++) {
                 Cell2D cellA = cells.get(a);
                 Cell2D cellB = cells.get(b);
                 int cellAtype = cellA.type;
                 int cellBtype = cellB.type;
-                int dist = (int) Math.round(Util.Dist(cellA.Xsq(), cellA.Ysq(), cellB.Xsq(), cellB.Ysq()));
-                if (cellAtype == 0 && cellBtype == 0) {
-                    if (ssPairCounts.containsKey(dist)) {
-                        ssPairCounts.put(dist, ssPairCounts.get(dist)+1);
-                    }
-                    else {
-                        ssPairCounts.put(dist, 1);
-                    }
-                }
-                else if (cellAtype == 1 && cellBtype == 1) {
-                    if (rrPairCounts.containsKey(dist)) {
-                        rrPairCounts.put(dist, rrPairCounts.get(dist)+1);
-                    }
-                    else {
-                        rrPairCounts.put(dist, 1);
-                    }
-                }
-                else {
-                    if (srPairCounts.containsKey(dist)) {
-                        srPairCounts.put(dist, srPairCounts.get(dist)+1);
-                    }
-                    else {
-                        srPairCounts.put(dist, 1);
-                    }
-                }
+                int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq())
+                int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq())
+                int euclideanDistance = (int) Math.round(Util.Dist(cellA.Xsq(), cellA.Ysq(), cellB.Xsq(), cellB.Ysq()));
+                
+                int pairType;
+                if (cellAtype == 0 && cellBtype == 0)
+                    pairType = 0;
+                else if (cellAtype == 1 && cellBtype == 1)
+                    pairType = 2;
+                else
+                    pairType = 1;
+
+                xRows.put(xDistance, xRows.get(xDistance).set(pairType, xRows.get(xDistance).get(pairType)+1))
+                yRows.put(yDistance, yRows.get(yDistance).set(pairType, yRows.get(yDistance).get(pairType)+1))
+                euclideanRows.put(euclideanDistance, euclideanRows.get(euclideanDistance).set(pairType, euclideanRows.get(euclideanDistance).get(pairType)+1))
             }
         }
 
-        HashMap<String, HashMap<Integer,Integer>> returnList = new HashMap<String, HashMap<Integer,Integer>>();
-        returnList.put("SS", ssPairCounts);
-        returnList.put("SR", srPairCounts);
-        returnList.put("RR", rrPairCounts);
+        List<Map<Integer, List<Integer>>> returnList = {xRows, yRows, euclideanRows};
         return returnList;
     }
 
@@ -127,7 +123,7 @@ public class SpatialEGT2D {
         FileIO pcOut = null;
         if (writePc) {
             pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
-            pcOut.Write("model,pair,time,distance,count\n");
+            pcOut.Write("model,time,pair,measure,distance,count\n");
         }
         GridWindow win = null;
         if (visualize) {
@@ -149,14 +145,22 @@ public class SpatialEGT2D {
                 }
                 if (writePc) {
                     if (tick % writePcFrequency == 0) {
-                        HashMap<String, HashMap<Integer,Integer>> pairCountsList = GetPairCorrelation(model);
-                        for (Map.Entry<String, HashMap<Integer,Integer>> pairCountsEntry : pairCountsList.entrySet()) {
-                            String pcName = pairCountsEntry.getKey();
-                            HashMap<Integer,Integer> pairCounts = pairCountsEntry.getValue();
-                            for (Map.Entry<Integer,Integer> pcEntry : pairCounts.entrySet()) {
-                                int dist = pcEntry.getKey();
-                                int count = pcEntry.getValue();
-                                pcOut.Write(modelName+","+pcName+","+tick+","+dist+","+count+"\n");
+                        List<Map<Integer, List<Integer>>> pairCountsList = GetPairCorrelation(model);
+                        Map<Integer, List<Integer>> xRows = pairCountsList.get(0);
+                        Map<Integer, List<Integer>> yRows = pairCountsList.get(1);
+                        Map<Integer, List<Integer>> euclideanRows = pairCountsList.get(2);
+
+                        List<String> pairTypes = {"SS", "SR", "RR"};
+                        for (int dist = 0; dist < 125; dist++) {
+                            for (int i = 0; i < 3; i++) {
+                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",x,"+dist+","+xRows.get(dist).get(0)+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",y,"+dist+","+yRows.get(dist).get(0)+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",euclidean,"+dist+","+euclideanRows.get(dist).get(0)+"\n");
+                            }
+                        }
+                        for (int dist = 0; dist < 175; dist++) {
+                            for (int i = 0; i < 3; i++) {
+                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",euclidean,"+dist+","+euclideanRows.get(dist).get(0)+"\n");
                             }
                         }
                     }
