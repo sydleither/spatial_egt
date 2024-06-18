@@ -1,29 +1,28 @@
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from scipy.stats import sem, t
 
 
-def read_dim(exp_dir, exp_name, dimension):
+def read_dim(exp_dir, exp_name, dimension, file_name):
     df = pd.DataFrame()
     run_path = f"output/{exp_dir}/{exp_name}"
     for rep_dir in os.listdir(run_path):
         rep_path = f"{run_path}/{rep_dir}"
         if os.path.isfile(rep_path):
             continue
-        result_file = f"{rep_path}/{dimension}populations.csv"
+        result_file = f"{rep_path}/{dimension}{file_name}.csv"
         if not os.path.exists(result_file) or os.path.getsize(result_file) == 0:
             print(f"File not found for rep {rep_dir}")
             continue
         df_i = pd.read_csv(result_file)
         df_i["rep"] = int(rep_dir)
-        df_i["condition"] = exp_name
-        df_i["dimension"] = result_file[0:2]
         df = pd.concat([df, df_i])
     return df
 
 
-def read_all(exp_dir):
+def read_all(exp_dir, file_name):
     df = pd.DataFrame()
     exp_path = f"output/{exp_dir}"
     for exp_name in os.listdir(exp_path):
@@ -36,7 +35,7 @@ def read_all(exp_dir):
                 continue
             for result_file in os.listdir(rep_path):
                 result_path = f"{rep_path}/{result_file}"
-                if not result_file.endswith(".csv"):
+                if not result_file.endswith(f"{file_name}.csv"):
                     continue
                 if not os.path.exists(result_path) or os.path.getsize(result_path) == 0:
                     print(f"File not found: {result_path}")
@@ -63,9 +62,9 @@ def calculate_confidence_interval(data):
     return data_mean, lower, upper
 
 
-def plot_line(ax, df, x_col, condition_name, color, label):
+def plot_line(ax, df, x_col, y_col, color, label):
     x_data = sorted(df[x_col].unique())
-    condition = df.pivot(index="rep", columns=x_col, values=condition_name).values.tolist()
+    condition = df.pivot(index="rep", columns=x_col, values=y_col).values.tolist()
     data_mean, lower, upper = calculate_confidence_interval(condition)
     ax.plot(x_data, data_mean, label=label, linewidth=2, color=color)
     ax.fill_between(list(x_data), lower, upper, color=color, alpha=0.5)
