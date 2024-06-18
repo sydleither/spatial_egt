@@ -12,22 +12,26 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static List GetPairCorrelation(Model2D model) {
+    public static List GetPairCorrelation(Model2D model, int maxDistance, int maxEuclideanDistance) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
         for (Cell2D cell : model) {
             cells.add(cell);
         }
 
-        Map<Integer, List<Integer>> xRows = new Hashmap<>();
-        Map<Integer, List<Integer>> yRows = new Hashmap<>();
-        Map<Integer, List<Integer>> euclideanRows = new Hashmap<>();
-        for (int i = 0; i < 125; i++) {
-            xRows.put(i, {0, 0, 0})
-            yRows.put(i, {0, 0, 0})
-            euclideanRows.put(i, {0, 0, 0})
+        Map<Integer, Integer[]> xRows = new HashMap<>();
+        Map<Integer, Integer[]> yRows = new HashMap<>();
+        Map<Integer, Integer[]> euclideanRows = new HashMap<>();
+        for (int i = 0; i < maxDistance; i++) {
+            Integer xStartingList[] = {0, 0, 0};
+            xRows.put(i, xStartingList);
+            Integer yStartingList[] = {0, 0, 0};
+            yRows.put(i, yStartingList);
+            Integer euclideanStartingList[] = {0, 0, 0};
+            euclideanRows.put(i, euclideanStartingList);
         }
-        for (int i = 125; i < 175; i++) {
-            euclideanRows.put(i, {0, 0, 0})
+        for (int i = maxDistance; i < maxEuclideanDistance; i++) {
+            Integer euclideanStartingList[] = {0, 0, 0};
+            euclideanRows.put(i, euclideanStartingList);
         }
 
         for (int a = 0; a < cells.size(); a++) {
@@ -36,8 +40,8 @@ public class SpatialEGT2D {
                 Cell2D cellB = cells.get(b);
                 int cellAtype = cellA.type;
                 int cellBtype = cellB.type;
-                int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq())
-                int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq())
+                int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq());
+                int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq());
                 int euclideanDistance = (int) Math.round(Util.Dist(cellA.Xsq(), cellA.Ysq(), cellB.Xsq(), cellB.Ysq()));
                 
                 int pairType;
@@ -48,13 +52,16 @@ public class SpatialEGT2D {
                 else
                     pairType = 1;
 
-                xRows.put(xDistance, xRows.get(xDistance).set(pairType, xRows.get(xDistance).get(pairType)+1))
-                yRows.put(yDistance, yRows.get(yDistance).set(pairType, yRows.get(yDistance).get(pairType)+1))
-                euclideanRows.put(euclideanDistance, euclideanRows.get(euclideanDistance).set(pairType, euclideanRows.get(euclideanDistance).get(pairType)+1))
+                xRows.get(xDistance)[pairType] = xRows.get(xDistance)[pairType]+1;
+                yRows.get(yDistance)[pairType] = yRows.get(yDistance)[pairType]+1;
+                euclideanRows.get(euclideanDistance)[pairType] = euclideanRows.get(euclideanDistance)[pairType]+1;
             }
         }
 
-        List<Map<Integer, List<Integer>>> returnList = {xRows, yRows, euclideanRows};
+        List<Map<Integer, Integer[]>> returnList = new ArrayList<>();
+        returnList.add(xRows);
+        returnList.add(yRows);
+        returnList.add(euclideanRows);
         return returnList;
     }
 
@@ -81,7 +88,7 @@ public class SpatialEGT2D {
         int visualizationFrequency = (int) params.get("visualizationFrequency");
         int writePopFrequency = (int) params.get("writePopFrequency");
         int writePcFrequency = (int) params.get("writePcFrequency");
-        int numDays = (int) params.get("numDays");
+        int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
         int neighborhood = (int) params.get("neighborhoodRadius");
@@ -95,6 +102,10 @@ public class SpatialEGT2D {
         payoff[0][1] = (double) params.get("B");
         payoff[1][0] = (double) params.get("C");
         payoff[1][1] = (double) params.get("D");
+
+        // calculations for pair correlation
+        int maxDistance = Math.max(x,y);
+        int maxEuclideanDistance = (int) Math.round(Math.sqrt(2*Math.pow(maxDistance, 2)));
 
         // initialize with specified models
         HashMap<String,Model2D> models = new HashMap<String,Model2D>();
@@ -136,7 +147,7 @@ public class SpatialEGT2D {
             Model2D model = modelEntry.getValue();
             model.InitTumorRandom(numCells, proportionResistant);
 
-            for (int tick = 0; tick <= numDays; tick++) {
+            for (int tick = 0; tick <= numTicks; tick++) {
                 if (writePop) {
                     if (tick % writePopFrequency == 0) {
                         int[] pop = GetPopulationSize(model);
@@ -145,22 +156,22 @@ public class SpatialEGT2D {
                 }
                 if (writePc) {
                     if (tick % writePcFrequency == 0) {
-                        List<Map<Integer, List<Integer>>> pairCountsList = GetPairCorrelation(model);
-                        Map<Integer, List<Integer>> xRows = pairCountsList.get(0);
-                        Map<Integer, List<Integer>> yRows = pairCountsList.get(1);
-                        Map<Integer, List<Integer>> euclideanRows = pairCountsList.get(2);
+                        List<Map<Integer, Integer[]>> pairCountsList = GetPairCorrelation(model, maxDistance, maxEuclideanDistance);
+                        Map<Integer, Integer[]> xRows = pairCountsList.get(0);
+                        Map<Integer, Integer[]> yRows = pairCountsList.get(1);
+                        Map<Integer, Integer[]> euclideanRows = pairCountsList.get(2);
 
-                        List<String> pairTypes = {"SS", "SR", "RR"};
-                        for (int dist = 0; dist < 125; dist++) {
+                        String pairTypes[] = {"SS", "SR", "RR"};
+                        for (int dist = 0; dist < maxDistance; dist++) {
                             for (int i = 0; i < 3; i++) {
-                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",x,"+dist+","+xRows.get(dist).get(0)+"\n");
-                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",y,"+dist+","+yRows.get(dist).get(0)+"\n");
-                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",euclidean,"+dist+","+euclideanRows.get(dist).get(0)+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+",x,"+dist+","+xRows.get(dist)[i]+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+",y,"+dist+","+yRows.get(dist)[i]+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+",euclidean,"+dist+","+euclideanRows.get(dist)[i]+"\n");
                             }
                         }
-                        for (int dist = 0; dist < 175; dist++) {
+                        for (int dist = maxDistance; dist < maxEuclideanDistance; dist++) {
                             for (int i = 0; i < 3; i++) {
-                                pcOut.Write(modelName+","+tick+","+pairTypes.get(i)+",euclidean,"+dist+","+euclideanRows.get(dist).get(0)+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+",euclidean,"+dist+","+euclideanRows.get(dist)[i]+"\n");
                             }
                         }
                     }
