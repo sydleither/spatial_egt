@@ -4,7 +4,7 @@ import sys
 
 
 def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
-                      writePcFrequency, numDays, radius, deathRate, drugGrowthReduction, numCells, 
+                      writePcFrequency, numTicks, radius, deathRate, drugGrowthReduction, numCells, 
                       proportionResistant, adaptiveTreatmentThreshold, payoff):
     config = {
         "null": runNull,
@@ -16,7 +16,7 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
         "x": 125,
         "y": 125,
         "neighborhoodRadius": radius,
-        "numDays": numDays,
+        "numTicks": numTicks,
         "deathRate": deathRate,
         "drugGrowthReduction": drugGrowthReduction,
         "numCells": numCells,

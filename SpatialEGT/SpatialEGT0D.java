@@ -33,7 +33,7 @@ public class SpatialEGT0D {
         int runContinuous = (int) params.get("continuous");
         int runAdaptive = (int) params.get("adaptive");
         int writePopFrequency = (int) params.get("writePopFrequency");
-        int numDays = (int) params.get("numDays");
+        int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
         double deathRate = (double) params.get("deathRate");
@@ -76,7 +76,7 @@ public class SpatialEGT0D {
             Model0D model = modelEntry.getValue();
             model.InitTumorRandom(numCells, proportionResistant);
 
-            for (int tick = 0; tick <= numDays; tick++) {
+            for (int tick = 0; tick <= numTicks; tick++) {
                 if (writePop) {
                     if (tick % writePopFrequency == 0) {
                         int[] pop = GetPopulationSize(model);
