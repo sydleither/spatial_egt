@@ -175,8 +175,8 @@ if __name__ == "__main__":
         names = ["competition", "no_game", "coexistance"]
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
-        for fr in [0.05, 0.01, 0.002]:
-            s, a = initial_games(experiment_name, [x+str(fr)[2:] for x in names], bmws, bwms, init_cells=2500, prop_res=fr, runtime=500, runContinuous=0)
+        for fr in ["0.050", "0.010", "0.002"]:
+            s, a = initial_games(experiment_name, [x+fr[2:] for x in names], bmws, bwms, init_cells=2500, prop_res=float(fr), runtime=500, runContinuous=0)
             submit_output += s
             analysis_output += a
     else:

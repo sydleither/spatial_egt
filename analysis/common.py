@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.stats import sem, t
 
 
-def read_dim(exp_dir, exp_name, dimension, file_name):
+def read_specific(exp_dir, exp_name, dimension, file_name):
     df = pd.DataFrame()
     run_path = f"output/{exp_dir}/{exp_name}"
     for rep_dir in os.listdir(run_path):
@@ -22,7 +22,7 @@ def read_dim(exp_dir, exp_name, dimension, file_name):
     return df
 
 
-def read_all(exp_dir, file_name):
+def read_all(exp_dir, file_name, dimension=""):
     df = pd.DataFrame()
     exp_path = f"output/{exp_dir}"
     for exp_name in os.listdir(exp_path):
@@ -35,7 +35,7 @@ def read_all(exp_dir, file_name):
                 continue
             for result_file in os.listdir(rep_path):
                 result_path = f"{rep_path}/{result_file}"
-                if not result_file.endswith(f"{file_name}.csv"):
+                if not result_file.endswith(f"{file_name}.csv") or not result_file.startswith(dimension):
                     continue
                 if not os.path.exists(result_path) or os.path.getsize(result_path) == 0:
                     print(f"File not found: {result_path}")

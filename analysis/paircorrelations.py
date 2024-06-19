@@ -6,7 +6,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import plot_line, read_dim
+from common import plot_line, read_all
 
 
 def euclidean_histograms(df, exp_dir, exp_name, dimension, transparent=False):
@@ -29,9 +29,40 @@ def euclidean_histograms(df, exp_dir, exp_name, dimension, transparent=False):
             fig.savefig(f"output/{exp_dir}/{exp_name}/{dimension}pair_correlation_{pair}_{time}.png")
 
 
-def pair_correlation_functions(df, grid_len, grid_area, exp_dir, exp_name, dimension, transparent=False):
+def pair_correlation_functions(df, exp_dir, dimension, fr="", transparent=False):
     df = df.loc[df["measure"] != "euclidean"]
 
+    time_end = df["time"].max()
+    light_colors = ["sandybrown", "lightpink", "lightgreen"]
+    dark_colors = ["sienna", "hotpink", "limegreen"]
+    for pair in df["pair"].unique():
+        df_pair = df.loc[df["pair"] == pair]
+        for time in [0, time_end]:
+            df_time = df_pair.loc[df_pair["time"] == time]
+            fig, ax = plt.subplots()
+            for i,condition in enumerate(df_time["condition"].unique()):
+                df_cond = df_time.loc[df["condition"] == condition]
+                plot_line(ax, df_cond.loc[df["measure"] == "x"], "distance", "P", dark_colors[i], condition+"_x")
+                plot_line(ax, df_cond.loc[df["measure"] == "y"], "distance", "P", light_colors[i], condition+"_y")
+            ax.set_xlabel("Distance Between Pairs of Cells")
+            ax.set_ylabel("Pair-Correlation Function Signals")
+            ax.set_title(f"{dimension} {pair} pairs at time {time}")
+            ax.legend()
+            fig.tight_layout()
+            if transparent:
+                fig.patch.set_alpha(0.0)
+            fig.savefig(f"output/{exp_dir}/{dimension}pair_correlation_{pair}_{time}{fr}.png")
+
+
+def main(exp_dir, dimension):
+    df_pc = read_all(exp_dir, "pairCorrelations", dimension)
+    df_pop = read_all(exp_dir, "populations", dimension)
+    df = df_pop.merge(df_pc, on=["model", "time", "rep", "condition", "dimension"])
+    df["total"] = df["sensitive"] + df["resistant"]
+
+    #calculate pair-correlation function signal
+    grid_area = 15625
+    grid_len = 125 if dimension == "2D" else 25
     #probability of selecting an agent
     df["p"] = 0
     df.loc[df["pair"] == "SS", "p"] = df["sensitive"]/grid_area
@@ -45,44 +76,18 @@ def pair_correlation_functions(df, grid_len, grid_area, exp_dir, exp_name, dimen
     #pair correlation function
     df["P"] = df["count"] / df["C"]
 
-    colors = cm.get_cmap("Set3").colors
-    for pair in df["pair"].unique():
-        df_pair = df.loc[df["pair"] == pair]
-        for time in [0, 500]:
-            df_time = df_pair.loc[df_pair["time"] == time]
-            fig, ax = plt.subplots()
-            plot_line(ax, df_time.loc[df["measure"] == "x"], "distance", "P", colors[0], "x")
-            plot_line(ax, df_time.loc[df["measure"] == "y"], "distance", "P", colors[1], "y")
-            ax.set_xlabel("Distance Between Pairs of Cells")
-            ax.set_ylabel("Normalized Count")
-            ax.set_title(f"Pair Correlation for {dimension} {exp_name} {pair} pairs at time {time}")
-            fig.tight_layout()
-            if transparent:
-                fig.patch.set_alpha(0.0)
-            fig.savefig(f"output/{exp_dir}/{exp_name}/{dimension}pair_correlation_{pair}_{time}.png")
-
-
-
-def main(exp_dir, exp_name, dimension):
-    df_pc = read_dim(exp_dir, exp_name, dimension, "pairCorrelations")
-    df_pop = read_dim(exp_dir, exp_name, dimension, "populations")
-    df = df_pop.merge(df_pc, on=["model", "time", "rep"])
-    df["total"] = df["sensitive"] + df["resistant"]
-
-    df["proportion"] = 0
-    df.loc[df["pair"] == "SS", "proportion"] = df["count"] / (0.5*df["sensitive"]*(df["sensitive"]-1))
-    df.loc[df["pair"] == "SR", "proportion"] = df["count"] / (0.5*df["total"]*(df["total"]-1))
-    df.loc[df["pair"] == "RR", "proportion"] = df["count"] / (0.5*df["resistant"]*(df["resistant"]-1))
-
-    if len(df["model"].unique()) > 1:
-        print("Please input data with only one model.")
-        exit()
-
-    pair_correlation_functions(df, 125 if dimension == "2D" else 25, 15625, exp_dir, exp_name, dimension, transparent=False)
+    if exp_dir == "gamespc":
+        df["fr"] = df["condition"].str[-3:]
+        df["condition"] = df["condition"].str[0:-3]
+        for fr in df["fr"].unique():
+            df_fr = df.loc[df["fr"] == fr]
+            pair_correlation_functions(df_fr, exp_dir, dimension, fr="_"+fr)
+    else:
+        pair_correlation_functions(df, 125 if dimension == "2D" else 25, 15625, exp_dir, dimension)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        main(sys.argv[1], sys.argv[2], sys.argv[3])
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
     else:
-        print("Please provide an experiment directory, name, and dimension.")
+        print("Please provide an experiment directory and dimension.")
