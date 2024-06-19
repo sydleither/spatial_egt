@@ -2,31 +2,38 @@ import sys
 import warnings
 warnings.filterwarnings("ignore")
 
-from matplotlib import cm
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from common import plot_line, read_all
 
 
-def euclidean_histograms(df, exp_dir, exp_name, dimension, transparent=False):
+def euclidean_counts(df, exp_dir, dimension, fr="", transparent=False):
     df = df.loc[df["measure"] == "euclidean"]
-    colors = cm.get_cmap("Set3").colors
+
+    df["proportion"] = 0
+    df.loc[df["pair"] == "SS", "proportion"] = df["count"] / (0.5*df["sensitive"]*(df["sensitive"]-1))
+    df.loc[df["pair"] == "SR", "proportion"] = df["count"] / (0.5*df["total"]*(df["total"]-1))
+    df.loc[df["pair"] == "RR", "proportion"] = df["count"] / (0.5*df["resistant"]*(df["resistant"]-1))
+
+    time_end = df["time"].max()
+    colors = ["sienna", "hotpink", "limegreen"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
-        for time in df_pair["time"].unique():
+        for time in [0, time_end]:
             df_time = df_pair.loc[df_pair["time"] == time]
             fig, ax = plt.subplots()
-            for rep in df_time["rep"].unique():
-                df_rep = df_time.loc[df_time["rep"] == rep]
-                ax.bar(df_rep["distance"], df_rep["count"], alpha=0.6, color=colors[rep])
-            ax.set_xlabel("Distance Between Pairs of Cells")
-            ax.set_ylabel("Count of Pairs")
-            ax.set_title(f"Pair Correlation for {dimension} {exp_name} {pair} pairs at time {time}")
+            for i,condition in enumerate(df_time["condition"].unique()):
+                df_cond = df_time.loc[df["condition"] == condition]
+                plot_line(ax, df_cond, "distance", "proportion", colors[i], condition)
+            ax.set_xlabel("Euclidean Distance Between Pairs of Cells")
+            ax.set_ylabel("Proportion")
+            ax.set_title(f"{dimension} {pair} pairs at time {time}")
+            ax.legend()
             fig.tight_layout()
             if transparent:
                 fig.patch.set_alpha(0.0)
-            fig.savefig(f"output/{exp_dir}/{exp_name}/{dimension}pair_correlation_{pair}_{time}.png")
+            fig.savefig(f"output/{exp_dir}/euclidean_{dimension}pair_correlation_{pair}_{time}{fr}.png")
 
 
 def pair_correlation_functions(df, exp_dir, dimension, fr="", transparent=False):
@@ -81,6 +88,7 @@ def main(exp_dir, dimension):
     df["C"] = multiplier*(grid_len-df["distance"])*df["p"]*df["p_hat"]
     #pair correlation function
     df["P"] = df["count"] / df["C"]
+    df.loc[df["P"] < 0, "P"] = 0
 
     if exp_dir == "gamespc":
         df["fr"] = df["condition"].str[-3:]
@@ -88,8 +96,10 @@ def main(exp_dir, dimension):
         for fr in df["fr"].unique():
             df_fr = df.loc[df["fr"] == fr]
             pair_correlation_functions(df_fr, exp_dir, dimension, fr="_"+fr)
+            euclidean_counts(df_fr, exp_dir, dimension, fr="_"+fr)
     else:
-        pair_correlation_functions(df, 125 if dimension == "2D" else 25, 15625, exp_dir, dimension)
+        pair_correlation_functions(df_fr, exp_dir, dimension)
+        euclidean_counts(df_fr, exp_dir, dimension)
 
 
 if __name__ == "__main__":

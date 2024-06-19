@@ -5,11 +5,11 @@ warnings.filterwarnings("ignore")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import read_dim, plot_line
+from common import read_specific, plot_line
 
 
 def main(exp_dir, exp_name, dimension, transparent=False):
-    df = read_dim(exp_dir, exp_name, dimension)
+    df = read_specific(exp_dir, exp_name, dimension, "populations")
     df["total"] = df["sensitive"] + df["resistant"]
     models = df["model"].unique()
     num_models = len(models)
@@ -17,9 +17,6 @@ def main(exp_dir, exp_name, dimension, transparent=False):
     s_colors = ["sandybrown", "lightpink", "lightgreen"]
     r_colors = ["saddlebrown", "deeppink", "darkgreen"]
     a_colors = ["sienna", "hotpink", "limegreen"]
-
-    ymin = 0
-    ymax = df["total"].max()
 
     fig = plt.figure(figsize=(11, 6))
     gs = fig.add_gridspec(2, num_models)
@@ -31,9 +28,9 @@ def main(exp_dir, exp_name, dimension, transparent=False):
         plot_line(ax, df_model, "time", "sensitive", s_colors[i], "Sensitive")
         plot_line(ax, df_model, "time", "resistant", r_colors[i], "Resistant")
         plot_line(ax_all, df_model, "time", "total", a_colors[i], models[i])
-        ax.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title=models[i])
+        ax.set(yscale="log", xlabel="Time", ylabel="Cells", title=models[i])
         ax.legend()
-    ax_all.set(ylim=(ymin, ymax), xlabel="Time", ylabel="Cells", title="Total Cells Over Time")
+    ax_all.set(yscale="log", xlabel="Time", ylabel="Cells", title="Total Cells Over Time")
     ax_all.legend()
 
     fig.suptitle(exp_name)
