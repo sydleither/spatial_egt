@@ -34,7 +34,8 @@ def pair_correlation_functions(df, exp_dir, dimension, fr="", transparent=False)
 
     time_end = df["time"].max()
     light_colors = ["sandybrown", "lightpink", "lightgreen"]
-    dark_colors = ["sienna", "hotpink", "limegreen"]
+    colors = ["sienna", "hotpink", "limegreen"]
+    dark_colors = ["saddlebrown", "deeppink", "darkgreen"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
         for time in [0, time_end]:
@@ -42,10 +43,12 @@ def pair_correlation_functions(df, exp_dir, dimension, fr="", transparent=False)
             fig, ax = plt.subplots()
             for i,condition in enumerate(df_time["condition"].unique()):
                 df_cond = df_time.loc[df["condition"] == condition]
-                plot_line(ax, df_cond.loc[df["measure"] == "x"], "distance", "P", dark_colors[i], condition+"_x")
-                plot_line(ax, df_cond.loc[df["measure"] == "y"], "distance", "P", light_colors[i], condition+"_y")
+                plot_line(ax, df_cond.loc[df["measure"] == "x"], "distance", "P", colors[i], condition)
+                plot_line(ax, df_cond.loc[df["measure"] == "y"], "distance", "P", light_colors[i], None)
+                if dimension == "3D":
+                    plot_line(ax, df_cond.loc[df["measure"] == "z"], "distance", "P", dark_colors[i], None)
             ax.set_xlabel("Distance Between Pairs of Cells")
-            ax.set_ylabel("Pair-Correlation Function Signals")
+            ax.set_ylabel("Pair-Correlation Function Signal")
             ax.set_title(f"{dimension} {pair} pairs at time {time}")
             ax.legend()
             fig.tight_layout()
@@ -60,7 +63,7 @@ def main(exp_dir, dimension):
     df = df_pop.merge(df_pc, on=["model", "time", "rep", "condition", "dimension"])
     df["total"] = df["sensitive"] + df["resistant"]
 
-    #calculate pair-correlation function signal
+    #calculate pair-correlation function signal (Binder & Simpson, 2013)
     grid_area = 15625
     grid_len = 125 if dimension == "2D" else 25
     #probability of selecting an agent
@@ -69,10 +72,13 @@ def main(exp_dir, dimension):
     df.loc[df["pair"] == "SR", "p"] = df["total"]/grid_area
     df.loc[df["pair"] == "RR", "p"] = df["resistant"]/grid_area
     #probability of selecting a second agent
-    ga_inv = 1/grid_area
-    df["p_hat"] = (df["p"]-(ga_inv)) / (1-ga_inv)
+    df["p_hat"] = 0
+    df.loc[df["pair"] == "SS", "p_hat"] = (df["sensitive"] - 1) / (grid_area - 1)
+    df.loc[df["pair"] == "SR", "p_hat"] = (2*df["resistant"]*df["sensitive"]) / ((df["total"])*(df["total"]-1))
+    df.loc[df["pair"] == "RR", "p_hat"] = (df["resistant"] - 1) / (grid_area - 1)
     #normalization term
-    df["C"] = grid_area*(grid_len-df["distance"])*df["p"]*df["p_hat"]
+    multiplier = grid_len**2 if dimension == "2D" else grid_len**4
+    df["C"] = multiplier*(grid_len-df["distance"])*df["p"]*df["p_hat"]
     #pair correlation function
     df["P"] = df["count"] / df["C"]
 
