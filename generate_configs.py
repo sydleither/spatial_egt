@@ -34,7 +34,7 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
 
 
 def initial_games(exp_dir, names, bmws, bwms, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1,
-                  writePcFrequency=100, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
+                  writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
                   adaptiveTreatmentThreshold=0.5, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
@@ -179,6 +179,34 @@ if __name__ == "__main__":
             s, a = initial_games(experiment_name, [x+fr[2:] for x in names], bmws, bwms, init_cells=2500, prop_res=float(fr), runtime=500, runContinuous=0)
             submit_output += s
             analysis_output += a
+    elif experiment_name == "gamespc_sw":
+        names = ["max", "half", "zero", "min"]
+        bmws = [0.005, 0.00025, 0.0, -0.024]
+        bwms = [0.0, 0.0, 0.0, 0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        submit_output += s
+        analysis_output += a
+    elif experiment_name == "gamespc_co":
+        names = ["25", "50", "75"]
+        bmws = [0.008, 0.012, 0.024]
+        bwms = [0.0, 0.0, 0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        submit_output += s
+        analysis_output += a
+    elif experiment_name == "gamespc_bi":
+        names = ["25", "50", "75"]
+        bmws = [0.00133, -0.008, -0.036]
+        bwms = [-0.02, -0.02, -0.02]
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        submit_output += s
+        analysis_output += a
+    elif experiment_name == "gamespc_rw":
+        names = ["min", "half", "max"]
+        bmws = [0.004, 0.0455, 0.087]
+        bwms = [0.0, 0.0, 0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        submit_output += s
+        analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()

@@ -17,7 +17,7 @@ def euclidean_counts(df, exp_dir, dimension, fr="", transparent=False):
     df.loc[df["pair"] == "RR", "proportion"] = df["count"] / (0.5*df["resistant"]*(df["resistant"]-1))
 
     time_end = df["time"].max()
-    colors = ["sienna", "hotpink", "limegreen"]
+    colors = ["sienna", "hotpink", "limegreen", "royalblue"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
         for time in [0, time_end]:
@@ -40,9 +40,9 @@ def pair_correlation_functions(df, exp_dir, dimension, fr="", transparent=False)
     df = df.loc[df["measure"] != "euclidean"]
 
     time_end = df["time"].max()
-    light_colors = ["sandybrown", "lightpink", "lightgreen"]
-    colors = ["sienna", "hotpink", "limegreen"]
-    dark_colors = ["saddlebrown", "deeppink", "darkgreen"]
+    light_colors = ["sandybrown", "lightpink", "lightgreen", "skyblue"]
+    colors = ["sienna", "hotpink", "limegreen", "royalblue"]
+    dark_colors = ["saddlebrown", "deeppink", "darkgreen", "mediumblue"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
         for time in [0, time_end]:
@@ -98,8 +98,8 @@ def main(exp_dir, dimension):
             pair_correlation_functions(df_fr, exp_dir, dimension, fr="_"+fr)
             euclidean_counts(df_fr, exp_dir, dimension, fr="_"+fr)
     else:
-        pair_correlation_functions(df_fr, exp_dir, dimension)
-        euclidean_counts(df_fr, exp_dir, dimension)
+        pair_correlation_functions(df, exp_dir, dimension)
+        euclidean_counts(df, exp_dir, dimension)
 
 
 if __name__ == "__main__":
