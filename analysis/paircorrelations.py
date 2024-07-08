@@ -16,11 +16,10 @@ def euclidean_counts(df, exp_dir, dimension, fr="", transparent=False):
     df.loc[df["pair"] == "SR", "proportion"] = df["count"] / (0.5*df["total"]*(df["total"]-1))
     df.loc[df["pair"] == "RR", "proportion"] = df["count"] / (0.5*df["resistant"]*(df["resistant"]-1))
 
-    time_end = df["time"].max()
     colors = ["sienna", "hotpink", "limegreen", "royalblue"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
-        for time in [0, time_end]:
+        for time in df_pair["time"].unique():
             df_time = df_pair.loc[df_pair["time"] == time]
             fig, ax = plt.subplots()
             for i,condition in enumerate(df_time["condition"].unique()):
@@ -36,21 +35,22 @@ def euclidean_counts(df, exp_dir, dimension, fr="", transparent=False):
             fig.savefig(f"output/{exp_dir}/euclidean_{dimension}pair_correlation_{pair}_{time}{fr}.png")
 
 
-def pair_correlation_functions(df, exp_dir, dimension, fr="", transparent=False):
+def pair_correlation_functions(df, exp_dir, dimension, conditions=[], fr="", transparent=False):
     df = df.loc[df["measure"] != "euclidean"]
+    if len(conditions) == 0:
+        conditions = df["condition"].unique()
 
-    time_end = df["time"].max()
     light_colors = ["sandybrown", "lightpink", "lightgreen", "skyblue"]
     colors = ["sienna", "hotpink", "limegreen", "royalblue"]
     dark_colors = ["saddlebrown", "deeppink", "darkgreen", "mediumblue"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
-        for time in [0, time_end]:
+        for time in df_pair["time"].unique():
             df_time = df_pair.loc[df_pair["time"] == time]
             fig, ax = plt.subplots()
-            for i,condition in enumerate(df_time["condition"].unique()):
-                df_cond = df_time.loc[df["condition"] == condition]
-                plot_line(ax, df_cond.loc[df["measure"] == "x"], "distance", "P", colors[i], condition)
+            for i in range(len(conditions)):
+                df_cond = df_time.loc[df["condition"] == conditions[i]]
+                plot_line(ax, df_cond.loc[df["measure"] == "x"], "distance", "P", colors[i], conditions[i])
                 plot_line(ax, df_cond.loc[df["measure"] == "y"], "distance", "P", light_colors[i], None)
                 if dimension == "3D":
                     plot_line(ax, df_cond.loc[df["measure"] == "z"], "distance", "P", dark_colors[i], None)
@@ -98,8 +98,7 @@ def main(exp_dir, dimension):
             pair_correlation_functions(df_fr, exp_dir, dimension, fr="_"+fr)
             euclidean_counts(df_fr, exp_dir, dimension, fr="_"+fr)
     else:
-        pair_correlation_functions(df, exp_dir, dimension)
-        euclidean_counts(df, exp_dir, dimension)
+        pair_correlation_functions(df, exp_dir, dimension, conditions=["bistability_75", "coexistence_75", "resistant_max", "sensitive_min"])
 
 
 if __name__ == "__main__":

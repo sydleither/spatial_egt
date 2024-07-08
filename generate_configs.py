@@ -33,14 +33,13 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir, names, bmws, bwms, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1,
+def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1,
                   writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
                   adaptiveTreatmentThreshold=0.5, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
 
-    gw = 0.03
     gm = 0.8*gw
 
     for i in range(len(names)):
@@ -183,30 +182,41 @@ if __name__ == "__main__":
         names = ["max", "half", "zero", "min"]
         bmws = [0.005, 0.00025, 0.0, -0.024]
         bwms = [0.0, 0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
         submit_output += s
         analysis_output += a
     elif experiment_name == "gamespc_co":
         names = ["25", "50", "75"]
         bmws = [0.008, 0.012, 0.024]
         bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
         submit_output += s
         analysis_output += a
     elif experiment_name == "gamespc_bi":
         names = ["25", "50", "75"]
         bmws = [0.00133, -0.008, -0.036]
         bwms = [-0.02, -0.02, -0.02]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
         submit_output += s
         analysis_output += a
     elif experiment_name == "gamespc_rw":
         names = ["min", "half", "max"]
         bmws = [0.004, 0.0455, 0.087]
-        bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=1000, runContinuous=0)
+        bwms = [-0.004, -0.004, -0.004]
+        s, a = initial_games(experiment_name, names, bmws, bwms, gw=0.015, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
         submit_output += s
         analysis_output += a
+    elif experiment_name == "gamespc_all":
+        games = ["sensitive", "coexistence", "bistability", "resistant"]
+        betas = [["max", "half", "zero", "min"], ["25", "50", "75"], ["25", "50", "75"], ["min", "half", "max"]]
+        bmws = [[0.005, 0.00025, 0.0, -0.024], [0.008, 0.012, 0.024], [0.00133, -0.008, -0.036], [0.004, 0.0455, 0.087]]
+        bwms = [[0.0]*4, [0.0]*3, [-0.02]*3, [-0.004]*3]
+        gws = [0.03, 0.03, 0.03, 0.015]
+        for i in range(len(games)):
+            names = [games[i]+"_"+betas[i][x] for x in range(len(betas[i]))]
+            s, a = initial_games(experiment_name, names, bmws[i], bwms[i], gw=gws[i], init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
+            submit_output += s
+            analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()

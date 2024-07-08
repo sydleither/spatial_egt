@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
+import HAL.Gui.GifMaker;
 import HAL.Gui.GridWindow;
 import HAL.Tools.FileIO;
 import HAL.Rand;
@@ -137,8 +138,10 @@ public class SpatialEGT2D {
             pcOut.Write("model,time,pair,measure,distance,count\n");
         }
         GridWindow win = null;
+        GifMaker gifWin = null;
         if (visualize) {
             win = new GridWindow("SpatialEGT", x, y, 4);
+            gifWin = new GifMaker(saveLoc+"growth.gif", 1, false);
         }
         
         // run models
@@ -181,6 +184,7 @@ public class SpatialEGT2D {
                     if (tick % visualizationFrequency == 0) {
                         win.ToPNG(saveLoc+modelName+tick+".png");
                     }
+                    gifWin.AddFrame(win);
                 }
                 model.ModelStep();
             }
@@ -189,6 +193,7 @@ public class SpatialEGT2D {
         // close output files
         if (visualize) {
             win.Close();
+            gifWin.Close();
         }
         if (writePop) {
             popsOut.Close();
