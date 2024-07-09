@@ -21,12 +21,12 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
 
     public double GetDivRate() {
         double total_payoff = 0;
-        int neighbors = MapOccupiedHood(G.divHood);
+        int neighbors = MapOccupiedHood(G.gameHood);
         if (neighbors == 0) {
             return G.payoff[this.type][this.type];
         }
         for (int i = 0; i < neighbors; i++) {
-            Cell2D neighborCell = G.GetAgent(G.divHood[i]);
+            Cell2D neighborCell = G.GetAgent(G.gameHood[i]);
             total_payoff += G.payoff[this.type][neighborCell.type];
         }
         return total_payoff/neighbors;

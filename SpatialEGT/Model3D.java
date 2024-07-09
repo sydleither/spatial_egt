@@ -12,6 +12,7 @@ public class Model3D extends AgentGrid3D<Cell3D> {
     boolean adaptiveTherapy;
     double[][] payoff;
     int[] divHood;
+    int[] gameHood;
     int drugConcentration;
     int startingPop;
 
@@ -26,7 +27,8 @@ public class Model3D extends AgentGrid3D<Cell3D> {
         this.adaptiveTreatmentThreshold = adaptiveTreatmentThreshold;
         this.payoff = payoff;
         this.drugConcentration = 1;
-        this.divHood = Util.SphereHood(false, neighborhood);
+        this.gameHood = Util.SphereHood(false, neighborhood);
+        this.divHood = Util.VonNeumannHood3D(false);
     }
 
     public void InitTumorRandom(int numCells, double proportionResistant) {

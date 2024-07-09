@@ -12,6 +12,7 @@ public class Model2D extends AgentGrid2D<Cell2D> {
     boolean adaptiveTherapy;
     double[][] payoff;
     int[] divHood;
+    int[] gameHood;
     int drugConcentration;
     int startingPop;
 
@@ -26,7 +27,8 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         this.adaptiveTreatmentThreshold = adaptiveTreatmentThreshold;
         this.payoff = payoff;
         this.drugConcentration = 1;
-        this.divHood = Util.CircleHood(false, neighborhood);
+        this.gameHood = Util.CircleHood(false, neighborhood);
+        this.divHood = Util.VonNeumannHood(false);
     }
 
     public void InitTumorRandom(int numCells, double proportionResistant) {

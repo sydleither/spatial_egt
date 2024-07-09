@@ -47,8 +47,8 @@ def plot_gamespace(df, transparent=False):
     ax.axhline(color="black")
     ax.axvline(color="black")
     ax.set(xlim=(-0.1, 0.1), ylim=(-0.015, 0.015), title="Game Space")
-    ax.set_xlabel("Relative Fitness of Resistant Invader")
-    ax.set_ylabel("Relative Fitness of Sensitive Invader")
+    ax.set_xlabel("Relative Fitness of Resistant")
+    ax.set_ylabel("Relative Fitness of Sensitive")
     ax.legend()
     fig.tight_layout()
     if transparent:
