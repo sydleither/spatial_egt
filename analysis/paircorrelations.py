@@ -3,6 +3,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from common import plot_line, read_all
@@ -37,6 +38,7 @@ def euclidean_counts(df, exp_dir, dimension, fr="", transparent=False):
 
 def pair_correlation_functions(df, exp_dir, dimension, conditions=[], fr="", transparent=False):
     df = df.loc[df["measure"] != "euclidean"]
+    df = groupby_confluence(df)
     if len(conditions) == 0:
         conditions = df["condition"].unique()
 
@@ -45,23 +47,36 @@ def pair_correlation_functions(df, exp_dir, dimension, conditions=[], fr="", tra
     dark_colors = ["saddlebrown", "deeppink", "darkgreen", "mediumblue"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
-        for time in df_pair["time"].unique():
-            df_time = df_pair.loc[df_pair["time"] == time]
+        for confluence in [4000]:
+            df_time = df_pair.loc[df_pair["confluence"] == confluence]
             fig, ax = plt.subplots()
             for i in range(len(conditions)):
-                df_cond = df_time.loc[df["condition"] == conditions[i]]
-                plot_line(ax, df_cond.loc[df["measure"] == "x"], "distance", "P", colors[i], conditions[i])
-                plot_line(ax, df_cond.loc[df["measure"] == "y"], "distance", "P", light_colors[i], None)
+                df_cond = df_time.loc[df_time["condition"] == conditions[i]]
+                df_cond = df_cond.loc[df_cond["time"] == df_cond["time"].min()]
+                print(conditions[i], confluence, df_cond["time"].unique())
+                if len(df_cond) == 0:
+                    continue
+                plot_line(ax, df_cond.loc[df_cond["measure"] == "x"], "distance", "P", colors[i], conditions[i])
+                plot_line(ax, df_cond.loc[df_cond["measure"] == "y"], "distance", "P", light_colors[i], None)
                 if dimension == "3D":
-                    plot_line(ax, df_cond.loc[df["measure"] == "z"], "distance", "P", dark_colors[i], None)
+                    plot_line(ax, df_cond.loc[df_cond["measure"] == "z"], "distance", "P", dark_colors[i], None)
             ax.set_xlabel("Distance Between Pairs of Cells")
             ax.set_ylabel("Pair-Correlation Function Signal")
-            ax.set_title(f"{dimension} {pair} pairs at time {time}")
+            ax.set_title(f"{dimension} {pair} pairs at confluence {confluence}")
             ax.legend()
             fig.tight_layout()
             if transparent:
                 fig.patch.set_alpha(0.0)
-            fig.savefig(f"output/{exp_dir}/{dimension}pair_correlation_{pair}_{time}{fr}.png")
+            fig.savefig(f"output/{exp_dir}/{dimension}pair_correlation_{pair}_{confluence}{fr}.png")
+
+
+def groupby_confluence(df):
+    df["confluence"] = np.round(df["total"], -3)
+    df_grp = df.groupby(["model", "condition", "rep", "dimension", "distance", "pair", "measure", "confluence"]).first()
+    df_grp = df_grp.reset_index()
+    for cond in df_grp["condition"].unique():
+        print(cond, df_grp.loc[df_grp["condition"] == cond]["confluence"].unique())
+    return df_grp
 
 
 def main(exp_dir, dimension):
@@ -98,7 +113,10 @@ def main(exp_dir, dimension):
             pair_correlation_functions(df_fr, exp_dir, dimension, fr="_"+fr)
             euclidean_counts(df_fr, exp_dir, dimension, fr="_"+fr)
     else:
-        pair_correlation_functions(df, exp_dir, dimension, conditions=["bistability_75", "coexistence_75", "resistant_max", "sensitive_min"])
+        #pair_correlation_functions(df, exp_dir, dimension, conditions=["bistability_75", "coexistence_75", "resistant_max", "sensitive_min"])
+        pair_correlation_functions(df, exp_dir, dimension, conditions=["bistability_equal", "coexistence_equal"])
+        #pair_correlation_functions(df, exp_dir, dimension, conditions=["sensitive_bgta", "sensitive_agtb"])
+        #pair_correlation_functions(df, exp_dir, dimension, conditions=["resistant_cgtd", "resistant_dgtc"])
 
 
 if __name__ == "__main__":
