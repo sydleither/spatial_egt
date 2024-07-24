@@ -20,8 +20,8 @@ public class SpatialEGT2D {
         }
 
         Map<Integer, Integer[]> annulusRow = new HashMap<>();
-        for (int i = 0; i < 2*maxDistance; i++) {
-            Integer annulusStartingList[] = {0, 0, 0};
+        for (int i = 1; i < 2*maxDistance; i++) {
+            Integer annulusStartingList[] = {0, 0, 0, 0};
             annulusRow.put(i, annulusStartingList);
         }
 
@@ -86,6 +86,7 @@ public class SpatialEGT2D {
         int numCells = (int) params.get("numCells");
         double proportionResistant = (double) params.get("proportionResistant");
         double adaptiveTreatmentThreshold = (double) params.get("adaptiveTreatmentThreshold");
+        int initialTumor = (int) params.get("initialTumor");
         double[][] payoff = new double[2][2];
         payoff[0][0] = (double) params.get("A");
         payoff[0][1] = (double) params.get("B");
@@ -128,14 +129,21 @@ public class SpatialEGT2D {
         GifMaker gifWin = null;
         if (visualize) {
             win = new GridWindow("SpatialEGT", x, y, 4);
-            gifWin = new GifMaker(saveLoc+"growth.gif", 1, false);
+            gifWin = new GifMaker(saveLoc+"growth.gif", 0, false);
         }
         
         // run models
         for (Map.Entry<String,Model2D> modelEntry : models.entrySet()) {
             String modelName = modelEntry.getKey();
             Model2D model = modelEntry.getValue();
-            model.InitTumorRandom(numCells, proportionResistant);
+            if (initialTumor == 1)
+                model.InitTumorLinear(numCells, proportionResistant);
+            else if (initialTumor == 2)
+                model.InitTumorConvex(numCells, proportionResistant);
+            else if (initialTumor == 3)
+                model.InitTumorConcave(numCells, proportionResistant);
+            else
+                model.InitTumorRandom(numCells, proportionResistant);
 
             for (int tick = 0; tick <= numTicks; tick++) {
                 if (writePop) {
@@ -148,7 +156,7 @@ public class SpatialEGT2D {
                     if (tick % writePcFrequency == 0) {
                         Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance);
                         String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                        for (int dist = 0; dist < 2*maxDistance; dist++) {
+                        for (int dist = 1; dist < 2*maxDistance; dist++) {
                             for (int i = 0; i < 4; i++) {
                                 pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
                             }

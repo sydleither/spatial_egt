@@ -19,8 +19,8 @@ public class SpatialEGT3D {
         }
 
         Map<Integer, Integer[]> annulusRow = new HashMap<>();
-        for (int i = 0; i < 3*maxDistance; i++) {
-            Integer annulusStartingList[] = {0, 0, 0};
+        for (int i = 1; i < 3*maxDistance; i++) {
+            Integer annulusStartingList[] = {0, 0, 0, 0};
             annulusRow.put(i, annulusStartingList);
         }
 
@@ -143,7 +143,7 @@ public class SpatialEGT3D {
                     if (tick % writePcFrequency == 0) {
                         Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance);
                         String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                        for (int dist = 0; dist < 3*maxDistance; dist++) {
+                        for (int dist = 1; dist < 3*maxDistance; dist++) {
                             for (int i = 0; i < 4; i++) {
                                 pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
                             }

@@ -54,6 +54,71 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         }
     }
 
+    public void InitTumorLinear(int numCells, double proportionResistant) {
+        int numResistant = (int)(numCells * proportionResistant);
+        int sqrtNumCells = (int)Math.floor(Math.sqrt(numCells));
+        int startLoc = (int)Math.floor((xDim/2)) - (int)Math.floor((sqrtNumCells/2));
+        int i = 0;
+        for (int x = startLoc; x < startLoc+sqrtNumCells; x++) {
+            for (int y = startLoc; y < startLoc+sqrtNumCells; y++) {
+                if (i < numResistant) {
+                    NewAgentSQ(x, y).Init(1);
+                }
+                else {
+                    NewAgentSQ(x, y).Init(0);
+                }
+                i++;
+            }
+        }
+        this.startingPop = i;
+    }
+
+    public void InitTumorConvex(int numCells, double proportionResistant) {
+        int tumorLength = (int)Math.floor(Math.sqrt(numCells));
+        int halfTumorLength = (int)Math.floor(tumorLength/2);
+        int startLoc = (int)Math.floor(xDim/2) - halfTumorLength;
+        int numResistant = (int)(numCells * proportionResistant);
+        int radius = (int)Math.sqrt((2*(numCells-numResistant))/Math.PI);
+        int i = 0;
+        for (int x = startLoc; x < startLoc+tumorLength; x++) {
+            for (int y = startLoc; y < startLoc+tumorLength; y++) {
+                int relativeX = x - startLoc;
+                int relativeY = y - startLoc;
+                if (Math.pow(relativeX-(int)tumorLength/2, 2) + Math.pow(relativeY, 2) <= Math.pow(radius, 2)) {
+                    NewAgentSQ(x, y).Init(1);
+                }
+                else {
+                    NewAgentSQ(x, y).Init(0);
+                }
+                i++;
+            }
+        }
+        this.startingPop = i;
+    }
+
+    public void InitTumorConcave(int numCells, double proportionResistant) {
+        int tumorLength = (int)Math.floor(Math.sqrt(numCells));
+        int halfTumorLength = (int)Math.floor(tumorLength/2);
+        int startLoc = (int)Math.floor(xDim/2) - halfTumorLength;
+        int numResistant = (int)(numCells * proportionResistant);
+        int radius = (int)Math.sqrt((2*(numCells-numResistant))/Math.PI);
+        int i = 0;
+        for (int x = startLoc; x < startLoc+tumorLength; x++) {
+            for (int y = startLoc; y < startLoc+tumorLength; y++) {
+                int relativeX = x - startLoc;
+                int relativeY = y - startLoc;
+                if (Math.pow(relativeX-(int)tumorLength/2, 2) + Math.pow(relativeY, 2) <= Math.pow(radius, 2)) {
+                    NewAgentSQ(x, y).Init(0);
+                }
+                else {
+                    NewAgentSQ(x, y).Init(1);
+                }
+                i++;
+            }
+        }
+        this.startingPop = i;
+    }
+
     public void ModelStep() {
         ShuffleAgents(rng);
         for (Cell2D cell : this) {
