@@ -36,24 +36,21 @@ def euclidean_counts(df, exp_dir, dimension, fr="", transparent=False):
             fig.savefig(f"output/{exp_dir}/euclidean_{dimension}pair_correlation_{pair}_{time}{fr}.png")
 
 
-def pair_correlation_functions(df, exp_dir, dimension, freq_col="time", conditions=[], avg_line=True, fr="", transparent=False):
+def pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[], conditions=[], avg_line=True, fr="", transparent=False):
     df = df.loc[df["measure"] != "euclidean"]
-    if freq_col == "time":
-        plot_freq = df["time"].unique()
-    elif freq_col == "confluence":
-        plot_freq = [4000]
+    if freq_col == "confluence":
         df = groupby_confluence(df)
-    else:
-        return
+    if len(freq_ticks) == 0:
+        freq_ticks = df[freq_col].unique()
     if len(conditions) == 0:
-        conditions = df["condition"].unique()
+        conditions = sorted(df["condition"].unique())
 
-    light_colors = ["sandybrown", "lightpink", "lightgreen", "skyblue"]
-    colors = ["sienna", "hotpink", "limegreen", "royalblue"]
-    dark_colors = ["saddlebrown", "deeppink", "darkgreen", "mediumblue"]
+    light_colors = ["sandybrown", "lightgreen", "skyblue"]
+    colors = ["sienna", "limegreen", "royalblue", "darkviolet"]
+    dark_colors = ["saddlebrown", "darkgreen", "mediumblue"]
     for pair in df["pair"].unique():
         df_pair = df.loc[df["pair"] == pair]
-        for freq in plot_freq:
+        for freq in freq_ticks:
             df_time = df_pair.loc[df_pair[freq_col] == freq]
             fig, ax = plt.subplots()
             for i in range(len(conditions)):
@@ -63,16 +60,17 @@ def pair_correlation_functions(df, exp_dir, dimension, freq_col="time", conditio
                     print(conditions[i], freq, df_cond["time"].unique())
                 if len(df_cond) == 0:
                     continue
-                if avg_line:
-                    df_cond = df_cond.drop("measure", axis=1)
-                    df_cond_grp = df_cond.groupby(["model", "condition", "rep", "dimension", "distance", "pair"]).mean()
-                    df_cond_grp = df_cond_grp.reset_index()
-                    plot_line(ax, df_cond_grp, "distance", "P", colors[i], conditions[i])
-                else:
-                    plot_line(ax, df_cond.loc[df_cond["measure"] == "x"], "distance", "P", colors[i], conditions[i])
-                    plot_line(ax, df_cond.loc[df_cond["measure"] == "y"], "distance", "P", light_colors[i], None)
-                    if dimension == "3D":
-                        plot_line(ax, df_cond.loc[df_cond["measure"] == "z"], "distance", "P", dark_colors[i], None)
+                plot_line(ax, df_cond.loc[df_cond["measure"] == "annulus"], "distance", "pc", colors[i], conditions[i])
+                # if avg_line:
+                #     df_cond = df_cond.drop("measure", axis=1)
+                #     df_cond_grp = df_cond.groupby(["model", "condition", "rep", "dimension", "distance", "pair"]).mean()
+                #     df_cond_grp = df_cond_grp.reset_index()
+                #     plot_line(ax, df_cond_grp, "distance", "pc", colors[i], conditions[i])
+                # else:
+                #     plot_line(ax, df_cond.loc[df_cond["measure"] == "x"], "distance", "pc", colors[i], conditions[i])
+                #     plot_line(ax, df_cond.loc[df_cond["measure"] == "y"], "distance", "pc", light_colors[i], None)
+                #     if dimension == "3D":
+                #         plot_line(ax, df_cond.loc[df_cond["measure"] == "z"], "distance", "pc", dark_colors[i], None)
             ax.set_xlabel("Distance Between Pairs of Cells")
             ax.set_ylabel("Pair-Correlation Function Signal")
             ax.set_title(f"{dimension} {pair} pairs at {freq}")
@@ -92,15 +90,7 @@ def groupby_confluence(df):
     return df_grp
 
 
-def main(exp_dir, dimension):
-    df_pc = read_all(exp_dir, "pairCorrelations", dimension)
-    df_pop = read_all(exp_dir, "populations", dimension)
-    df = df_pop.merge(df_pc, on=["model", "time", "rep", "condition", "dimension"])
-    df["total"] = df["sensitive"] + df["resistant"]
-
-    #calculate pair-correlation function signal (Binder & Simpson, 2013)
-    grid_area = 15625
-    grid_len = 125 if dimension == "2D" else 25
+def binder_pc(grid_len, grid_area, dimension, df):
     #probability of selecting an agent
     p_s = df["sensitive"]/grid_area
     p_r = df["resistant"]/grid_area
@@ -114,12 +104,37 @@ def main(exp_dir, dimension):
     multiplier = grid_len**2 if dimension == "2D" else grid_len**4
     df["C"] = multiplier*(grid_len-df["distance"])*df["p_hat"]
     #pair correlation function
-    df["P"] = df["count"] / df["C"]
-    df.loc[df["P"] < 0, "P"] = 0
+    df["pc"] = df["count"] / df["C"]
+    df.loc[df["pc"] < 0, "pc"] = 0
+    return df
 
-    # df = df.loc[(df["pair"] == "SR") & (df["measure"] != "euclidean") & (df["time"] == 100) & ((df["distance"] > 114) | (df["distance"] < 10))]
-    # print(df)
-    # exit()
+
+def dini_pc(grid_len, grid_area, df):
+    #normalization factor
+    df["C"] = 0
+    df.loc[df["pair"] == "SS", "C"] = (df["sensitive"] * (df["sensitive"]-1) * grid_len) / (grid_area - 1)
+    df.loc[df["pair"] == "SR", "C"] = (2 * df["sensitive"] * df["resistant"] * grid_len) / (grid_area - 1)
+    df.loc[df["pair"] == "RR", "C"] = (df["sensitive"] * (df["sensitive"]-1) * grid_len) / (grid_area - 1)
+    #pair correlation function
+    df["pc"] = (df["count"] / df["C"])
+    return df
+
+
+def bull_pc(grid_area, df):
+    df["pc"] = (1/(df["sensitive"]*df["resistant"])) * (df["count"]*(grid_area/(df["distance"]*4)))
+    return df
+    
+
+def main(exp_dir, dimension):
+    df_pc = read_all(exp_dir, "pairCorrelations", dimension)
+    df_pc = df_pc.loc[df_pc["distance"] < 125]
+    df_pop = read_all(exp_dir, "populations", dimension)
+    df = df_pop.merge(df_pc, on=["model", "time", "rep", "condition", "dimension"])
+    df["total"] = df["sensitive"] + df["resistant"]
+
+    grid_area = 15625
+    grid_len = 125 if dimension == "2D" else 25
+    df = bull_pc(grid_area, df)
 
     if exp_dir == "gamespc":
         df["fr"] = df["condition"].str[-3:]
@@ -129,11 +144,10 @@ def main(exp_dir, dimension):
             pair_correlation_functions(df_fr, exp_dir, dimension, fr="_"+fr)
             euclidean_counts(df_fr, exp_dir, dimension, fr="_"+fr)
     else:
-        #pair_correlation_functions(df, exp_dir, dimension, conditions=["bistability_75", "coexistence_75", "resistant_max", "sensitive_min"])
-        pair_correlation_functions(df, exp_dir, dimension, conditions=["bistability_equal", "coexistence_equal"], freq_col="confluence")
-        #pair_correlation_functions(df, exp_dir, dimension, conditions=["sensitive_bgta", "sensitive_agtb"])
-        #pair_correlation_functions(df, exp_dir, dimension, conditions=["resistant_cgtd", "resistant_dgtc"])
-        #pair_correlation_functions(df, exp_dir, dimension, freq_col="time", transparent=True, avg_line=True)
+        pair_correlation_functions(df, exp_dir, dimension, freq_col="confluence", avg_line=True, freq_ticks=[3000], 
+                                   conditions=["bistability_equal", "coexistence_equal", "resistant_cgtd", "sensitive_agtb"])
+        pair_correlation_functions(df, exp_dir, dimension, freq_col="time", avg_line=True, freq_ticks=[0, 250, 500], 
+                                   conditions=["bistability_equal", "coexistence_equal", "resistant_cgtd", "sensitive_agtb"])
 
 
 if __name__ == "__main__":
