@@ -50,4 +50,18 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
             return;
         }
     }
+
+    public boolean OppositeTypeInNeighborhood() {
+        int neighbors = MapOccupiedHood(G.gameHood);
+        if (neighbors == 0) {
+            return false;
+        }
+        for (int i = 0; i < neighbors; i++) {
+            Cell2D neighborCell = G.GetAgent(G.gameHood[i]);
+            if (neighborCell.type != this.type) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import read_all, read_specific, plot_line
+from common import read_all
 
 
 def get_times_to_progression(df):
@@ -57,6 +57,26 @@ def create_heatmaps(exp_dir, df, categories=["threshold", "fR", "initial_density
         plt.close()
 
 
+def create_heatmaps_diff(exp_dir, df, categories=["threshold", "fR", "initial_density"]):
+        if len(categories) != 3:
+            print("Unhardcode the heatmap function")
+            return
+        col = categories[0]
+        row = categories[1]
+        across = categories[2]
+        fig, ax = plt.subplots(1, len(categories), figsize=(len(categories)*8, 8))
+        for i,x in enumerate(df[across].unique()):
+            df_k = df.loc[df[across] == x]
+            df_avg_a = df_k.loc[df_k["model"] == "adaptive"].groupby([col, row])["time"].mean().unstack()
+            df_avg_c = df_k.loc[df_k["model"] == "continuous"].groupby([col, row])["time"].mean().unstack()
+            df_avg = df_avg_a.subtract(df_avg_c)
+            sns.heatmap(df_avg, fmt="g", annot=True, cmap="Greens", ax=ax[i])
+            ax[i].set(title=f"{across} {x}")
+        fig.patch.set_alpha(0.0)
+        plt.savefig(f"output/{exp_dir}/diff_heatmap_{col}_{row}_{across}.png")
+        plt.close()
+
+
 def main(exp_dir, dimension):
     thresholds = {"0":0.3, "1":0.5, "2":0.7}
     frs = {"0":0.01, "1":0.05, "2":0.1}
@@ -67,10 +87,10 @@ def main(exp_dir, dimension):
     df["fR"] = df["condition"].str.split("_").str[2].str[-1].map(frs)
     df["initial_density"] = df["condition"].str.split("_").str[3].str[-1].map(cells)
     df = get_times_to_progression(df)
+
     create_heatmaps_avg(exp_dir, df)
     create_heatmaps(exp_dir, df, categories=["threshold", "fR", "initial_density"])
-    create_heatmaps(exp_dir, df, categories=["fR", "initial_density", "threshold"])
-    create_heatmaps(exp_dir, df, categories=["initial_density", "threshold", "fR"])
+    create_heatmaps_diff(exp_dir, df, categories=["threshold", "fR", "initial_density"])
 
 
 if __name__ == "__main__":

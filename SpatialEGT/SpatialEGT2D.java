@@ -1,5 +1,6 @@
 package SpatialEGT;
 
+import java.util.Arrays;
 import java.lang.Math;
 import java.util.HashMap;
 import java.util.List;
@@ -13,20 +14,24 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance) {
+    public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance, int area, Map<List<Integer>, Integer> annulusAreaLookupTable) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
         for (Cell2D cell : model) {
             cells.add(cell);
         }
 
         Map<Integer, Integer[]> annulusRow = new HashMap<>();
-        for (int i = 1; i < 2*maxDistance; i++) {
+        for (int i = 1; i < maxDistance; i++) {
             Integer annulusStartingList[] = {0, 0, 0, 0};
             annulusRow.put(i, annulusStartingList);
         }
 
         for (int a = 0; a < cells.size(); a++) {
-            for (int b = a+1; b < cells.size(); b++) {
+            for (int b = 0; b < cells.size(); b++) {
+                if (a == b) {
+                    continue;
+                }
+
                 Cell2D cellA = cells.get(a);
                 Cell2D cellB = cells.get(b);
                 int cellAtype = cellA.type;
@@ -34,7 +39,15 @@ public class SpatialEGT2D {
                 int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq());
                 int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq());
                 int annulus = xDistance + yDistance;
-                
+
+                // if (!cellA.OppositeTypeInNeighborhood()) {
+                //     continue;
+                // }
+
+                if (annulus >= maxDistance) {
+                    continue;
+                }
+
                 int pairType;
                 if (cellAtype == 0 && cellBtype == 0)
                     pairType = 0;
@@ -47,11 +60,35 @@ public class SpatialEGT2D {
                 else
                     pairType = -9;
 
-                annulusRow.get(annulus)[pairType] = annulusRow.get(annulus)[pairType]+1;
+                List<Integer> tableKey = Arrays.asList(cellA.Xsq(), cellA.Ysq(), annulus);
+                int normalized_count = (int)(area/annulusAreaLookupTable.get(tableKey));
+                annulusRow.get(annulus)[pairType] = annulusRow.get(annulus)[pairType]+normalized_count;
             }
         }
 
         return annulusRow;
+    }
+
+    public static Map<List<Integer>, Integer> GetAnnulusAreaLookupTable(int x, int y, int maxDistance) {
+        //TODO make more efficient (don't calculate area when radius is not near boundary, reflections)
+        Map<List<Integer>, Integer> table = new HashMap<>();
+        for (int r = 1; r < maxDistance; r++) {
+            for (int x1 = 0; x1 < x; x1++) {
+                for (int y1 = 0; y1 < y; y1++) {
+                    List<Integer> tableKey = Arrays.asList(x1, y1, r);
+                    int area = 0;
+                    for (int x2 = Math.max(x1-r,0); x2 <= Math.min(x1+r,x); x2++) {
+                        for (int y2 = Math.max(y1-r,0); y2 <= Math.min(y1+r,y); y2++) {
+                            if (Math.abs(x1-x2) + Math.abs(y1-y2) == r) {
+                                area += 1;
+                            }
+                        }
+                    }
+                    table.put(tableKey, area);
+                }
+            }
+        }
+        return table;
     }
 
     public static int[] GetPopulationSize(Model2D model) {
@@ -94,7 +131,8 @@ public class SpatialEGT2D {
         payoff[1][1] = (double) params.get("D");
 
         // calculations for pair correlation
-        int maxDistance = Math.max(x,y);
+        int maxDistance = 0;
+        Map<List<Integer>, Integer> annulusAreaLookupTable = null;
 
         // initialize with specified models
         HashMap<String,Model2D> models = new HashMap<String,Model2D>();
@@ -122,8 +160,10 @@ public class SpatialEGT2D {
         }
         FileIO pcOut = null;
         if (writePc) {
+            maxDistance = x;
+            annulusAreaLookupTable = GetAnnulusAreaLookupTable(x, y, maxDistance);
             pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
-            pcOut.Write("model,time,pair,measure,distance,count\n");
+            pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
         }
         GridWindow win = null;
         GifMaker gifWin = null;
@@ -154,9 +194,9 @@ public class SpatialEGT2D {
                 }
                 if (writePc) {
                     if (tick % writePcFrequency == 0) {
-                        Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance);
+                        Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance, x*y, annulusAreaLookupTable);
                         String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                        for (int dist = 1; dist < 2*maxDistance; dist++) {
+                        for (int dist = 1; dist < maxDistance; dist++) {
                             for (int i = 0; i < 4; i++) {
                                 pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
                             }
