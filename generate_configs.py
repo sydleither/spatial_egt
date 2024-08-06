@@ -88,7 +88,7 @@ def generate_scripts_batch(exp_dir, config_names):
     submit_output = []
     analysis_output = []
     for config_name in config_names:
-        for space in ["WM", "2D", "3D"]:
+        for space in ["2D"]:
             if space == "WM":
                 config_type = "long"
             else:
@@ -103,9 +103,9 @@ def write_scripts_batch(exp_dir, submit_output, analysis_output):
         for output_line in submit_output:
             f.write(output_line)
 
-    with open(f"output/analyze_{exp_dir}_experiments", "w") as f:
-        for output_line in analysis_output:
-            f.write(output_line)
+    # with open(f"output/analyze_{exp_dir}_experiments", "w") as f:
+    #     for output_line in analysis_output:
+    #         f.write(output_line)
 
 
 if __name__ == "__main__":
@@ -251,21 +251,50 @@ if __name__ == "__main__":
         pd = [[0.03, 0.06], [0.03], [0.06], [0.03, 0.06]]
         for i in range(len(games)):
             names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
-            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=0,
+            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=2,
                                  init_cells=900, prop_res=0.5, runtime=500, runContinuous=0, writePcFrequency=50, radius=3)
             submit_output += s
             analysis_output += a
-    elif experiment_name == "presentation":
-        games = ["coexistence", "bistability"]
-        pa = [0.03, 0.06]
-        pb = [0.06, 0.03]
-        pc = [0.06, 0.03]
-        pd = [0.03, 0.06]
+    elif experiment_name == "gamespc_within":
+        games = ["sensitive", "coexistence"]
+        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"]]
+        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03]]
+        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06]]
+        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06]]
+        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03]]
         for i in range(len(games)):
-            s, a = custom_games(experiment_name, [games[i]], a=[pa[i]], b=[pb[i]], c=[pc[i]], d=[pd[i]],
-                                 init_cells=100, prop_res=0.5, runtime=500, runContinuous=0, writePcFrequency=10, radius=3)
+            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
+            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=3, turnover=0.018,
+                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=200, radius=3)
             submit_output += s
             analysis_output += a
+    elif experiment_name == "gamespc_within2":
+        games = ["bistability", "resistant"]
+        subgames = [["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
+        pa = [[0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
+        pb = [[0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
+        pc = [[0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
+        pd = [[0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
+        for i in range(len(games)):
+            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
+            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=1, turnover=0.018,
+                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=200, radius=3)
+            submit_output += s
+            analysis_output += a
+    elif experiment_name == "at_paramsweep":
+        names = ["competition", "no_game", "coexistence"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        for i,threshold in enumerate([0.3, 0.5, 0.7]):
+            for j,fr in enumerate([0.01, 0.05, 0.1]):
+                for k,cells in enumerate([1875, 6250, 11250]):
+                    subexp_names = [f"{x}_thr{i}_fr{j}_c{k}" for x in names]
+                    s, a = initial_games(experiment_name, subexp_names, bmws, bwms,
+                                         radius=2, runAdaptive=1, writePcFrequency=0,
+                                         drug_reduction=0.9, init_cells=cells, prop_res=fr, 
+                                         adaptiveTreatmentThreshold=threshold, runtime=10000)
+                    submit_output += s
+                    analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()

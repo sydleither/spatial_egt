@@ -1,5 +1,6 @@
 import sys
 
+from matplotlib.colors import BoundaryNorm
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -23,57 +24,32 @@ def get_times_to_progression(df):
     return df_pt
 
 
-def create_heatmaps_avg(exp_dir, df, categories=["threshold", "fR", "initial_density"], models=["adaptive", "continuous", "nodrug"]):
-    for i in range(len(categories)):
-        for j in range(i+1, len(categories)):
-            col = categories[i]
-            row = categories[j]
-            fig, ax = plt.subplots(1, len(models), figsize=(len(models)*8, 8))
-            for m in range(len(models)):
-                df_avg = df.loc[df["model"] == models[m]].groupby([col, row])["time"].mean().unstack()
-                sns.heatmap(df_avg, fmt="g", annot=True, cmap="Greens", ax=ax[m])
-                ax[m].set(title=models[m])
-            fig.patch.set_alpha(0.0)
-            plt.savefig(f"output/{exp_dir}/heatmap_{col}_{row}.png")
-            plt.close()
-
-
-def create_heatmaps(exp_dir, df, categories=["threshold", "fR", "initial_density"], model="adaptive"):
-        if len(categories) != 3:
-            print("Unhardcode the heatmap function")
-            return
-        df = df.loc[df["model"] == model]
-        col = categories[0]
-        row = categories[1]
-        across = categories[2]
-        fig, ax = plt.subplots(1, len(categories), figsize=(len(categories)*8, 8))
-        for i,x in enumerate(df[across].unique()):
-            df_k = df.loc[df[across] == x]
-            df_avg = df_k.groupby([col, row])["time"].mean().unstack()
-            sns.heatmap(df_avg, fmt="g", annot=True, cmap="Greens", ax=ax[i])
-            ax[i].set(title=f"{across} {x}")
-        fig.patch.set_alpha(0.0)
-        plt.savefig(f"output/{exp_dir}/{model}_heatmap_{col}_{row}_{across}.png")
-        plt.close()
-
-
-def create_heatmaps_diff(exp_dir, df, categories=["threshold", "fR", "initial_density"]):
+def create_heatmaps_rel(exp_dir, df, categories=["threshold", "fR", "initial_density"]):
         if len(categories) != 3:
             print("Unhardcode the heatmap function")
             return
         col = categories[0]
         row = categories[1]
         across = categories[2]
+
         fig, ax = plt.subplots(1, len(categories), figsize=(len(categories)*8, 8))
+        cmap = plt.get_cmap("PiYG")
+        cmaplist = [cmap(i) for i in range(cmap.N)]
+        cmap = cmap.from_list("Custom cmap", cmaplist, cmap.N)
+        bounds = [-50, -40, -30, -20, -10, -1, 1, 10, 20, 30, 40, 50]
+        norm = BoundaryNorm(bounds, cmap.N)
+
         for i,x in enumerate(df[across].unique()):
             df_k = df.loc[df[across] == x]
             df_avg_a = df_k.loc[df_k["model"] == "adaptive"].groupby([col, row])["time"].mean().unstack()
             df_avg_c = df_k.loc[df_k["model"] == "continuous"].groupby([col, row])["time"].mean().unstack()
-            df_avg = df_avg_a.subtract(df_avg_c)
-            sns.heatmap(df_avg, fmt="g", annot=True, cmap="Greens", ax=ax[i])
-            ax[i].set(title=f"{across} {x}")
+            df_avg = df_avg_a.divide(df_avg_c)
+            df_avg = 100*(df_avg-1)
+            sns.heatmap(df_avg, fmt="g", annot=True, cmap=cmap, norm=norm, ax=ax[i])
+
         fig.patch.set_alpha(0.0)
-        plt.savefig(f"output/{exp_dir}/diff_heatmap_{col}_{row}_{across}.png")
+        fig.tight_layout()
+        plt.savefig(f"output/{exp_dir}/relative_heatmap_{col}_{row}_{across}.png")
         plt.close()
 
 
@@ -88,9 +64,7 @@ def main(exp_dir, dimension):
     df["initial_density"] = df["condition"].str.split("_").str[3].str[-1].map(cells)
     df = get_times_to_progression(df)
 
-    create_heatmaps_avg(exp_dir, df)
-    create_heatmaps(exp_dir, df, categories=["threshold", "fR", "initial_density"])
-    create_heatmaps_diff(exp_dir, df, categories=["threshold", "fR", "initial_density"])
+    create_heatmaps_rel(exp_dir, df, categories=["threshold", "fR", "initial_density"])
 
 
 if __name__ == "__main__":
