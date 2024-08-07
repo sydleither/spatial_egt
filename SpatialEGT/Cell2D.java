@@ -1,5 +1,7 @@
 package SpatialEGT;
 
+import java.util.HashMap;
+
 import HAL.GridsAndAgents.AgentSQ2Dunstackable;
 import HAL.Util;
 
@@ -68,20 +70,26 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
         return false;
     }
 
-    public double Fs() {
-        int neighbors = MapOccupiedHood(G.gameHood);
-        if (neighbors == 0) {
-            return 0;
+    public HashMap<Integer,Double> Fs(int maxRadius) {
+        HashMap<Integer,Double> fsList = new HashMap<Integer,Double>();
+        for (int radius = 1; radius < maxRadius; radius++) {
+            int[] neighborhood = Util.CircleHood(false, radius);
+            int neighbors = MapOccupiedHood(neighborhood);
+            if (neighbors == 0) {
+                fsList.put(radius, 0.0);
+                continue;
+            }
+            double s = 0;
+            double r = 0;
+            for (int i = 0; i < neighbors; i++) {
+                Cell2D neighborCell = G.GetAgent(neighborhood[i]);
+                if (neighborCell.type == 0)
+                    s += 1;
+                else
+                    r += 1;
+            }
+            fsList.put(radius, s/(s+r));
         }
-        double s = 0;
-        double r = 0;
-        for (int i = 0; i < neighbors; i++) {
-            Cell2D neighborCell = G.GetAgent(G.gameHood[i]);
-            if (neighborCell.type == 0)
-                s += 1;
-            else
-                r += 1;
-        }
-        return s/(s+r);
+        return fsList;
     }
 }

@@ -14,6 +14,28 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
+    public static HashMap<Integer,Double> GetFsList(Model2D model, int maxRadius) {
+        HashMap<Integer,Double> fsList = new HashMap<Integer,Double>();
+        for (int radius = 1; radius < maxRadius; radius++) {
+            fsList.put(radius, 0.0);
+        }
+        int numCells = 0;
+        for (Cell2D cell : model) {
+            if (cell.type == 0) {
+                continue;
+            }
+            HashMap<Integer,Double> fsListCell = cell.Fs(maxRadius);
+            for (int radius = 1; radius < maxRadius; radius++) {
+                fsList.put(radius, fsList.get(radius)+fsListCell.get(radius));
+            }
+            numCells += 1;
+        }
+        for (int radius = 1; radius < maxRadius; radius++) {
+            fsList.put(radius, fsList.get(radius)/numCells);
+        }
+        return fsList;
+    }
+
     public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance, int area, Map<List<Integer>, Integer> annulusAreaLookupTable) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
         for (Cell2D cell : model) {
@@ -168,10 +190,9 @@ public class SpatialEGT2D {
             pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
         }
         FileIO fsOut = null;
-        HashMap<Double,List<Integer>> fsList = null;
         if (writeFs) {
             fsOut = new FileIO(saveLoc+"fs.csv", "w");
-            fsOut.Write("model,time,fs,growth_rate\n");
+            fsOut.Write("model,time,radius,fs\n");
         }
         GridWindow win = null;
         GifMaker gifWin = null;
@@ -213,27 +234,12 @@ public class SpatialEGT2D {
                 }
                 if (writeFs) {
                     if (tick % writeFsFrequency == 0) {
-                        if (tick > 0) {
-                            for (Map.Entry<Double,List<Integer>> entry : fsList.entrySet()) {
-                                Double fs = entry.getKey();
-                                List<Integer> cellIdxs = entry.getValue();
-                                double g = 0;
-                                for (int i = 0; i < cellIdxs.size(); i++) {
-                                    Cell2D cell = model.GetAgent(cellIdxs.get(i));
-                                    if (cell == null || cell.type == 0) {
-                                        g -= 1;
-                                    }
-                                    else {
-                                        if (cell.reproduced) {
-                                            g += 1;
-                                        }
-                                    }
-                                }
-                                g = g/cellIdxs.size();
-                                fsOut.Write(modelName+","+tick+","+fs+","+g+"\n");
-                            }
+                        HashMap<Integer,Double> fsList = GetFsList(model, 10);
+                        for (Map.Entry<Integer,Double> entry : fsList.entrySet()) {
+                            int radius = entry.getKey();
+                            double fs = entry.getValue();
+                            fsOut.Write(modelName+","+tick+","+radius+","+fs+"\n");
                         }
-                        fsList = model.GetFsList();
                     }
                 }
                 if (visualize) {

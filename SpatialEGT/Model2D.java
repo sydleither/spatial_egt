@@ -1,9 +1,5 @@
 package SpatialEGT;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
-
 import HAL.GridsAndAgents.AgentGrid2D;
 import HAL.Gui.GridWindow;
 import HAL.Rand;
@@ -150,27 +146,5 @@ public class Model2D extends AgentGrid2D<Cell2D> {
                 win.SetPix(x+iModel*xDim, y, color);
             }
         }
-    }
-
-    public HashMap<Double,List<Integer>> GetFsList() {
-        HashMap<Double,List<Integer>> fsList = new HashMap<Double,List<Integer>>();
-        for (Cell2D cell : this) {
-            if (cell.type == 0) {
-                continue;
-            }
-            double fs = cell.Fs();
-            int cellIdx = cell.Isq();
-            if (fsList.get(fs) == null) {
-                List<Integer> tempList = new ArrayList<Integer>();
-                tempList.add(cellIdx);
-                fsList.put(fs, tempList);
-            }
-            else {
-                List<Integer> tempList = fsList.get(fs);
-                tempList.add(cellIdx);
-                fsList.put(fs, tempList);
-            }
-        }
-        return fsList;
     }
 }
