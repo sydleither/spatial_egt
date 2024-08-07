@@ -1,5 +1,6 @@
 package SpatialEGT;
 
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -8,10 +9,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class SpatialEGT {
     public static void main(String[] args) {
         // read in arguments
-        String expDir = args[0];
-        String expName = args[1];
-        String dimension = args[2];
-        String rep = args[3];
+        String expDir = null;
+        String expName = null;
+        String dimension = null;
+        String rep = null;
+        if (args.length == 0) {
+            expDir = "test";
+            expName = "test";
+            dimension = "2D";
+            rep = "0";
+        }
+        else if (args.length == 4) {
+            expDir = args[0];
+            expName = args[1];
+            dimension = args[2];
+            rep = args[3];
+        }
+        else {
+            System.out.println("Please provide the following arguments: experiment directory, experiment name, dimension, and replicate/seed.");
+        }
         String saveLoc = "output/"+expDir+"/"+expName+"/"+rep+"/"+dimension;
         
         // read in json parameters

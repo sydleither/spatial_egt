@@ -7,6 +7,7 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
     int type;
     int color;
     double deathRate;
+    boolean reproduced;
 
     public void Init(int type) {
         this.type = type;
@@ -38,11 +39,13 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
         if (G.drugConcentration > 0.0 && this.type == 0) {
             divRate = divRate * (1 - G.drugGrowthReduction);
         }
+        reproduced = false;
         if (G.rng.Double() < divRate) {
             int options = MapEmptyHood(G.divHood);
             if (options > 0) {
                 G.NewAgentSQ(G.divHood[G.rng.Int(options)]).Init(this.type);
             }
+            reproduced = true;
         }
         //natural death
         if (G.rng.Double() < G.deathRate) {
@@ -63,5 +66,22 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
             }
         }
         return false;
+    }
+
+    public double Fs() {
+        int neighbors = MapOccupiedHood(G.gameHood);
+        if (neighbors == 0) {
+            return 0;
+        }
+        double s = 0;
+        double r = 0;
+        for (int i = 0; i < neighbors; i++) {
+            Cell2D neighborCell = G.GetAgent(G.gameHood[i]);
+            if (neighborCell.type == 0)
+                s += 1;
+            else
+                r += 1;
+        }
+        return s/(s+r);
     }
 }

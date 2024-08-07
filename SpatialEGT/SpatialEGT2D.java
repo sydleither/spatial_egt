@@ -114,6 +114,7 @@ public class SpatialEGT2D {
         int visualizationFrequency = (int) params.get("visualizationFrequency");
         int writePopFrequency = (int) params.get("writePopFrequency");
         int writePcFrequency = (int) params.get("writePcFrequency");
+        int writeFsFrequency = (int) params.get("writeFsFrequency");
         int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
@@ -152,6 +153,7 @@ public class SpatialEGT2D {
         // check what to run and initialize output
         boolean writePop = writePopFrequency != 0;
         boolean writePc = writePcFrequency != 0;
+        boolean writeFs = writeFsFrequency != 0;
         boolean visualize = visualizationFrequency != 0;
         FileIO popsOut = null;
         if (writePop) {
@@ -164,6 +166,12 @@ public class SpatialEGT2D {
             annulusAreaLookupTable = GetAnnulusAreaLookupTable(x, y, maxDistance);
             pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
             pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
+        }
+        FileIO fsOut = null;
+        HashMap<Double,List<Integer>> fsList = null;
+        if (writeFs) {
+            fsOut = new FileIO(saveLoc+"fs.csv", "w");
+            fsOut.Write("model,time,fs,growth_rate\n");
         }
         GridWindow win = null;
         GifMaker gifWin = null;
@@ -203,6 +211,31 @@ public class SpatialEGT2D {
                         }
                     }
                 }
+                if (writeFs) {
+                    if (tick % writeFsFrequency == 0) {
+                        if (tick > 0) {
+                            for (Map.Entry<Double,List<Integer>> entry : fsList.entrySet()) {
+                                Double fs = entry.getKey();
+                                List<Integer> cellIdxs = entry.getValue();
+                                double g = 0;
+                                for (int i = 0; i < cellIdxs.size(); i++) {
+                                    Cell2D cell = model.GetAgent(cellIdxs.get(i));
+                                    if (cell == null || cell.type == 0) {
+                                        g -= 1;
+                                    }
+                                    else {
+                                        if (cell.reproduced) {
+                                            g += 1;
+                                        }
+                                    }
+                                }
+                                g = g/cellIdxs.size();
+                                fsOut.Write(modelName+","+tick+","+fs+","+g+"\n");
+                            }
+                        }
+                        fsList = model.GetFsList();
+                    }
+                }
                 if (visualize) {
                     model.DrawModel(win, 0);
                     if (tick % visualizationFrequency == 0) {
@@ -224,6 +257,9 @@ public class SpatialEGT2D {
         }
         if (writePc) {
             pcOut.Close();
+        }
+        if (writeFs) {
+            fsOut.Close();
         }
     }
 }
