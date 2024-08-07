@@ -45,6 +45,7 @@ def create_heatmaps_rel(exp_dir, df, categories=["threshold", "fR", "initial_den
             df_avg_c = df_k.loc[df_k["model"] == "continuous"].groupby([col, row])["time"].mean().unstack()
             df_avg = df_avg_a.divide(df_avg_c)
             df_avg = 100*(df_avg-1)
+            df_avg = df_avg.round(0)
             sns.heatmap(df_avg, fmt="g", annot=True, cmap=cmap, norm=norm, ax=ax[i])
 
         fig.patch.set_alpha(0.0)

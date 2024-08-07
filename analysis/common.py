@@ -62,9 +62,9 @@ def calculate_confidence_interval(data):
     return data_mean, lower, upper
 
 
-def plot_line(ax, df, x_col, y_col, color, label):
+def plot_line(ax, df, x_col, y_col, color, label=None, avg_over="rep"):
     x_data = sorted(df[x_col].unique())
-    condition = df.pivot(index="rep", columns=x_col, values=y_col).values.tolist()
+    condition = df.pivot(index=avg_over, columns=x_col, values=y_col).values.tolist()
     data_mean, lower, upper = calculate_confidence_interval(condition)
     ax.plot(x_data, data_mean, label=label, linewidth=2, color=color)
     ax.fill_between(list(x_data), lower, upper, color=color, alpha=0.5)

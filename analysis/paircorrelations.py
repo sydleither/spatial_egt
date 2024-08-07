@@ -18,8 +18,10 @@ def pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_tic
     if len(conditions) == 0:
         conditions = sorted(df["condition"].unique())
 
-    colors = ["sienna", "limegreen", "royalblue", "darkviolet"]
-    for pair in df["pair"].unique():
+    colors = ["lightgreen", "limegreen", "darkgreen", "sandybrown", "sienna", "saddlebrown",
+              "cyan", "darkturquoise", "cadetblue", "orchid", "mediumorchid", "darkorchid"]
+    #colors = ["sienna", "limegreen", "royalblue", "darkviolet", "darkgray", "indianred"]
+    for pair in ["SR", "RS"]:
         df_pair = df.loc[df["pair"] == pair]
         for freq in freq_ticks:
             df_time = df_pair.loc[df_pair[freq_col] == freq]
@@ -54,20 +56,23 @@ def groupby_confluence(df):
 def bull_pc(df):
     df["pc"] = df["normalized_count"] / (df["sensitive"]*df["resistant"])
     return df
-    
+
 
 def main(exp_dir, dimension):
     df_pc = read_all(exp_dir, "pairCorrelations", dimension)
     df_pop = read_all(exp_dir, "populations", dimension)
     df = df_pop.merge(df_pc, on=["model", "time", "rep", "condition", "dimension"])
-    #df = df.loc[df["radius"] < 7]
+    df = df.loc[df["radius"] < 10]
     df["total"] = df["sensitive"] + df["resistant"]
     df = bull_pc(df)
 
-    pair_correlation_functions(df, exp_dir, dimension, freq_col="confluence", freq_ticks=[3000], transparent=True,
-                                conditions=["bistability_equal", "coexistence_equal", "resistant_cgtd", "sensitive_bgta"])
-    pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 250, 500], transparent=True,
-                                conditions=["bistability_equal", "coexistence_equal", "resistant_cgtd", "sensitive_bgta"])
+    # pair_correlation_functions(df, exp_dir, dimension, freq_col="confluence", freq_ticks=[3000], transparent=True,
+    #                             conditions=["sensitive_equal", "sensitive_agtb", "sensitive_bgta"])
+    # pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 1000, 2000], transparent=True,
+    #                             conditions=["sensitive_equal", "sensitive_agtb", "sensitive_bgta"])
+    # pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 1000, 2000], transparent=True,
+    #                             conditions=["coexistence_equal", "coexistence_bgtc", "coexistence_cgtb"])
+    pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 1000, 2000], transparent=True)
 
 
 if __name__ == "__main__":
