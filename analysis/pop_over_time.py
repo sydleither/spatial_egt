@@ -8,7 +8,7 @@ import pandas as pd
 from common import read_specific, plot_line
 
 
-def main(exp_dir, exp_name, dimension, transparent=False):
+def main(exp_dir, exp_name, dimension, transparent):
     df = read_specific(exp_dir, exp_name, dimension, "populations")
     df["total"] = df["sensitive"] + df["resistant"]
     models = df["model"].unique()
@@ -35,13 +35,13 @@ def main(exp_dir, exp_name, dimension, transparent=False):
 
     fig.suptitle(exp_name)
     fig.tight_layout()
-    if transparent:
+    if transparent == "true":
         fig.patch.set_alpha(0.0)
     fig.savefig(f"output/{exp_dir}/{exp_name}/{dimension}pop_over_time.png")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        main(sys.argv[1], sys.argv[2], sys.argv[3])
+    if len(sys.argv) == 5:
+        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
     else:
-        print("Please provide an experiment directory, name, and dimension.")
+        print("Please provide an experiment directory, name, dimension, and transparency (true).")

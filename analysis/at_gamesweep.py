@@ -25,6 +25,7 @@ def plot_fs_by_r(df, exp_dir, exp_name, dimension, model, times):
             ax.scatter(df_t["radius"], df_t["fs"], color=COLORS[i], label=time)
     ax.set(xlabel="Radius", ylabel="Fraction Sensitive", title=f"{exp_name} {model} {dimension}")
     fig.legend(title="Tick")
+    fig.patch.set_alpha(0.0)
     fig.tight_layout()
     fig.savefig(f"output/{exp_dir}/{exp_name}/fsr_{model}{dimension}.png")
 
@@ -39,8 +40,9 @@ def plot_gr_by_fs(df, exp_dir, exp_name, dimension, model):
             ax[j].scatter(df_tr["fs"], df_tr["resistant"], color=COLORS[rep])
             ax[j].set(title=radius)
     fig.supxlabel("Fraction Sensitive")
-    fig.supylabel("Growth Rate of Resistant")
+    fig.supylabel("Resistant Growth Rate")
     fig.suptitle(f"{exp_name} {model} {dimension}")
+    fig.patch.set_alpha(0.0)
     fig.tight_layout(rect=[0.015, 0.03, 1, 0.95])
     fig.savefig(f"output/{exp_dir}/{exp_name}/grfs_{model}{dimension}.png")
 
@@ -48,23 +50,27 @@ def plot_gr_by_fs(df, exp_dir, exp_name, dimension, model):
 def plot_r_by_gr(df, exp_dir, exp_name, dimension, model):
     df = df.loc[df["model"] == model]
     fig, ax = plt.subplots()
-    sns.violinplot(data=df, x="radius", y="resistant", hue="rep", ax=ax)
-    ax.set(xlabel="Radius", ylabel="Growth Rate of Resistant", title=f"{exp_name} {model} {dimension}")
+    sns.violinplot(data=df, x="radius", y="delta_resistant", ax=ax)
+    ax.set(xlabel="Radius", ylabel="Delta Resistant Growth Rate", title=f"{exp_name} {model} {dimension}")
+    fig.patch.set_alpha(0.0)
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     fig.savefig(f"output/{exp_dir}/{exp_name}/rgr_{model}{dimension}.png")
 
 
 def main(exp_dir, exp_name, dimension):
+    config = json.load(open(f"output/{exp_dir}/{exp_name}/{exp_name}.json"))
     df_fs = read_specific(exp_dir, exp_name, dimension, "fs")
     df_pop = read_specific(exp_dir, exp_name, dimension, "populations")
     df_pop = df_pop.reset_index()
     df_gr = df_pop.drop(["index", "time", "rep", "model"], axis=1)
-    df_gr = df_gr.rolling(window=2).apply(lambda x: (x.values[1]-x.values[0])/x.values[0] if x.values[0] != 0 else x.values[1])
+    df_gr = df_gr.rolling(window=2).apply(lambda x: x.values[1]/x.values[0] if x.values[0] != 0 else 0)
     df_gr = df_gr.join(df_pop[["time", "rep", "model"]])
     df = df_fs.merge(df_gr, on=["model", "time", "rep"])
+    df["delta_resistant"] = df["resistant"] - (1 + config["D"])
+    df = df.loc[(df["sensitive"] > 0) & (df["resistant"] > 0)]
 
     for model in df["model"].unique():
-        plot_fs_by_r(df_fs, exp_dir, exp_name, dimension, model, [0, 1000, 5000, 10000])
+        plot_fs_by_r(df_fs, exp_dir, exp_name, dimension, model, [0, 1000, 2500, 5000])
         plot_gr_by_fs(df, exp_dir, exp_name, dimension, model)
         plot_r_by_gr(df, exp_dir, exp_name, dimension, model)
 
@@ -77,23 +83,24 @@ def theoretical_main(exp_dir, exp_name, dimension):
     d = config["D"]
 
     radius_areas = {1:4, 2:12, 3:28, 4:48, 5:80}
-    df_dict = {"model":[], "rep":[], "time":[], "radius":[], "fs":[], "resistant":[], "sensitive":[]}
+    df_dict = {"radius":[], "fs":[], "resistant":[], "sensitive":[]}
     for radius, radius_area in radius_areas.items():
         types_in_radius = [x for x in product(range(radius_area+1), repeat=3) if sum(x) == radius_area]
         for num_empty, num_sensitive, num_resistant in types_in_radius:
             total_cells = num_sensitive+num_resistant
             if total_cells == 0:
                 continue
-            df_dict["model"].append("theoretical")
-            df_dict["rep"].append(0)
-            df_dict["time"].append(0)
             df_dict["radius"].append(radius)
             df_dict["fs"].append(num_sensitive/total_cells)
             df_dict["resistant"].append(((num_sensitive*c) + (num_resistant*d))/total_cells)
             df_dict["sensitive"].append(((num_sensitive*a) + (num_resistant*b))/total_cells)
     df = pd.DataFrame(df_dict)
+    df["model"] = "theoretical"
+    df["rep"] = 0
+    df["time"] = 0
     df["resistant"] = df["resistant"].round(3)
     df["sensitive"] = df["sensitive"].round(3)
+    df["delta_resistant"] = df["resistant"] - d
     df = df.drop_duplicates()
 
     plot_fs_by_r(df, exp_dir, exp_name, dimension, "theoretical", [0])

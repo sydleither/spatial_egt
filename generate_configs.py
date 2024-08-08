@@ -303,7 +303,7 @@ if __name__ == "__main__":
         s, a = initial_games(experiment_name, names, bmws, bwms, runNull=1,
                                 radius=1, runAdaptive=1, writePcFrequency=0, writeFsFrequency=1,
                                 drug_reduction=0.9, init_cells=11250, prop_res=0.01, 
-                                adaptiveTreatmentThreshold=0.3, runtime=10000)
+                                adaptiveTreatmentThreshold=0.3, runtime=5000)
         submit_output += s
         analysis_output += a
     else:
