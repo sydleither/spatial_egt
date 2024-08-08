@@ -3,7 +3,7 @@ import os
 import sys
 
 
-def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
+def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                       writePcFrequency, numTicks, radius, deathRate, drugGrowthReduction, numCells, 
                       proportionResistant, adaptiveTreatmentThreshold, initialTumor, payoff):
     config = {
@@ -13,6 +13,7 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
         "visualizationFrequency": 0,
         "writePopFrequency": writePopFrequency,
         "writePcFrequency": writePcFrequency,
+        "writeFsFrequency": writeFsFrequency,
         "x": 125,
         "y": 125,
         "neighborhoodRadius": radius,
@@ -34,7 +35,7 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
         json.dump(config, f, indent=4)
 
 
-def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1,
+def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1, writeFsFrequency=0,
                   writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
                   adaptiveTreatmentThreshold=0.5, initialTumor=0, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
@@ -52,7 +53,7 @@ def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0,
         os.mkdir("output/"+exp_dir+"/"+exp_name)
         for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
+        experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                           writePcFrequency, runtime, radius, turnover, drug_reduction, init_cells, 
                           prop_res, adaptiveTreatmentThreshold, initialTumor, payoff)
         config_names.append(exp_name)
@@ -61,7 +62,7 @@ def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0,
     return submit_output, analysis_output
 
 
-def custom_games(exp_dir, names, a, b, c, d, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1,
+def custom_games(exp_dir, names, a, b, c, d, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1, writeFsFrequency=0,
                   writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
                   adaptiveTreatmentThreshold=0.5, initialTumor=0, runtime=500):
     if not os.path.exists("output/"+exp_dir):
@@ -75,7 +76,7 @@ def custom_games(exp_dir, names, a, b, c, d, runNull=1, runAdaptive=0, runContin
         os.mkdir("output/"+exp_dir+"/"+exp_name)
         for i in range(10):
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-        experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
+        experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                           writePcFrequency, runtime, radius, turnover, drug_reduction, init_cells, 
                           prop_res, adaptiveTreatmentThreshold, initialTumor, payoff)
         config_names.append(exp_name)
@@ -300,7 +301,7 @@ if __name__ == "__main__":
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
         s, a = initial_games(experiment_name, names, bmws, bwms, runNull=1,
-                                radius=1, runAdaptive=1, writePcFrequency=0,
+                                radius=1, runAdaptive=1, writePcFrequency=0, writeFsFrequency=1,
                                 drug_reduction=0.9, init_cells=11250, prop_res=0.01, 
                                 adaptiveTreatmentThreshold=0.3, runtime=10000)
         submit_output += s
