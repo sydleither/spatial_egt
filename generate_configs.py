@@ -295,6 +295,16 @@ if __name__ == "__main__":
                                          adaptiveTreatmentThreshold=threshold, runtime=10000)
                     submit_output += s
                     analysis_output += a
+    elif experiment_name == "at_gamesweep":
+        names = ["competition", "no_game", "coexistence"]
+        bmws = [-0.007, 0, 0.007]
+        bwms = [0.0, 0.0, 0.0]
+        s, a = initial_games(experiment_name, names, bmws, bwms, runNull=1,
+                                radius=1, runAdaptive=1, writePcFrequency=0,
+                                drug_reduction=0.9, init_cells=11250, prop_res=0.01, 
+                                adaptiveTreatmentThreshold=0.3, runtime=10000)
+        submit_output += s
+        analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()
