@@ -16,6 +16,7 @@ def main(exp_dir, exp_name, dimension, transparent):
     df_gr = df_gr.rolling(window=2).apply(lambda x: x.values[1]/x.values[0] if x.values[0] != 0 else 0)
     df = df_gr.join(df[["time", "rep", "model"]])
     df["diff"] = df["sensitive"] - df["resistant"]
+    df = df.loc[df["time"] > 0]
     models = df["model"].unique()
     num_models = len(models)
 
@@ -34,10 +35,10 @@ def main(exp_dir, exp_name, dimension, transparent):
         plot_line(ax, df_model, "time", "resistant", r_colors[i], "Resistant")
         plot_line(ax_all, df_model, "time", "diff", a_colors[i], models[i])
         ax.axhline(1, linestyle="dashed", color="black", linewidth=1)
-        ax.set(xlabel="Time", ylabel="Cells", title=models[i])
+        ax.set(xlabel="Time", ylabel="Growth Rate", title=models[i])
         ax.legend()
     ax_all.axhline(0, linestyle="dashed", color="black", linewidth=1)
-    ax_all.set(xlabel="Time", ylabel="Cells", title="Difference in Growth Rate")
+    ax_all.set(xlabel="Time", ylabel="Growth Rate", title="Difference in Growth Rate")
     ax_all.legend()
 
     fig.suptitle(f"{exp_name} Growth Rates")

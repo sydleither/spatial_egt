@@ -61,13 +61,14 @@ def main(exp_dir, exp_name, dimension):
     config = json.load(open(f"output/{exp_dir}/{exp_name}/{exp_name}.json"))
     df_fs = read_specific(exp_dir, exp_name, dimension, "fs")
     df_pop = read_specific(exp_dir, exp_name, dimension, "populations")
+    df_pop = df_pop.loc[(df_pop["sensitive"] > 0) & (df_pop["resistant"] > 0)]
     df_pop = df_pop.reset_index()
     df_gr = df_pop.drop(["index", "time", "rep", "model"], axis=1)
     df_gr = df_gr.rolling(window=2).apply(lambda x: x.values[1]/x.values[0] if x.values[0] != 0 else 0)
     df_gr = df_gr.join(df_pop[["time", "rep", "model"]])
     df = df_fs.merge(df_gr, on=["model", "time", "rep"])
     df["delta_resistant"] = df["resistant"] - (1 + config["D"])
-    df = df.loc[(df["sensitive"] > 0) & (df["resistant"] > 0)]
+    df = df.loc[df["time"] > 0]
 
     for model in df["model"].unique():
         plot_fs_by_r(df_fs, exp_dir, exp_name, dimension, model, [0, 1000, 2500, 5000])
