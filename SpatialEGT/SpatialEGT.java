@@ -13,6 +13,7 @@ public class SpatialEGT {
         String expName = null;
         String dimension = null;
         String rep = null;
+        int visualizationFrequency = 0;
         if (args.length == 0) {
             expDir = "test";
             expName = "test";
@@ -25,8 +26,15 @@ public class SpatialEGT {
             dimension = args[2];
             rep = args[3];
         }
+        else if (args.length == 5) {
+            expDir = args[0];
+            expName = args[1];
+            dimension = args[2];
+            rep = args[3];
+            visualizationFrequency = Integer.parseInt(args[4]);
+        }
         else {
-            System.out.println("Please provide the following arguments: experiment directory, experiment name, dimension, and replicate/seed.");
+            System.out.println("Please provide the following arguments: experiment directory, experiment name, dimension, replicate/seed, and (optional) visualization frequency.");
         }
         String saveLoc = "output/"+expDir+"/"+expName+"/"+rep+"/"+dimension;
         
@@ -42,7 +50,7 @@ public class SpatialEGT {
 
         // run models
         if (dimension.equals("2D")) {
-            new SpatialEGT2D(saveLoc, params, Long.parseLong(rep));
+            new SpatialEGT2D(saveLoc, params, Long.parseLong(rep), visualizationFrequency);
         }
         else if (dimension.equals("3D")) {
             new SpatialEGT3D(saveLoc, params, Long.parseLong(rep));

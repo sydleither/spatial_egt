@@ -54,6 +54,40 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         }
     }
 
+    public void InitTumorCluster(int numCells, double proportionResistant) {
+        this.startingPop = numCells;
+
+        //resistant cluster
+        int numResistant = (int)(numCells * proportionResistant);
+        int sqrtNumResistant = (int)Math.floor(Math.sqrt(numResistant));
+        int startLoc = (int)Math.floor((xDim/2)) - (int)Math.floor((sqrtNumResistant/2));
+
+        int resistantPlaced = 0;
+        for (int x = startLoc; x < startLoc+sqrtNumResistant; x++) {
+            for (int y = startLoc; y < startLoc+sqrtNumResistant; y++) {
+                if (resistantPlaced < numResistant) {
+                    NewAgentSQ(x, y).Init(1);
+                }
+                resistantPlaced++;
+            }
+        }
+
+        //create and place sensitive cells on random positions in grid
+        int gridSize = xDim * yDim;
+        int[] startingPositions = new int[gridSize];
+        for (int i = 0; i < gridSize; i++) {
+            if (PopAt(i) == 0) {
+                startingPositions[i] = i;
+            }
+        }
+        rng.Shuffle(startingPositions);
+
+        int numSensitive = numCells - resistantPlaced;
+        for (int i = 0; i < numSensitive; i++) {
+            NewAgentSQ(startingPositions[i]).Init(0);
+        }
+    }
+
     public void InitTumorLinear(int numCells, double proportionResistant) {
         int numResistant = (int)(numCells * proportionResistant);
         int sqrtNumCells = (int)Math.floor(Math.sqrt(numCells));

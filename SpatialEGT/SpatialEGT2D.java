@@ -128,12 +128,11 @@ public class SpatialEGT2D {
         return popSize;
     }
 
-    public SpatialEGT2D(String saveLoc, Map<String, Object> params, long seed) {
+    public SpatialEGT2D(String saveLoc, Map<String, Object> params, long seed, int visualizationFrequency) {
         // turn parameters json into variables
         int runNull = (int) params.get("null");
         int runContinuous = (int) params.get("continuous");
         int runAdaptive = (int) params.get("adaptive");
-        int visualizationFrequency = (int) params.get("visualizationFrequency");
         int writePopFrequency = (int) params.get("writePopFrequency");
         int writePcFrequency = (int) params.get("writePcFrequency");
         int writeFsFrequency = (int) params.get("writeFsFrequency");
@@ -177,6 +176,16 @@ public class SpatialEGT2D {
         boolean writePc = writePcFrequency != 0;
         boolean writeFs = writeFsFrequency != 0;
         boolean visualize = visualizationFrequency != 0;
+
+        GridWindow win = null;
+        GifMaker gifWin = null;
+        if (visualize) {
+            win = new GridWindow("SpatialEGT", x, y, 4);
+            gifWin = new GifMaker(saveLoc+"growth.gif", 0, false);
+            writePop = false;
+            writePc = false;
+            writeFs = false;
+        }
         FileIO popsOut = null;
         if (writePop) {
             popsOut = new FileIO(saveLoc+"populations.csv", "w");
@@ -194,12 +203,6 @@ public class SpatialEGT2D {
             fsOut = new FileIO(saveLoc+"fs.csv", "w");
             fsOut.Write("model,time,radius,fs\n");
         }
-        GridWindow win = null;
-        GifMaker gifWin = null;
-        if (visualize) {
-            win = new GridWindow("SpatialEGT", x, y, 4);
-            gifWin = new GifMaker(saveLoc+"growth.gif", 0, false);
-        }
         
         // run models
         for (Map.Entry<String,Model2D> modelEntry : models.entrySet()) {
@@ -211,6 +214,8 @@ public class SpatialEGT2D {
                 model.InitTumorConvex(numCells, proportionResistant);
             else if (initialTumor == 3)
                 model.InitTumorConcave(numCells, proportionResistant);
+            else if (initialTumor == 4)
+                model.InitTumorCluster(numCells, proportionResistant);
             else
                 model.InitTumorRandom(numCells, proportionResistant);
 
