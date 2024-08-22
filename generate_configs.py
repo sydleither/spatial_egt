@@ -120,13 +120,6 @@ if __name__ == "__main__":
         s, a = initial_games(experiment_name, names, bmws, bwms, runtime=10000)
         submit_output += s
         analysis_output += a
-    elif experiment_name == "gamesd":
-        names = ["competition", "no_game", "coexistance"]
-        bmws = [-0.007, 0, 0.007]
-        bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, turnover=0.015)
-        submit_output += s
-        analysis_output += a
     elif experiment_name == "coexist":
         names = ["14", "25", "33", "40", "45", "50", "60", "70", "80", "90"]
         bmws = [0.007, 0.008, 0.009, 0.010, 0.011, 0.012, 0.015, 0.020, 0.030, 0.060]
@@ -134,59 +127,6 @@ if __name__ == "__main__":
         s, a = initial_games(experiment_name, names, bmws, bwms)
         submit_output += s
         analysis_output += a
-    elif experiment_name == "test":
-        names = ["coexistance"]
-        bmws = [0.007]
-        bwms = [0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, turnover=0.015, runtime=100)
-        submit_output += s
-        analysis_output += a
-    elif experiment_name == "bistability":
-        names = ["bistability", "no_game"]
-        bmws = [-0.007, 0]
-        bwms = [-0.02, 0]
-        for prop_res in [0.3, 0.5, 0.7]:
-            s, a = initial_games(experiment_name, [x+str(prop_res)[-1] for x in names], bmws, bwms, prop_res=prop_res)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "drug":
-        names = ["no_game"]
-        bmws = [0]
-        bwms = [0]
-        for drug_reduction in [0.5, 0.6, 0.7, 0.8, 0.9]:
-            s, a = initial_games(experiment_name, [x+str(drug_reduction)[-1] for x in names], bmws, bwms, drug_reduction=drug_reduction, prop_res=0.001, runtime=10000)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "threshold":
-        names = ["competition", "no_game", "coexistance"]
-        bmws = [-0.007, 0, 0.007]
-        bwms = [0.0, 0.0, 0.0]
-        for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
-            s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names],
-                                 bmws, bwms, drug_reduction=0.9, prop_res=0.01, 
-                                 adaptiveTreatmentThreshold=threshold, runtime=5000)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "threshold_d":
-        names = ["competition", "no_game", "coexistance"]
-        bmws = [-0.007, 0, 0.007]
-        bwms = [0.0, 0.0, 0.0]
-        for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
-            s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names],
-                                 bmws, bwms, drug_reduction=0.9, init_cells=11250, prop_res=0.01, 
-                                 adaptiveTreatmentThreshold=threshold, runtime=5000)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "threshold_dfr":
-        names = ["competition", "no_game", "coexistance"]
-        bmws = [-0.007, 0, 0.007]
-        bwms = [0.0, 0.0, 0.0]
-        for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
-            s, a = initial_games(experiment_name, [x+str(threshold)[-1] for x in names],
-                                 bmws, bwms, drug_reduction=0.9, init_cells=11250, prop_res=0.001, 
-                                 adaptiveTreatmentThreshold=threshold, runtime=10000)
-            submit_output += s
-            analysis_output += a
     elif experiment_name == "gameshood":
         names = ["competition", "no_game", "coexistance"]
         bmws = [-0.007, 0, 0.007]
@@ -195,42 +135,6 @@ if __name__ == "__main__":
             s, a = initial_games(experiment_name, [x+str(radius) for x in names], bmws, bwms, radius=radius)
             submit_output += s
             analysis_output += a
-    elif experiment_name == "gamespc":
-        names = ["competition", "no_game", "coexistance"]
-        bmws = [-0.007, 0, 0.007]
-        bwms = [0.0, 0.0, 0.0]
-        for fr in ["0.050", "0.010", "0.002"]:
-            s, a = initial_games(experiment_name, [x+fr[2:] for x in names], bmws, bwms, init_cells=2500, prop_res=float(fr), runtime=500, runContinuous=0)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "gamespc_sw":
-        names = ["max", "half", "zero", "min"]
-        bmws = [0.005, 0.00025, 0.0, -0.024]
-        bwms = [0.0, 0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
-        submit_output += s
-        analysis_output += a
-    elif experiment_name == "gamespc_co":
-        names = ["25", "50", "75"]
-        bmws = [0.008, 0.012, 0.024]
-        bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
-        submit_output += s
-        analysis_output += a
-    elif experiment_name == "gamespc_bi":
-        names = ["25", "50", "75"]
-        bmws = [0.00133, -0.008, -0.036]
-        bwms = [-0.02, -0.02, -0.02]
-        s, a = initial_games(experiment_name, names, bmws, bwms, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
-        submit_output += s
-        analysis_output += a
-    elif experiment_name == "gamespc_rw":
-        names = ["min", "half", "max"]
-        bmws = [0.004, 0.0455, 0.087]
-        bwms = [-0.004, -0.004, -0.004]
-        s, a = initial_games(experiment_name, names, bmws, bwms, gw=0.015, init_cells=2500, prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100)
-        submit_output += s
-        analysis_output += a
     elif experiment_name == "gamespc_all":
         games = ["sensitive", "coexistence", "bistability", "resistant"]
         betas = [["max", "half", "zero", "min"], ["25", "50", "75"], ["25", "50", "75"], ["min", "half", "max"]]
@@ -243,43 +147,32 @@ if __name__ == "__main__":
                                  prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100, radius=3)
             submit_output += s
             analysis_output += a
-    elif experiment_name == "custom_gamespc_all":
+    elif experiment_name == "custom_gamespc_all_toy":
         games = ["sensitive", "coexistence", "bistability", "resistant"]
-        subgames = [["agtb", "bgta"], ["equal"], ["equal"], ["cgtd", "dgtc"]]
-        pa = [[0.09, 0.06], [0.03], [0.06], [0.03, 0.0]]
-        pb = [[0.06, 0.09], [0.06], [0.03], [0.0, 0.03]]
-        pc = [[0.06, 0.03], [0.06], [0.03], [0.06, 0.03]]
-        pd = [[0.03, 0.06], [0.03], [0.06], [0.03, 0.06]]
-        for i in range(len(games)):
-            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
-            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=2,
-                                 init_cells=900, prop_res=0.5, runtime=500, runContinuous=0, writePcFrequency=50, radius=3)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "gamespc_within":
-        games = ["sensitive", "coexistence"]
-        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"]]
-        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03]]
-        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06]]
-        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06]]
-        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03]]
-        for i in range(len(games)):
-            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
-            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=3, turnover=0.018,
-                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=200, radius=3)
-            submit_output += s
-            analysis_output += a
-    elif experiment_name == "gamespc_within2":
-        games = ["bistability", "resistant"]
-        subgames = [["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
-        pa = [[0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
-        pb = [[0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
-        pc = [[0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
-        pd = [[0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
+        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"],
+                    ["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
+        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03], [0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
+        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06], [0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
+        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06], [0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
+        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03], [0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
         for i in range(len(games)):
             names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
             s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=1, turnover=0.018,
-                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=200, radius=3)
+                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=500, radius=3)
+            submit_output += s
+            analysis_output += a
+    elif experiment_name == "custom_gamespc_all":
+        games = ["sensitive", "coexistence", "bistability", "resistant"]
+        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"],
+                    ["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
+        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03], [0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
+        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06], [0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
+        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06], [0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
+        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03], [0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
+        for i in range(len(games)):
+            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
+            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=0, turnover=0.009,
+                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=500, radius=3)
             submit_output += s
             analysis_output += a
     elif experiment_name == "at_paramsweep":

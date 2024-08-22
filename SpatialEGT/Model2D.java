@@ -54,7 +54,6 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         }
     }
 
-    //TODO this isnt working
     public void InitTumorCluster(int numCells, double proportionResistant) {
         this.startingPop = numCells;
 
