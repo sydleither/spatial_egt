@@ -14,26 +14,43 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static HashMap<Integer,Double> GetFsList(Model2D model, int maxRadius) {
-        HashMap<Integer,Double> fsList = new HashMap<Integer,Double>();
-        for (int radius = 1; radius < maxRadius; radius++) {
-            fsList.put(radius, 0.0);
-        }
-        int numCells = 0;
-        for (Cell2D cell : model) {
+    public static Map<List<Double>, Double> GetFsList(Model2D model, int maxRadius) {
+        ArrayList<List<Object>> fsList = new ArrayList<List<Object>>();
+        for (Cell2D cell: model) {
             if (cell.type == 0) {
                 continue;
             }
             HashMap<Integer,Double> fsListCell = cell.Fs(maxRadius);
-            for (int radius = 1; radius < maxRadius; radius++) {
-                fsList.put(radius, fsList.get(radius)+fsListCell.get(radius));
+            for (int radius = 1; radius <= maxRadius; radius++) {
+                List<Object> listEntry = Arrays.asList(cell.reproduced, radius, fsListCell.get(radius));
+                fsList.add(listEntry);
             }
-            numCells += 1;
         }
-        for (int radius = 1; radius < maxRadius; radius++) {
-            fsList.put(radius, fsList.get(radius)/numCells);
+
+        Map<List<Double>, Double> fsListBinned = new Hashmap<>();
+        Map<List<Double>, int> fsListBinnedCount = new Hashmap<>();
+        for (List<Object> listEntry : fsList) {
+            double reproduced = listEntry.get(0) ? 1.0 : 0.0;
+            int radius = listEntry.get(1);
+            double fs = listEntry.get(2);
+            List<Double> listBinnedEntry = Arrays.asList(radius, fs);
+            if (fsListBinned.get(listBinnedEntry) == null) {
+                fsListBinned.put(listBinnedEntry, reproduced);
+                fsListBinnedCount.put(listBinnedEntry, 1);
+            }
+            else {
+                fsListBinned.put(listBinnedEntry, fsListBinned.get(listBinnedEntry)+reproduced);
+                fsListBinnedCount.put(listBinnedEntry, fsListBinnedCount.get(listBinnedEntry)+1);
+            }
         }
-        return fsList;
+
+        for (Map.Entry<List<Double>, Double> entry : fsListBinned.entrySet()) {
+            List<Double> key = entry.getKey();
+            double numReproduced = entry.getValue();
+            fsListBinned.put(key, numReproduced/fsListBinnedCount.get(key));
+        }
+
+        return fsListBinned;
     }
 
     public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance, int area, Map<List<Integer>, Integer> annulusAreaLookupTable) {
@@ -61,10 +78,6 @@ public class SpatialEGT2D {
                 int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq());
                 int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq());
                 int annulus = xDistance + yDistance;
-
-                // if (!cellA.OppositeTypeInNeighborhood()) {
-                //     continue;
-                // }
 
                 if (annulus >= maxDistance) {
                     continue;
@@ -201,7 +214,7 @@ public class SpatialEGT2D {
         FileIO fsOut = null;
         if (writeFs) {
             fsOut = new FileIO(saveLoc+"fs.csv", "w");
-            fsOut.Write("model,time,radius,fs\n");
+            fsOut.Write("model,time,radius,fs,proportion_reproduced\n");
         }
         
         // run models
@@ -239,11 +252,11 @@ public class SpatialEGT2D {
                 }
                 if (writeFs) {
                     if (tick % writeFsFrequency == 0) {
-                        HashMap<Integer,Double> fsList = GetFsList(model, 10);
+                        Map<List<Double>, Double> fsList = GetFsList(model, 10);
                         for (Map.Entry<Integer,Double> entry : fsList.entrySet()) {
-                            int radius = entry.getKey();
-                            double fs = entry.getValue();
-                            fsOut.Write(modelName+","+tick+","+radius+","+fs+"\n");
+                        List<Double> key = entry.getKey();
+                        double proportionReproduced = entry.getValue();
+                            fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+proportionReproduced+"\n");
                         }
                     }
                 }

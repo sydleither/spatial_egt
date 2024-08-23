@@ -72,7 +72,7 @@ public class Cell2D extends AgentSQ2Dunstackable<Model2D> {
 
     public HashMap<Integer,Double> Fs(int maxRadius) {
         HashMap<Integer,Double> fsList = new HashMap<Integer,Double>();
-        for (int radius = 1; radius < maxRadius; radius++) {
+        for (int radius = 1; radius <= maxRadius; radius++) {
             int[] neighborhood = Util.CircleHood(false, radius);
             int neighbors = MapOccupiedHood(neighborhood);
             if (neighbors == 0) {
