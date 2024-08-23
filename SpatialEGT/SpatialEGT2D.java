@@ -22,17 +22,18 @@ public class SpatialEGT2D {
             }
             HashMap<Integer,Double> fsListCell = cell.Fs(maxRadius);
             for (int radius = 1; radius <= maxRadius; radius++) {
-                List<Object> listEntry = Arrays.asList(cell.reproduced, radius, fsListCell.get(radius));
+                List<Object> listEntry = Arrays.asList(cell.reproduced, (double) radius, fsListCell.get(radius));
                 fsList.add(listEntry);
             }
         }
 
-        Map<List<Double>, Double> fsListBinned = new Hashmap<>();
-        Map<List<Double>, int> fsListBinnedCount = new Hashmap<>();
+        Map<List<Double>, Double> fsListBinned = new HashMap<>();
+        Map<List<Double>, Integer> fsListBinnedCount = new HashMap<>();
         for (List<Object> listEntry : fsList) {
-            double reproduced = listEntry.get(0) ? 1.0 : 0.0;
-            int radius = listEntry.get(1);
-            double fs = listEntry.get(2);
+            double reproduced = (boolean) listEntry.get(0) ? 1.0 : 0.0;
+            double radius = (double) listEntry.get(1);
+            double fs = (double) listEntry.get(2);
+            fs = Math.round(fs * Math.pow(10, 1)) / Math.pow(10, 1);
             List<Double> listBinnedEntry = Arrays.asList(radius, fs);
             if (fsListBinned.get(listBinnedEntry) == null) {
                 fsListBinned.put(listBinnedEntry, reproduced);
@@ -253,7 +254,7 @@ public class SpatialEGT2D {
                 if (writeFs) {
                     if (tick % writeFsFrequency == 0) {
                         Map<List<Double>, Double> fsList = GetFsList(model, 10);
-                        for (Map.Entry<Integer,Double> entry : fsList.entrySet()) {
+                        for (Map.Entry<List<Double>,Double> entry : fsList.entrySet()) {
                         List<Double> key = entry.getKey();
                         double proportionReproduced = entry.getValue();
                             fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+proportionReproduced+"\n");
