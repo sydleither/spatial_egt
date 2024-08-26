@@ -14,7 +14,7 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static Map<List<Double>, Double> GetFsList(Model2D model, int maxRadius) {
+    public static Map<List<Double>, List<Integer>> GetFsList(Model2D model, int maxRadius) {
         ArrayList<List<Object>> fsList = new ArrayList<List<Object>>();
         for (Cell2D cell: model) {
             if (cell.type == 0) {
@@ -27,28 +27,21 @@ public class SpatialEGT2D {
             }
         }
 
-        Map<List<Double>, Double> fsListBinned = new HashMap<>();
-        Map<List<Double>, Integer> fsListBinnedCount = new HashMap<>();
+        Map<List<Double>, List<Integer>> fsListBinned = new HashMap<>();
         for (List<Object> listEntry : fsList) {
-            double reproduced = (boolean) listEntry.get(0) ? 1.0 : 0.0;
+            int reproduced = (boolean) listEntry.get(0) ? 1 : 0;
             double radius = (double) listEntry.get(1);
             double fs = (double) listEntry.get(2);
-            fs = Math.round(fs * Math.pow(10, 1)) / Math.pow(10, 1);
-            List<Double> listBinnedEntry = Arrays.asList(radius, fs);
-            if (fsListBinned.get(listBinnedEntry) == null) {
-                fsListBinned.put(listBinnedEntry, reproduced);
-                fsListBinnedCount.put(listBinnedEntry, 1);
+            fs = Math.round(fs * Math.pow(10, 2)) / Math.pow(10, 2);
+            List<Double> listBinnedKey = Arrays.asList(radius, fs);
+            if (fsListBinned.get(listBinnedKey) == null) {
+                List<Integer> listBinnedEntry = Arrays.asList(reproduced, 1);
+                fsListBinned.put(listBinnedKey, listBinnedEntry);
             }
             else {
-                fsListBinned.put(listBinnedEntry, fsListBinned.get(listBinnedEntry)+reproduced);
-                fsListBinnedCount.put(listBinnedEntry, fsListBinnedCount.get(listBinnedEntry)+1);
+                List<Integer> listBinnedEntry = Arrays.asList(fsListBinned.get(listBinnedKey).get(0)+reproduced, fsListBinned.get(listBinnedKey).get(1)+1);
+                fsListBinned.put(listBinnedKey, listBinnedEntry);
             }
-        }
-
-        for (Map.Entry<List<Double>, Double> entry : fsListBinned.entrySet()) {
-            List<Double> key = entry.getKey();
-            double numReproduced = entry.getValue();
-            fsListBinned.put(key, numReproduced/fsListBinnedCount.get(key));
         }
 
         return fsListBinned;
@@ -215,7 +208,7 @@ public class SpatialEGT2D {
         FileIO fsOut = null;
         if (writeFs) {
             fsOut = new FileIO(saveLoc+"fs.csv", "w");
-            fsOut.Write("model,time,radius,fs,proportion_reproduced\n");
+            fsOut.Write("model,time,radius,fs,reproduced,total\n");
         }
         
         // run models
@@ -253,11 +246,11 @@ public class SpatialEGT2D {
                 }
                 if (writeFs) {
                     if (tick % writeFsFrequency == 0) {
-                        Map<List<Double>, Double> fsList = GetFsList(model, 10);
-                        for (Map.Entry<List<Double>,Double> entry : fsList.entrySet()) {
+                        Map<List<Double>, List<Integer>> fsList = GetFsList(model, 10);
+                        for (Map.Entry<List<Double>,List<Integer>> entry : fsList.entrySet()) {
                         List<Double> key = entry.getKey();
-                        double proportionReproduced = entry.getValue();
-                            fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+proportionReproduced+"\n");
+                        List<Integer> value = entry.getValue();
+                            fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+value.get(0)+","+value.get(1)+"\n");
                         }
                     }
                 }
