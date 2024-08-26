@@ -172,7 +172,7 @@ if __name__ == "__main__":
         for i in range(len(games)):
             names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
             s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=0, turnover=0.009,
-                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=500, radius=3)
+                                 init_cells=1250, prop_res=0.5, runtime=100, runContinuous=0, writePcFrequency=25, radius=3)
             submit_output += s
             analysis_output += a
     elif experiment_name == "at_paramsweep":
@@ -194,9 +194,9 @@ if __name__ == "__main__":
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
         s, a = initial_games(experiment_name, names, bmws, bwms, runNull=1,
-                                radius=1, runAdaptive=1, writePcFrequency=0, writeFsFrequency=1,
-                                drug_reduction=0.9, init_cells=11250, prop_res=0.01, 
-                                adaptiveTreatmentThreshold=0.3, runtime=5000)
+                                radius=1, runAdaptive=1, writePcFrequency=0, writeFsFrequency=100,
+                                drug_reduction=0.9, init_cells=11250, prop_res=0.01,
+                                adaptiveTreatmentThreshold=0.3, runtime=1000)
         submit_output += s
         analysis_output += a
     else:
