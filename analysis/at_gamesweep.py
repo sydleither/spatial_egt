@@ -3,6 +3,7 @@ import json
 import sys
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -12,11 +13,11 @@ from common import read_specific
 COLORS = ["#509154", "#A9561E", "#77BCFD", "#B791D4", "#EEDD5D", "#738696", "#24BCA8", "#D34A4F", "#8D81FE", "#FDA949"]
 
 
-def plot_r_by_fs(df, exp_dir, exp_name, dimension, model, times):
+def plot_r_by_fs(df, exp_dir, exp_name, dimension, model):
     df = df.loc[df["model"] == model]
-    df = df.loc[df["time"].isin(times)]
     fig, ax = plt.subplots()
-    sns.lineplot(data=df, x="radius", y="fs", weights="total", orient="x", ax=ax, hue="time", palette=COLORS[0:len(times)])
+    sns.lineplot(data=df, x="radius", y="fs", orient="x", ax=ax, hue="time", palette=COLORS)
+    #sns.lineplot(data=df, x="radius", y="fs", orient="x", ax=ax, hue="time", palette=COLORS)
     ax.set(xlabel="Radius", ylabel="Fraction Sensitive", title=f"{exp_name} {model} {dimension}")
     ax.set(ylim=(0, 1))
     fig.patch.set_alpha(0.0)
@@ -24,16 +25,22 @@ def plot_r_by_fs(df, exp_dir, exp_name, dimension, model, times):
     fig.savefig(f"output/{exp_dir}/{exp_name}/rfs_{model}{dimension}.png")
 
 
-def plot_fs_by_gr(df, exp_dir, exp_name, dimension, model, times):
+def plot_fs_by_gr(df, exp_dir, exp_name, dimension, model, limit_radii=False):
     df = df.loc[df["model"] == model]
-    #df = df.loc[df["time"].isin(times)]
-    radii = sorted(df["radius"].unique())
-    fig, ax = plt.subplots(1, len(radii), figsize=(30, 3))
-    for j,radius in enumerate(radii):
-        # sns.lineplot(data=df.loc[df["radius"] == radius], x="fs", y="gr", 
-        #              hue="time", orient="x", ax=ax[j], palette=COLORS[0:len(times)])
-        sns.lineplot(data=df.loc[df["radius"] == radius], x="fs", y="gr", weights="total", orient="x", ax=ax[j], color=COLORS[0])
-        ax[j].set(title=radius, xlim=(0, 1), ylim=(0, 0.05))
+    if limit_radii:
+        radii = [1,2,3,4,5]
+        fig_width = 15
+    else:
+        radii = sorted(df["radius"].unique())
+        fig_width = 30
+    fig, ax = plt.subplots(1, len(radii), figsize=(fig_width, 3))
+    for i,radius in enumerate(radii):
+        df_r = df.loc[df["radius"] == radius]
+        #sns.lineplot(data=df_r, x="fs", y="gr", orient="x", ax=ax[j], color=COLORS[0])
+        for j,time in enumerate(df_r["time"].unique()):
+            df_rt = df_r.loc[df_r["time"] == time]
+            ax[i].scatter(x=df_rt["fs"], y=df_rt["gr"], color=COLORS[j], alpha=0.66)
+        ax[i].set(title=radius, xlim=(0, 1), ylim=(0, 0.1))
     fig.supxlabel("Fraction Sensitive")
     fig.supylabel("Resistant Growth Rate")
     fig.suptitle(f"{exp_name} {model} {dimension}")
@@ -42,14 +49,13 @@ def plot_fs_by_gr(df, exp_dir, exp_name, dimension, model, times):
     fig.savefig(f"output/{exp_dir}/{exp_name}/fsgr_{model}{dimension}.png")
 
 
-def plot_r_by_gr(df, exp_dir, exp_name, dimension, model, times):
+def plot_r_by_gr(df, exp_dir, exp_name, dimension, model):
     df = df.loc[df["model"] == model]
-    df = df.loc[df["time"].isin(times)]
     fig, ax = plt.subplots(figsize=(16,8))
-    sns.boxplot(data=df, x="time", y="delta_gr", hue="radius", notch=True, ax=ax, palette=COLORS)
+    sns.boxplot(data=df, x="radius", y="delta_gr", notch=True, ax=ax, color=COLORS[0])
     ax.axhline(0, linestyle="dashed", color="black", linewidth=0.5)
-    ax.set(xlabel="Time", ylabel="Delta Resistant Growth Rate", title=f"{exp_name} {model} {dimension}")
-    ax.set(ylim=(-1, 1.5))
+    ax.set(xlabel="Radius", ylabel="Delta Resistant Growth Rate", title=f"{exp_name} {model} {dimension}")
+    ax.set(ylim=(-1, 1))
     fig.patch.set_alpha(0.0)
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     fig.savefig(f"output/{exp_dir}/{exp_name}/rgr_{model}{dimension}.png")
@@ -58,17 +64,15 @@ def plot_r_by_gr(df, exp_dir, exp_name, dimension, model, times):
 def main(exp_dir, exp_name, dimension):
     config = json.load(open(f"output/{exp_dir}/{exp_name}/{exp_name}.json"))
     df_fs = read_specific(exp_dir, exp_name, dimension, "fs")
-    df_pop = read_specific(exp_dir, exp_name, dimension, "populations")
-    df = df_fs.merge(df_pop, on=["model", "time", "rep"])
-    df = df.loc[(df["sensitive"] > 0) & (df["resistant"] > 0)]
-    df["gr"] = df["reproduced"] / df["total"]
+    df_fs = df_fs.loc[(df_fs["time"] > 0) & (df_fs["time"] <= 1500)]
+    df_fs["gr"] = (df_fs["reproduced"] / df_fs["total"])
+    df = df_fs[["model", "time", "radius", "fs", "reproduced", "total", "gr"]].groupby(["model", "time", "radius", "fs"]).mean().reset_index()
     df["delta_gr"] = (df["gr"] - config["D"]) / config["D"]
 
-    times = [100, 500, 1000]
     for model in df["model"].unique():
-        plot_r_by_fs(df, exp_dir, exp_name, dimension, model, times)
-        plot_fs_by_gr(df, exp_dir, exp_name, dimension, model, times)
-        plot_r_by_gr(df, exp_dir, exp_name, dimension, model, times)
+        plot_r_by_fs(df, exp_dir, exp_name, dimension, model)
+        plot_fs_by_gr(df, exp_dir, exp_name, dimension, model, limit_radii=True)
+        plot_r_by_gr(df, exp_dir, exp_name, dimension, model)
 
 
 def theoretical_main(exp_dir, exp_name, dimension):
@@ -100,9 +104,9 @@ def theoretical_main(exp_dir, exp_name, dimension):
     df["delta_gr"] = (df["gr"] - d) / d
     df = df.drop_duplicates()
 
-    plot_r_by_fs(df, exp_dir, exp_name, dimension, "theoretical", [0])
-    plot_fs_by_gr(df, exp_dir, exp_name, dimension, "theoretical", [0])
-    plot_r_by_gr(df, exp_dir, exp_name, dimension, "theoretical", [0])
+    plot_r_by_fs(df, exp_dir, exp_name, dimension, "theoretical")
+    plot_fs_by_gr(df, exp_dir, exp_name, dimension, "theoretical", limit_radii=True)
+    plot_r_by_gr(df, exp_dir, exp_name, dimension, "theoretical")
 
 
 if __name__ == "__main__":
