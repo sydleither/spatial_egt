@@ -76,6 +76,7 @@ public class SpatialEGT3D {
         int runAdaptive = (int) params.get("adaptive");
         int writePopFrequency = (int) params.get("writePopFrequency");
         int writePcFrequency = (int) params.get("writePcFrequency");
+        int writeFsFrequency = (int) params.get("writeFsFrequency");
         int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
@@ -85,6 +86,7 @@ public class SpatialEGT3D {
         int numCells = (int) params.get("numCells");
         double proportionResistant = (double) params.get("proportionResistant");
         double adaptiveTreatmentThreshold = (double) params.get("adaptiveTreatmentThreshold");
+        int initialTumor = (int) params.get("initialTumor");
         double[][] payoff = new double[2][2];
         payoff[0][0] = (double) params.get("A");
         payoff[0][1] = (double) params.get("B");
@@ -122,6 +124,7 @@ public class SpatialEGT3D {
         }
         FileIO pcOut = null;
         if (writePc) {
+            return;
             pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
             pcOut.Write("model,time,pair,measure,distance,count\n");
         }
