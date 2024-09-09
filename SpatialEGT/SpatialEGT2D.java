@@ -222,6 +222,8 @@ public class SpatialEGT2D {
             else if (initialTumor == 3)
                 model.InitTumorConcave(numCells, proportionResistant);
             else if (initialTumor == 4)
+                model.InitTumorCircle(numCells, proportionResistant);
+            else if (initialTumor == 5)
                 model.InitTumorCluster(numCells, proportionResistant);
             else
                 model.InitTumorRandom(numCells, proportionResistant);
