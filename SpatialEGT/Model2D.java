@@ -57,12 +57,15 @@ public class Model2D extends AgentGrid2D<Cell2D> {
     public void InitTumorCircle(int numCells, double radius) {
         this.startingPop = numCells;
 
-        Cell2D startingResistant = NewAgentSQ((int)Math.floor((xDim/2)), (int)Math.floor((yDim/2)));
+        int midX = (int)Math.floor((xDim/2));
+        int midY = (int)Math.floor((yDim/2));
+        NewAgentSQ(midX, midY).Init(1);
+        Cell2D startingResistant = GetAgent(midX, midY);
         int[] circle = Util.CircleHood(false, radius);
         int circleCoords = startingResistant.MapHood(circle);
 
         for (int i = 0; i < circleCoords; i++) {
-            NewAgentSQ(i).Init(1);
+            NewAgentSQ(circle[i]).Init(1);
         }
 
         int sqrtNumCells = (int)Math.floor(Math.sqrt(numCells));

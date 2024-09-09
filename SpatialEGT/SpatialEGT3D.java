@@ -124,7 +124,6 @@ public class SpatialEGT3D {
         }
         FileIO pcOut = null;
         if (writePc) {
-            return;
             pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
             pcOut.Write("model,time,pair,measure,distance,count\n");
         }
