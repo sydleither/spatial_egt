@@ -17,6 +17,7 @@ def read_specific(exp_dir, exp_name, dimension, file_name):
             print(f"File not found for rep {rep_dir}")
             continue
         df_i = pd.read_csv(result_file)
+        df_i["dimension"] = dimension
         df_i["rep"] = int(rep_dir)
         df = pd.concat([df, df_i])
     return df
@@ -29,22 +30,9 @@ def read_all(exp_dir, file_name, dimension=""):
         run_path = f"{exp_path}/{exp_name}"
         if os.path.isfile(run_path):
                 continue
-        for rep_dir in os.listdir(run_path):
-            rep_path = f"{run_path}/{rep_dir}"
-            if os.path.isfile(rep_path):
-                continue
-            for result_file in os.listdir(rep_path):
-                result_path = f"{rep_path}/{result_file}"
-                if not result_file.endswith(f"{file_name}.csv") or not result_file.startswith(dimension):
-                    continue
-                if not os.path.exists(result_path) or os.path.getsize(result_path) == 0:
-                    print(f"File not found: {result_path}")
-                    continue
-                df_i = pd.read_csv(result_path)
-                df_i["rep"] = int(rep_dir)
-                df_i["condition"] = exp_name
-                df_i["dimension"] = result_file[0:2]
-                df = pd.concat([df, df_i])
+        df_i = read_specific(exp_dir, exp_name, dimension, file_name)
+        df_i["condition"] = exp_name
+        df = pd.concat([df, df_i])
     return df
 
 
@@ -92,3 +80,8 @@ def permutation_test(data1, data2, num_permutations=1000, verbose=False):
         print(f"\tObserved mean diff: {observed_mean}")
         print(f"\tAverage permutated mean diff: {np.mean(permutated_means)}")
     return p
+
+
+def get_colors():
+    return ["#509154", "#A9561E", "#77BCFD", "#B791D4", "#EEDD5D",
+            "#738696", "#24BCA8", "#D34A4F", "#8D81FE", "#FDA949"]

@@ -4,19 +4,17 @@ import sys
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from common import read_specific
+from common import get_colors, read_specific
 
 
-COLORS = ["#509154", "#A9561E", "#77BCFD", "#B791D4", "#EEDD5D",
-          "#738696", "#24BCA8", "#D34A4F", "#8D81FE", "#FDA949"]
+COLORS = get_colors()
 
 
 def boundary_r(df, exp_dir, exp_name, dimension, model, time):
-    df = df.loc[(df["model"] == model) & (df["time"] == time)]
+    df = df.loc[(df["model"] == model) & (df["time"] == time) & (df["radius"] <= 5)]
     df = df[["rep", "radius", "total_boundary", "resistant"]].drop_duplicates()
     df["s_in_neighborhood"] = df["total_boundary"] / df["resistant"]
     
@@ -47,7 +45,7 @@ def get_possible_fs(radius):
 
 def fs_dist(df, exp_dir, exp_name, dimension, model, radius, time):
     df = df.loc[(df["model"] == model) & (df["time"] == time) & (df["radius"] == radius)]
-    if radius > 1:
+    if radius > 1 and model != "theoretical":
         df_fs = pd.MultiIndex.from_product([
                 df["rep"].unique(),
                 get_possible_fs(radius)],
@@ -59,10 +57,16 @@ def fs_dist(df, exp_dir, exp_name, dimension, model, radius, time):
     sns.barplot(df, x="fs", y="normalized_total", errorbar="ci", color=COLORS[0], ax=ax)
     if radius > 1:
         ax.xaxis.set_major_locator(ticker.LinearLocator(10))
-    ax.set(ylim=(0, 0.5/radius),
-           xlabel=f"Fraction Sensitive In Radius {radius} from Resistant", 
-           ylabel="Proportion of Boundary Resistant", 
-           title=f"{exp_name} {model} {dimension} at tick {time}")
+    if model == "theoretical":
+        ax.set(ylim=(0, 0.05),
+           xlabel=f"Fraction Sensitive in Radius {radius} from Resistant", 
+           ylabel="Growth Rate", 
+           title=f"{exp_name} {model} {dimension}")
+    else:
+        ax.set(ylim=(0, 0.5/radius),
+            xlabel=f"Fraction Sensitive in Radius {radius} from Resistant", 
+            ylabel="Proportion of Boundary Resistant", 
+            title=f"{exp_name} {model} {dimension} at tick {time}")
     fig.patch.set_alpha(0.0)
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     fig.savefig(f"output/{exp_dir}/{exp_name}/fs_{model}{dimension}_r{radius}t{time}.png")
@@ -78,15 +82,55 @@ def main(exp_dir, exp_name, dimension):
     df = df.merge(df_grp, on=df_key)
     df["normalized_total"] = df["total"] / df["total_boundary"]
 
-    fs_dist(df, exp_dir, exp_name, dimension, "nodrug", 3, 500)
+    times = list(df["time"].unique())
+    times.remove(0)
+    radii = [1, 2, 3]
+    for time in times:
+        for radius in radii:
+            fs_dist(df, exp_dir, exp_name, dimension, "nodrug", radius, time)
 
     df_pop = read_specific(exp_dir, exp_name, dimension, "populations")
     df = df.merge(df_pop, on=["model", "rep", "time"])
-    boundary_r(df, exp_dir, exp_name, dimension, "nodrug", 500)
+    for time in times:
+        boundary_r(df, exp_dir, exp_name, dimension, "nodrug", time)
+
+
+def theoretical_main(exp_dir, exp_name, dimension):
+    config = json.load(open(f"output/{exp_dir}/{exp_name}/{exp_name}.json"))
+    a = config["A"]
+    b = config["B"]
+    c = config["C"]
+    d = config["D"]
+
+    radius_areas = {1:4, 2:12, 3:28, 4:48, 5:80}
+    df_dict = {"radius":[], "fs":[], "resistant_gr":[]}
+    for radius, radius_area in radius_areas.items():
+        types_in_radius = [x for x in product(range(radius_area+1), repeat=3) if sum(x) == radius_area]
+        for num_empty, num_sensitive, num_resistant in types_in_radius:
+            total_cells = num_sensitive+num_resistant
+            if total_cells == 0:
+                continue
+            df_dict["radius"].append(radius)
+            df_dict["fs"].append(num_sensitive/total_cells)
+            df_dict["resistant_gr"].append(((num_sensitive*c) + (num_resistant*d))/total_cells)
+    df = pd.DataFrame(df_dict)
+    df["model"] = "theoretical"
+    df["rep"] = 0
+    df["time"] = 0
+    df["total"] = 1
+    df["fs"] = df["fs"].round(2)
+    df["resistant_gr"] = df["resistant_gr"].round(3)
+
+    df["normalized_total"] = df["resistant_gr"]
+    for radius in [1, 2, 3]:
+        fs_dist(df, exp_dir, exp_name, dimension, "theoretical", radius, 0)
 
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(sys.argv[1], sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 5:
+        theoretical_main(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
-        print("Please provide an experiment directory, experiment name, and dimension.")
+        print("Please provide an experiment directory, experiment name, \
+              dimension, and optionally a flag to run theoretical analysis.")
