@@ -18,15 +18,15 @@ def boundary_r(df, exp_dir, exp_name, dimension, model, time):
     df = df[["rep", "radius", "total_boundary", "resistant"]].drop_duplicates()
     df["s_in_neighborhood"] = df["total_boundary"] / df["resistant"]
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,6))
     sns.barplot(df, x="radius", y="s_in_neighborhood", errorbar="ci", color=COLORS[0], ax=ax)
     ax.set(ylim=(0, 1),
            xlabel="Neighborhood Radius", 
            ylabel="Proportion of Resistant Cells with a\nSensitive Cell in Their Neighborhood", 
            title=f"{exp_name} {model} {dimension} at tick {time}")
     fig.patch.set_alpha(0.0)
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    fig.savefig(f"output/{exp_dir}/{exp_name}/boundary_{model}{dimension}_t{time}.png")
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/{exp_name}/boundary_{model}{dimension}_t{time}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -53,7 +53,7 @@ def fs_dist(df, exp_dir, exp_name, dimension, model, radius, time):
         df = df.set_index(["rep", "fs"]).reindex(df_fs, fill_value=0).reset_index()
         df = df[["fs", "normalized_total", "rep"]]
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,6))
     sns.barplot(df, x="fs", y="normalized_total", errorbar="ci", color=COLORS[0], ax=ax)
     if radius > 1:
         ax.xaxis.set_major_locator(ticker.LinearLocator(10))
@@ -68,8 +68,24 @@ def fs_dist(df, exp_dir, exp_name, dimension, model, radius, time):
             ylabel="Proportion of Boundary Resistant", 
             title=f"{exp_name} {model} {dimension} at tick {time}")
     fig.patch.set_alpha(0.0)
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    fig.savefig(f"output/{exp_dir}/{exp_name}/fs_{model}{dimension}_r{radius}t{time}.png")
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/{exp_name}/fs_{model}{dimension}_r{radius}t{time}.png", bbox_inches="tight")
+    plt.close()
+
+
+def plot_average_fs(df, exp_name, exp_dir, dimension, model, time):
+    df = df.loc[(df["model"] == model) & (df["time"] == time) & (df["radius"] <= 5)]
+    df = df[["rep", "radius", "average_fs"]].drop_duplicates()
+
+    fig, ax = plt.subplots(figsize=(8,6))
+    sns.barplot(df, x="radius", y="average_fs", errorbar="ci", color=COLORS[0], ax=ax)
+    ax.set(ylim=(0, 0.5),
+           xlabel="Neighborhood Radius", 
+           ylabel="Average Fraction Sensitive", 
+           title=f"{exp_name} {model} {dimension} at tick {time}")
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/{exp_name}/avgfs_{model}{dimension}_t{time}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -77,15 +93,18 @@ def main(exp_dir, exp_name, dimension):
     df_key = ["model", "time", "radius", "rep"]
     df = read_specific(exp_dir, exp_name, dimension, "fs")
     df = df.loc[(df["fs"] < 1) & (df["fs"] > 0)]
-    df_grp = df[df_key+["total"]].groupby(df_key).sum().reset_index()
-    df_grp = df_grp.rename(columns={"total":"total_boundary"})
+    df["weighted_fs"] = df["fs"]*df["total"]
+    df_grp = df[df_key+["total", "weighted_fs"]].groupby(df_key).sum().reset_index()
+    df_grp = df_grp.rename(columns={"total":"total_boundary", "weighted_fs":"weighted_fs_sum"})
     df = df.merge(df_grp, on=df_key)
+    df["average_fs"] = df["weighted_fs_sum"]/df["total_boundary"]
     df["normalized_total"] = df["total"] / df["total_boundary"]
 
     times = list(df["time"].unique())
     times.remove(0)
     radii = [1, 2, 3]
     for time in times:
+        plot_average_fs(df, exp_name, exp_dir, dimension, "nodrug", time)
         for radius in radii:
             fs_dist(df, exp_dir, exp_name, dimension, "nodrug", radius, time)
 

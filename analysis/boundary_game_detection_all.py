@@ -5,10 +5,18 @@ warnings.filterwarnings("ignore")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
-import seaborn as sns
 
 from boundary_game_detection import get_possible_fs
-from common import get_colors, read_all
+from common import get_colors, plot_line, read_all
+
+
+def get_conditions_palette(conditions):
+    if len(conditions) > 10:
+        palette = ["lightgreen", "limegreen", "darkgreen", "sandybrown", "chocolate", "saddlebrown",
+                   "cyan", "darkturquoise", "cadetblue", "orchid", "mediumorchid", "darkorchid"]
+    else:
+        palette = get_colors()
+    return palette
 
 
 def fs_dist(df, exp_dir, dimension, model, radius, time):
@@ -23,14 +31,9 @@ def fs_dist(df, exp_dir, dimension, model, radius, time):
     df["fs"] = df["fs"].astype(str)
     df = df[["fs", "normalized_total", "rep", "condition"]]
 
-    conditions = sorted(df["condition"].unique())
-    if len(conditions) > 10:
-        palette = ["lightgreen", "limegreen", "darkgreen", "sandybrown", "chocolate", "saddlebrown",
-                   "cyan", "darkturquoise", "cadetblue", "orchid", "mediumorchid", "darkorchid"]
-    else:
-        palette = get_colors()
-
     ylims = {1:0.6, 2:0.2, 3:0.1}
+    conditions = sorted(df["condition"].unique())
+    palette = get_conditions_palette(conditions)
 
     fig, ax = plt.subplots(figsize=(8,6))
     for c,condition in enumerate(conditions):
@@ -50,25 +53,48 @@ def fs_dist(df, exp_dir, dimension, model, radius, time):
     plt.close()
 
 
+def boundary_r(df, exp_dir, dimension, model, time):
+    df = df.loc[(df["model"] == model) & (df["time"] == time) & (df["radius"] <= 5)]
+    df = df[["condition", "rep", "radius", "total_boundary", "resistant"]].drop_duplicates()
+    df["s_in_neighborhood"] = df["total_boundary"] / df["resistant"]
+
+    conditions = sorted(df["condition"].unique())
+    palette = get_conditions_palette(conditions)
+    
+    fig, ax = plt.subplots(figsize=(8,6))
+    for c,condition in enumerate(conditions):
+        df_cond = df.loc[df["condition"] == condition]
+        plot_line(ax, df_cond, "radius", "s_in_neighborhood", palette[c], condition)
+    ax.set(ylim=(0, 1),
+           xlabel="Neighborhood Radius", 
+           ylabel="Proportion of Resistant Cells with a\nSensitive Cell in Their Neighborhood", 
+           title=f"{exp_dir} {model} {dimension} at tick {time}")
+    ax.legend()
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/boundary_{model}{dimension}_t{time}.png", bbox_inches="tight")
+    plt.close()
+
+
 def plot_average_fs(df, exp_dir, dimension, model, time):
     df = df.loc[(df["model"] == model) & (df["time"] == time) & (df["radius"] <= 5)]
     df = df[["condition", "rep", "radius", "average_fs"]].drop_duplicates()
 
     conditions = sorted(df["condition"].unique())
-    if len(conditions) > 10:
-        palette = ["lightgreen", "limegreen", "darkgreen", "sandybrown", "chocolate", "saddlebrown",
-                   "cyan", "darkturquoise", "cadetblue", "orchid", "mediumorchid", "darkorchid"]
-    else:
-        palette = get_colors()
+    palette = get_conditions_palette(conditions)
 
-    fig, ax = plt.subplots(figsize=(10,8))
-    sns.lineplot(df, x="radius", y="average_fs", hue="condition", hue_order=conditions, errorbar="ci", palette=palette, ax=ax)
-    ax.set(xlabel="Neighborhood Radius", 
+    fig, ax = plt.subplots(figsize=(8,6))
+    for c,condition in enumerate(conditions):
+        df_cond = df.loc[df["condition"] == condition]
+        plot_line(ax, df_cond, "radius", "average_fs", palette[c], condition)
+    ax.set(ylim=(0, 1),
+           xlabel="Neighborhood Radius", 
            ylabel="Average Fraction Sensitive", 
            title=f"{exp_dir} {model} {dimension} at tick {time}")
+    ax.legend()
     fig.patch.set_alpha(0.0)
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    fig.savefig(f"output/{exp_dir}/avgfs_{model}{dimension}_t{time}.png")
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/avgfs_{model}{dimension}_t{time}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -90,6 +116,11 @@ def main(exp_dir, dimension):
         plot_average_fs(df, exp_dir, dimension, "nodrug", time)
         for radius in radii:
             fs_dist(df, exp_dir, dimension, "nodrug", radius, time)
+
+    df_pop = read_all(exp_dir, "populations", dimension)
+    df = df.merge(df_pop, on=["model", "condition", "rep", "time"])
+    for time in times:
+        boundary_r(df, exp_dir, dimension, "nodrug", time)
 
 
 if __name__ == "__main__":
