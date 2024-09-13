@@ -92,7 +92,7 @@ def plot_average_fs(df, exp_name, exp_dir, dimension, model, time):
 def main(exp_dir, exp_name, dimension):
     df_key = ["model", "time", "radius", "rep"]
     df = read_specific(exp_dir, exp_name, dimension, "fs")
-    df = df.loc[(df["fs"] < 1) & (df["fs"] > 0)]
+    df = df.loc[df["fs"] > 0]
     df["weighted_fs"] = df["fs"]*df["total"]
     df_grp = df[df_key+["total", "weighted_fs"]].groupby(df_key).sum().reset_index()
     df_grp = df_grp.rename(columns={"total":"total_boundary", "weighted_fs":"weighted_fs_sum"})
