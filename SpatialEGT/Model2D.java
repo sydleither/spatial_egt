@@ -54,29 +54,33 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         }
     }
 
-    public void InitTumorCircle(int numCells, double radius) {
-        this.startingPop = numCells;
-
-        int midX = (int)Math.floor((xDim/2));
-        int midY = (int)Math.floor((yDim/2));
-        NewAgentSQ(midX, midY).Init(1);
-        Cell2D startingResistant = GetAgent(midX, midY);
-        int[] circle = Util.CircleHood(false, radius);
-        int circleCoords = startingResistant.MapHood(circle);
-
-        for (int i = 0; i < circleCoords; i++) {
-            NewAgentSQ(circle[i]).Init(1);
-        }
-
-        int sqrtNumCells = (int)Math.floor(Math.sqrt(numCells));
-        int startLoc = (int)Math.floor((xDim/2)) - (int)Math.floor((sqrtNumCells/2));
-        for (int x = startLoc; x < startLoc+sqrtNumCells; x++) {
-            for (int y = startLoc; y < startLoc+sqrtNumCells; y++) {
-                if (PopAt(x, y) == 0) {
+    public void InitTumorCircle(int numCells, double proportionResistant, int gap) {
+        int tumorLength = (int)Math.floor(Math.sqrt(numCells));
+        int halfTumorLength = (int)Math.floor(tumorLength/2);
+        int startLoc = (int)Math.floor(xDim/2) - halfTumorLength;
+        int numResistant = (int)(numCells * proportionResistant);
+        int radius = (int)Math.round(Math.sqrt(numResistant/Math.PI));
+        int gapRadius = radius+gap;
+        int i = 0;
+        for (int x = startLoc+gap; x < startLoc+tumorLength-gap; x++) {
+            for (int y = startLoc+gap; y < startLoc+tumorLength-gap; y++) {
+                int relativeX = x - startLoc - halfTumorLength;
+                int relativeY = y - startLoc - halfTumorLength;
+                boolean inGap = Math.pow(relativeX, 2) + Math.pow(relativeY, 2) <= Math.pow(gapRadius, 2);
+                boolean inResistantCircle = Math.pow(relativeX, 2) + Math.pow(relativeY, 2) <= Math.pow(radius, 2);
+                if (inGap && !inResistantCircle) {
+                    continue;
+                }
+                else if (inResistantCircle) {
+                    NewAgentSQ(x, y).Init(1);
+                }
+                else {
                     NewAgentSQ(x, y).Init(0);
                 }
+                i++;
             }
         }
+        this.startingPop = i;
     }
 
     public void InitTumorCluster(int numCells, double proportionResistant) {
