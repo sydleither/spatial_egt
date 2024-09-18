@@ -217,15 +217,13 @@ public class SpatialEGT2D {
             String modelName = modelEntry.getKey();
             Model2D model = modelEntry.getValue();
             if (initialTumor == 1)
-                model.InitTumorLinear(numCells, proportionResistant);
+                model.InitTumorLinear(proportionResistant, toyGap);
             else if (initialTumor == 2)
                 model.InitTumorConvex(numCells, proportionResistant);
             else if (initialTumor == 3)
                 model.InitTumorConcave(numCells, proportionResistant);
             else if (initialTumor == 4)
-                model.InitTumorCircle(numCells, proportionResistant, toyGap);
-            else if (initialTumor == 5)
-                model.InitTumorCluster(numCells, proportionResistant);
+                model.InitTumorCircle(proportionResistant, toyGap);
             else
                 model.InitTumorRandom(numCells, proportionResistant);
 
