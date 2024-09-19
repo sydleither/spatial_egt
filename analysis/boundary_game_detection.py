@@ -114,6 +114,16 @@ def main(exp_dir, exp_name, dimension):
         boundary_r(df, exp_dir, exp_name, dimension, "nodrug", time)
 
 
+def fs_hist(df, exp_dir, exp_name, dimension, radius):
+    df = df.loc[(df["radius"] == radius)]
+    fig, ax = plt.subplots()
+    sns.histplot(data=df, x="fs", color=COLORS[0], binwidth=0.01, ax=ax)
+    ax.xaxis.set_major_locator(ticker.LinearLocator(10))
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/{exp_name}/fshist{dimension}.png", bbox_inches="tight")
+
+
 def theoretical_main(exp_dir, exp_name, dimension):
     config = json.load(open(f"output/{exp_dir}/{exp_name}/{exp_name}.json"))
     a = config["A"]
