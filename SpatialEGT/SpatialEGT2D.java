@@ -153,6 +153,7 @@ public class SpatialEGT2D {
         double proportionResistant = (double) params.get("proportionResistant");
         double adaptiveTreatmentThreshold = (double) params.get("adaptiveTreatmentThreshold");
         int initialTumor = (int) params.get("initialTumor");
+        int toyGap = (int) params.get("toyGap");
         double[][] payoff = new double[2][2];
         payoff[0][0] = (double) params.get("A");
         payoff[0][1] = (double) params.get("B");
@@ -216,15 +217,13 @@ public class SpatialEGT2D {
             String modelName = modelEntry.getKey();
             Model2D model = modelEntry.getValue();
             if (initialTumor == 1)
-                model.InitTumorLinear(numCells, proportionResistant);
+                model.InitTumorLinear(proportionResistant, toyGap);
             else if (initialTumor == 2)
                 model.InitTumorConvex(numCells, proportionResistant);
             else if (initialTumor == 3)
                 model.InitTumorConcave(numCells, proportionResistant);
             else if (initialTumor == 4)
-                model.InitTumorCircle(numCells, proportionResistant);
-            else if (initialTumor == 5)
-                model.InitTumorCluster(numCells, proportionResistant);
+                model.InitTumorCircle(proportionResistant, toyGap);
             else
                 model.InitTumorRandom(numCells, proportionResistant);
 

@@ -54,73 +54,49 @@ public class Model2D extends AgentGrid2D<Cell2D> {
         }
     }
 
-    public void InitTumorCircle(int numCells, double radius) {
-        this.startingPop = numCells;
-
-        int midX = (int)Math.floor((xDim/2));
-        int midY = (int)Math.floor((yDim/2));
-        NewAgentSQ(midX, midY).Init(1);
-        Cell2D startingResistant = GetAgent(midX, midY);
-        int[] circle = Util.CircleHood(false, radius);
-        int circleCoords = startingResistant.MapHood(circle);
-
-        for (int i = 0; i < circleCoords; i++) {
-            NewAgentSQ(circle[i]).Init(1);
-        }
-
-        int sqrtNumCells = (int)Math.floor(Math.sqrt(numCells));
-        int startLoc = (int)Math.floor((xDim/2)) - (int)Math.floor((sqrtNumCells/2));
-        for (int x = startLoc; x < startLoc+sqrtNumCells; x++) {
-            for (int y = startLoc; y < startLoc+sqrtNumCells; y++) {
-                if (PopAt(x, y) == 0) {
-                    NewAgentSQ(x, y).Init(0);
+    public void InitTumorCircle(double proportionResistant, int gap) {
+        //TODO has issue of sensitive cells being removed by radius gap
+        //so proportion resistant is not right
+        int tumorLength = xDim-2*gap;
+        int halfTumorLength = (int)Math.round(tumorLength/2);
+        int startLoc = gap;
+        int numResistant = (int)(Math.pow(tumorLength, 2) * proportionResistant);
+        int radius = (int)Math.round(Math.sqrt(numResistant/Math.PI));
+        int gapRadius = radius+gap;
+        int i = 0;
+        for (int x = startLoc; x < startLoc+tumorLength; x++) {
+            for (int y = startLoc; y < startLoc+tumorLength; y++) {
+                int relativeX = x - startLoc - halfTumorLength;
+                int relativeY = y - startLoc - halfTumorLength;
+                boolean inGap = Math.pow(relativeX, 2) + Math.pow(relativeY, 2) <= Math.pow(gapRadius, 2);
+                boolean inResistantCircle = Math.pow(relativeX, 2) + Math.pow(relativeY, 2) <= Math.pow(radius, 2);
+                if (inGap && !inResistantCircle) {
+                    continue;
                 }
-            }
-        }
-    }
-
-    public void InitTumorCluster(int numCells, double proportionResistant) {
-        this.startingPop = numCells;
-
-        //resistant cluster
-        int numResistant = (int)(numCells * proportionResistant);
-        int sqrtNumResistant = (int)Math.floor(Math.sqrt(numResistant));
-        int startLoc = (int)Math.floor((xDim/2)) - (int)Math.floor((sqrtNumResistant/2));
-
-        int resistantPlaced = 0;
-        for (int x = startLoc; x < startLoc+sqrtNumResistant; x++) {
-            for (int y = startLoc; y < startLoc+sqrtNumResistant; y++) {
-                if (resistantPlaced < numResistant) {
+                if (inResistantCircle) {
                     NewAgentSQ(x, y).Init(1);
                 }
-                resistantPlaced++;
+                else {
+                    NewAgentSQ(x, y).Init(0);
+                }
+                i++;
             }
         }
-
-        //create and place sensitive cells on random positions in grid
-        int gridSize = xDim * yDim;
-        int[] startingPositions = new int[gridSize];
-        for (int i = 0; i < gridSize; i++) {
-            if (PopAt(i) == 0) {
-                startingPositions[i] = i;
-            }
-        }
-        rng.Shuffle(startingPositions);
-
-        int numSensitive = numCells - resistantPlaced;
-        for (int i = 0; i < numSensitive; i++) {
-            NewAgentSQ(startingPositions[i]).Init(0);
-        }
+        this.startingPop = i;
     }
 
-    public void InitTumorLinear(int numCells, double proportionResistant) {
-        int numResistant = (int)(numCells * proportionResistant);
-        int sqrtNumCells = (int)Math.floor(Math.sqrt(numCells));
-        int startLoc = (int)Math.floor((xDim/2)) - (int)Math.floor((sqrtNumCells/2));
+    public void InitTumorLinear(double proportionResistant, int gap) {
+        int startLoc = gap;
+        int endLoc = xDim - gap;
+        int gapStart = (int)Math.ceil((xDim*proportionResistant)) - (int)Math.ceil(gap/2) - 1;
+        int gapEnd = (int)Math.ceil((xDim*proportionResistant)) + (int)Math.floor(gap/2);
         int i = 0;
-        for (int x = startLoc; x < startLoc+sqrtNumCells; x++) {
-            for (int y = startLoc; y < startLoc+sqrtNumCells; y++) {
-                if (i < numResistant) {
+        for (int x = startLoc; x < endLoc; x++) {
+            for (int y = startLoc; y < endLoc; y++) {
+                if (x >= gapStart && x < gapEnd) {
+                    continue;
+                }
+                if (x < gapStart) {
                     NewAgentSQ(x, y).Init(1);
                 }
                 else {

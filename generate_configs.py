@@ -5,7 +5,7 @@ import sys
 
 def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                       writePcFrequency, numTicks, radius, deathRate, drugGrowthReduction, numCells, 
-                      proportionResistant, adaptiveTreatmentThreshold, initialTumor, payoff):
+                      proportionResistant, adaptiveTreatmentThreshold, initialTumor, toyGap, payoff):
     config = {
         "null": runNull,
         "adaptive": runAdaptive,
@@ -24,6 +24,7 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
         "proportionResistant": proportionResistant,
         "adaptiveTreatmentThreshold": adaptiveTreatmentThreshold,
         "initialTumor": initialTumor,
+        "toyGap": toyGap,
         "A": payoff[0],
         "B": payoff[1],
         "C": payoff[2],
@@ -37,7 +38,7 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
 
 def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1, writeFsFrequency=0,
                   writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
-                  adaptiveTreatmentThreshold=0.5, initialTumor=0, runtime=50000):
+                  adaptiveTreatmentThreshold=0.5, initialTumor=0, toyGap=5, runtime=50000):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -55,7 +56,7 @@ def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0,
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
         experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                           writePcFrequency, runtime, radius, turnover, drug_reduction, init_cells, 
-                          prop_res, adaptiveTreatmentThreshold, initialTumor, payoff)
+                          prop_res, adaptiveTreatmentThreshold, initialTumor, toyGap, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -64,7 +65,7 @@ def initial_games(exp_dir, names, bmws, bwms, gw=0.03, runNull=1, runAdaptive=0,
 
 def custom_games(exp_dir, names, a, b, c, d, runNull=1, runAdaptive=0, runContinuous=1, writePopFrequency=1, writeFsFrequency=0,
                   writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
-                  adaptiveTreatmentThreshold=0.5, initialTumor=0, runtime=500):
+                  adaptiveTreatmentThreshold=0.5, initialTumor=0, toyGap=5, runtime=500):
     if not os.path.exists("output/"+exp_dir):
         os.mkdir("output/"+exp_dir)
     config_names = []
@@ -78,7 +79,7 @@ def custom_games(exp_dir, names, a, b, c, d, runNull=1, runAdaptive=0, runContin
             os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
         experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                           writePcFrequency, runtime, radius, turnover, drug_reduction, init_cells, 
-                          prop_res, adaptiveTreatmentThreshold, initialTumor, payoff)
+                          prop_res, adaptiveTreatmentThreshold, initialTumor, toyGap, payoff)
         config_names.append(exp_name)
 
     submit_output, analysis_output = generate_scripts_batch(exp_dir, config_names)
@@ -95,7 +96,7 @@ def generate_scripts_batch(exp_dir, config_names):
             else:
                 config_type = "short"
             submit_output.append(f"sbatch run_config_{config_type}.sb {exp_dir} {config_name} {space}\n")
-            analysis_output.append(f"python3 analysis/pop_over_time.py {exp_dir} {config_name} {space}\n")
+            analysis_output.append(f"java -cp build/:lib/* SpatialEGT.SpatialEGT {exp_dir} {config_name} {space} 0 2000\n")
     return submit_output, analysis_output
 
 
@@ -104,9 +105,9 @@ def write_scripts_batch(exp_dir, submit_output, analysis_output):
         for output_line in submit_output:
             f.write(output_line)
 
-    # with open(f"output/analyze_{exp_dir}_experiments", "w") as f:
-    #     for output_line in analysis_output:
-    #         f.write(output_line)
+    with open(f"output/analyze_{exp_dir}_experiments", "w") as f:
+        for output_line in analysis_output:
+            f.write(output_line)
 
 
 if __name__ == "__main__":
@@ -147,20 +148,6 @@ if __name__ == "__main__":
                                  prop_res=0.05, runtime=500, runContinuous=0, writePcFrequency=100, radius=3)
             submit_output += s
             analysis_output += a
-    elif experiment_name == "custom_gamespc_all_toy":
-        games = ["sensitive", "coexistence", "bistability", "resistant"]
-        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"],
-                    ["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
-        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03], [0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
-        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06], [0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
-        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06], [0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
-        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03], [0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
-        for i in range(len(games)):
-            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
-            s, a = custom_games(experiment_name, names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=1, turnover=0.018,
-                                 init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=500, radius=3)
-            submit_output += s
-            analysis_output += a
     elif experiment_name == "custom_gamespc_all":
         games = ["sensitive", "coexistence", "bistability", "resistant"]
         subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"],
@@ -176,7 +163,7 @@ if __name__ == "__main__":
             submit_output += s
             analysis_output += a
     elif experiment_name == "at_paramsweep":
-        names = ["competition", "no_game", "coexistence"]
+        names = ["competition", "nogame", "coexistence"]
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
         for i,threshold in enumerate([0.3, 0.5, 0.7]):
@@ -193,12 +180,27 @@ if __name__ == "__main__":
         names = ["competition", "no_game", "coexistence"]
         bmws = [-0.007, 0, 0.007]
         bwms = [0.0, 0.0, 0.0]
-        s, a = initial_games(experiment_name, names, bmws, bwms, runNull=1,
-                                radius=1, runAdaptive=1, writePcFrequency=0, writeFsFrequency=100,
+        s, a = initial_games(experiment_name, names, bmws, bwms, runNull=1, runContinuous=0,
+                                radius=3, runAdaptive=0, writePcFrequency=0, writeFsFrequency=2,
                                 drug_reduction=0.9, init_cells=11250, prop_res=0.01,
-                                adaptiveTreatmentThreshold=0.3, runtime=1000)
+                                adaptiveTreatmentThreshold=0.3, runtime=50)
         submit_output += s
         analysis_output += a
+    elif experiment_name == "gaps_linear":
+        games = ["sensitive", "coexistence", "bistability", "resistant"]
+        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"],
+                    ["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
+        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03], [0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
+        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06], [0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
+        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06], [0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
+        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03], [0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
+        for i in range(len(games)):
+            names = [games[i]+"_"+subgames[i][x] for x in range(len(subgames[i]))]
+            s, a = custom_games(writePopFrequency=1, writeFsFrequency=500,
+                                exp_dir=experiment_name, names=names, a=pa[i], b=pb[i], c=pc[i], d=pd[i], initialTumor=1, turnover=0.018,
+                                init_cells=15625, prop_res=0.5, runtime=2000, runContinuous=0, writePcFrequency=500, radius=3, toyGap=5)
+            submit_output += s
+            analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()
