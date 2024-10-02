@@ -67,7 +67,7 @@ def custom_games(exp_dir, names, a, b, c, d, runNull=1, runAdaptive=0, runContin
                   writePcFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
                   adaptiveTreatmentThreshold=0.5, initialTumor=0, toyGap=5, runtime=500, replicates=10, spaces=["2D", "3D", "WM"]):
     if not os.path.exists("output/"+exp_dir):
-        os.mkdir("output/"+exp_dir)
+        os.makedirs("output/"+exp_dir)
     config_names = []
 
     for i in range(len(names)):

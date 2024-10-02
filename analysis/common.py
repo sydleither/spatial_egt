@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from scipy.stats import sem, t
+pd.options.mode.chained_assignment = None
 
 
 def read_specific(exp_dir, exp_name, dimension, file_name):
@@ -33,6 +34,17 @@ def read_all(exp_dir, file_name, dimension=""):
         df_i = read_specific(exp_dir, exp_name, dimension, file_name)
         df_i["condition"] = exp_name
         df = pd.concat([df, df_i])
+    return df
+
+
+def process_fs(df, key):
+    df = df.loc[(df["fs"] > 0) & (df["radius"] <= 5)]
+    df["weighted_fs"] = df["fs"]*df["total"]
+    df_grp = df[key+["total", "weighted_fs"]].groupby(key).sum().reset_index()
+    df_grp = df_grp.rename(columns={"total":"total_boundary", "weighted_fs":"weighted_fs_sum"})
+    df = df.merge(df_grp, on=key)
+    df["average_fs"] = df["weighted_fs_sum"] / df["total_boundary"]
+    df["normalized_total"] = df["total"] / df["total_boundary"]
     return df
 
 

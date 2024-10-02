@@ -1,3 +1,6 @@
 [submodule "HAL"]
 	path = HAL
 	url = https://github.com/MathOnco/HAL
+[submodule "DDIT"]
+	path = DDIT
+	url = https://github.com/VincentRagusa/DDIT

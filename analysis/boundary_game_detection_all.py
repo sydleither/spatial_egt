@@ -7,7 +7,7 @@ import matplotlib.ticker as ticker
 import pandas as pd
 
 from boundary_game_detection import get_possible_fs
-from common import get_colors, plot_line, read_all
+from common import get_colors, plot_line, process_fs, read_all
 
 
 def get_conditions_palette(conditions):
@@ -100,14 +100,7 @@ def plot_average_fs(df, exp_dir, dimension, model, time):
 
 def main(exp_dir, dimension):
     df_key = ["model", "condition", "time", "radius", "rep"]
-    df = read_all(exp_dir, "fs", dimension)
-    df = df.loc[df["fs"] > 0]
-    df["weighted_fs"] = df["fs"]*df["total"]
-    df_grp = df[df_key+["total", "weighted_fs"]].groupby(df_key).sum().reset_index()
-    df_grp = df_grp.rename(columns={"total":"total_boundary", "weighted_fs":"weighted_fs_sum"})
-    df = df.merge(df_grp, on=df_key)
-    df["average_fs"] = df["weighted_fs_sum"]/df["total_boundary"]
-    df["normalized_total"] = df["total"] / df["total_boundary"]
+    df = process_fs(read_all(exp_dir, "fs", dimension), df_key)
 
     times = list(df["time"].unique())
     if 0 in times:
