@@ -41,13 +41,13 @@ def pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_tic
             ax.set_ylabel("Pair-Correlation Function Signal")
             ax.set_title(f"{dimension} {pair} pairs at {freq}")
             if zoom:
-                ax.set_ylim(0, 0.3)
+                ax.set_ylim(0, 0.5)
             ax.legend()
             fig.tight_layout()
             if transparent:
                 fig.patch.set_alpha(0.0)
             extra_filename = "_zoom" if zoom else ""
-            fig.savefig(f"output/{exp_dir}/{dimension}pair_correlation_{pair}_{freq}{extra_filename}.png")
+            fig.savefig(f"output/{exp_dir}/{dimension}pair_correlation_{pair}_{freq}{extra_filename}_{len(conditions)}.png")
 
 
 def groupby_confluence(df):
@@ -71,14 +71,8 @@ def main(exp_dir, dimension):
     df["total"] = df["sensitive"] + df["resistant"]
     df = bull_pc(df)
 
-    # pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 1000, 2000], transparent=True,
-    #                             conditions=["sensitive_equal", "sensitive_agtb", "sensitive_bgta"])
-    # pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 1000, 2000], transparent=True,
-    #                             conditions=["coexistence_equal", "coexistence_bgtc", "coexistence_cgtb"])
-    pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[0, 1000, 2000], transparent=True)
-    pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[1000, 2000], transparent=True, zoom=True)
-    # pair_correlation_functions(df, exp_dir, dimension, freq_col="time", freq_ticks=[2000], transparent=True, zoom=True, 
-    #                            conditions=["sensitive_equal", "sensitive_agtb", "sensitive_bgta", "resistant_equal", "resistant_cgtd", "resistant_dgtc"])
+    pair_correlation_functions(df, exp_dir, dimension, freq_col="time", zoom=True, transparent=True)
+    pair_correlation_functions(df, exp_dir, dimension, freq_col="time", zoom=False, transparent=True)
 
 
 if __name__ == "__main__":

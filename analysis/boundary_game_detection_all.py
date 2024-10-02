@@ -87,7 +87,7 @@ def plot_average_fs(df, exp_dir, dimension, model, time):
     for c,condition in enumerate(conditions):
         df_cond = df.loc[df["condition"] == condition]
         plot_line(ax, df_cond, "radius", "average_fs", palette[c], condition)
-    ax.set(ylim=(0, 1),
+    ax.set(ylim=(0, 0.5),
            xlabel="Neighborhood Radius", 
            ylabel="Average Fraction Sensitive", 
            title=f"{exp_dir} {model} {dimension} at tick {time}")
@@ -110,7 +110,8 @@ def main(exp_dir, dimension):
     df["normalized_total"] = df["total"] / df["total_boundary"]
 
     times = list(df["time"].unique())
-    times.remove(0)
+    if 0 in times:
+        times.remove(0)
     radii = [1, 2, 3]
     for time in times:
         plot_average_fs(df, exp_dir, dimension, "nodrug", time)
