@@ -1,14 +1,20 @@
 from itertools import chain, combinations
+import json
 import os
 import sys
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
-from common import process_fs
+from common import get_colors, process_fs
 sys.path.insert(0, "DDIT")
 from DDIT import DDIT
+
+warnings.filterwarnings("ignore")
+COLORS = get_colors()
 
 
 '''
@@ -22,14 +28,19 @@ def save_data(exp_dir, dimension):
         grid_path = f"{exp_path}/{grid_params}"
         if os.path.isfile(grid_path):
             continue
-        fr = int(grid_params[2])/10
-        cells = int(grid_params.split("_")[-1][1:])
         for game_dir in os.listdir(grid_path):
             game_path = f"{grid_path}/{game_dir}"
             if os.path.isfile(game_path):
                 continue
             game = game_dir.split("_")[0]
-            subgame = game_dir.split("_")[1]
+            config = json.load(open(f"{game_path}/{game_dir}.json"))
+            a = config["A"]
+            b = config["B"]
+            c = config["C"]
+            d = config["D"]
+            grid_size = config["x"]*config["y"]
+            cells = config["numCells"]
+            fr = config["proportionResistant"]
             for rep_dir in os.listdir(game_path):
                 rep_path = f"{game_path}/{rep_dir}"
                 if os.path.isfile(rep_path):
@@ -43,10 +54,14 @@ def save_data(exp_dir, dimension):
                 df_pop_i = pd.read_csv(pop_file)
                 df_pop_i["dimension"] = dimension
                 df_pop_i["rep"] = int(rep_dir)
+                df_pop_i["grid_size"] = grid_size
                 df_pop_i["initial_fr"] = fr
                 df_pop_i["initial_cells"] = cells
                 df_pop_i["game"] = game
-                df_pop_i["subgame"] = subgame
+                df_pop_i["A"] = a
+                df_pop_i["B"] = b
+                df_pop_i["C"] = c
+                df_pop_i["D"] = d
                 df_pop_i["uid"] = uid
                 df_fs_i = pd.read_csv(fs_file)
                 df_fs_i = process_fs(df_fs_i, ["model", "time", "radius"])
@@ -96,7 +111,7 @@ def create_pop_features(df):
     df["proportion_resistant"] = df["resistant"] / (df["resistant"] + df["sensitive"])
 
     #amount of grid filled
-    df["density"] = (df["resistant"] + df["sensitive"]) / 15625
+    df["density"] = (df["resistant"] + df["sensitive"]) / df["grid_size"]
 
     return df
 
@@ -104,38 +119,47 @@ def create_pop_features(df):
 '''
 Data Exploration / Visualization
 '''
-def feature_boxplots(exp_dir, features, labels):
-    label_name = list(labels.columns)[0]
-    label_data = list(labels[label_name].values)
-    label_categories = set(label_data)
-    feature_names = features.columns
-    num_features = len(feature_names)
-    boxplot_spacing = np.arange(len(label_categories))+1
-    fig, ax = plt.subplots(1, num_features, figsize=(8*num_features,8))
-    for f,feature_name in enumerate(feature_names):
-        feature_data = list(features[feature_name].values)
-        feature_data_by_label = [[feature_data[i] for i in range(len(feature_data)) if label_data[i] == label] for label in label_categories]
-        ax[f].boxplot(feature_data_by_label, positions=boxplot_spacing, notch=True)
-        ax[f].set_xticks(np.arange(1,len(label_categories)+1), labels=label_categories)
-        ax[f].set_title(feature_name)
-    fig.patch.set_alpha(0.0)
-    fig.tight_layout()
-    fig.savefig(f"output/{exp_dir}/feature_boxplots.png", bbox_inches="tight")
+def feature_pairplot(exp_dir, df, label_hue):
+    sns.pairplot(df, hue=label_hue)
+    plt.savefig(f"output/{exp_dir}/feature_pairplot_{label_hue}.png", bbox_inches="tight")
     plt.close()
 
 
-def create_fragmentation_matrix(exp_dir, features, labels, binning_method):
+def features_by_labels(exp_dir, df, label_names):
+    feature_names = list(df.columns)
+    [feature_names.remove(ln) for ln in label_names]
+    num_features = len(feature_names)
+    num_labels = len(label_names)
+    fig, ax = plt.subplots(num_labels, num_features, figsize=(8*num_features,8*num_labels))
+    for l,label_name in enumerate(label_names):
+        label_dtype = df[label_name].dtypes
+        for f,feature_name in enumerate(feature_names):
+            axis = ax[f] if num_labels == 1 else ax[l][f]
+            if label_dtype == float:
+                sns.scatterplot(data=df, x=feature_name, y=label_name, 
+                                color=COLORS[0], ax=axis)
+            else:
+                sns.boxplot(data=df, x=feature_name, y=label_name, hue=label_name, 
+                            legend=False, notch=True, palette=COLORS, ax=axis)
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/feature_labels{num_labels}.png", bbox_inches="tight")
+    plt.close()
+
+
+def create_fragmentation_matrix(exp_dir, df, label_names, binning_method):
     #initializations
     ddit = DDIT()
-    label_name = list(labels.columns)[0]
-    feature_names = features.columns
-    feature_name_map = {name:str(i) for i,name in enumerate(feature_names)}
+    feature_names = list(df.columns)
+    [feature_names.remove(ln) for ln in label_names]
+    num_labels = len(label_names)
     num_features = len(feature_names)
+    feature_name_map = {name:str(i) for i,name in enumerate(feature_names)}
 
     #bin and register features
     for feature_name in feature_names:
         feature_name_index = feature_name_map[feature_name]
-        column_data = features[feature_name].values
+        column_data = df[feature_name].values
         if binning_method == "round":
             column_data = [round(x,2) for x in column_data]
         elif binning_method == "equal":
@@ -145,32 +169,34 @@ def create_fragmentation_matrix(exp_dir, features, labels, binning_method):
             print("Invalid binning method  provided to create_fragmentation_matrix().")
             return
         ddit.register_column_tuple(feature_name_index, tuple(column_data))
-    ddit.register_column_tuple(label_name, tuple(labels[label_name].values))
+    for ln in label_names:
+        ddit.register_column_tuple(ln, tuple(df[ln].values))
     
     #calculate entropies
     feature_powerset = chain.from_iterable(combinations(feature_name_map.values(), r) for r in range(num_features+1))
-    label_entropy = ddit.H(label_name)
-    entropies = dict()
-    for feature_set in feature_powerset:
-        if len(feature_set) == 0:
-            continue
-        ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
-        entropies[tuple(feature_set)] = ent
+    feature_powerset = list(feature_powerset)[1:]
+    entropies = [[] for _ in range(num_labels)]
+    for l,label_name in enumerate(label_names):
+        label_entropy = ddit.H(label_name)
+        print(f"{label_name} {label_entropy}")
+        for feature_set in feature_powerset:
+            ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
+            entropies[l].append(ent)
 
     #visualize
-    num_feature_sets = len(entropies)
-    entropy_values = list(entropies.values())
+    num_feature_sets = len(entropies[0])
     fig, ax = plt.subplots(figsize=(15,5))
-    ax.imshow(np.array(entropy_values).reshape(1, -1), cmap="Greens")
-    ax.set_xticks(np.arange(num_feature_sets), labels=["".join(x) for x in entropies.keys()])
-    ax.set_yticks([])
+    ax.imshow(np.array(entropies), cmap="Greens")
+    ax.set_xticks(np.arange(num_feature_sets), labels=["".join(x) for x in feature_powerset])
+    ax.set_yticks(np.arange(num_labels), labels=label_names)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
-    for j in range(num_feature_sets):
-        ax.text(j, 0, round(entropy_values[j], 2), ha="center", va="center", color="hotpink")
+    for l in range(num_labels):
+        for j in range(num_feature_sets):
+            ax.text(j, l, round(entropies[l][j], 2), ha="center", va="center", color="hotpink")
     ax.set_title("Fragmentation Matrix")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    fig.savefig(f"output/{exp_dir}/fragmentation.png", bbox_inches="tight")
+    fig.savefig(f"output/{exp_dir}/fragmentation{num_labels}.png", bbox_inches="tight")
     plt.close()
     print(feature_name_map)
 
@@ -183,10 +209,14 @@ def main(exp_dir, dimension):
         exit()
     
     df = create_pop_features(create_fs_features(df))
-    features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density"]]
-    labels = df[["game"]]
-    feature_boxplots(exp_dir, features, labels)
+    features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "game"]]
+    labels = ["game"]
+    # features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "A", "B", "C", "D"]]
+    # labels = ["A", "B", "C", "D"]
+
+    features_by_labels(exp_dir, features, labels)
     create_fragmentation_matrix(exp_dir, features, labels, "round")
+    feature_pairplot(exp_dir, features, labels[0])
 
 
 if __name__ == "__main__":
