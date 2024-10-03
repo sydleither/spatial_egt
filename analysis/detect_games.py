@@ -2,6 +2,8 @@ from itertools import chain, combinations
 import os
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from common import process_fs
@@ -9,6 +11,9 @@ sys.path.insert(0, "DDIT")
 from DDIT import DDIT
 
 
+'''
+Aggregate HAL Runs
+'''
 def save_data(exp_dir, dimension):
     df = pd.DataFrame()
     exp_path = f"output/{exp_dir}"
@@ -51,6 +56,9 @@ def save_data(exp_dir, dimension):
     pd.to_pickle(df, f"output/{exp_dir}/{dimension}df.pkl")
 
 
+'''
+Feature Engineering
+'''
 def create_fs_features(df):
     #slope of average fs over neighborhood radii
     df_r1 = df.loc[df["radius"] == 1]
@@ -75,7 +83,7 @@ def create_fs_features(df):
     df_r3 = df_r3[["uid", "average_fs"]].drop_duplicates()
     df = df.merge(df_r3, on=["uid"])
 
-    #collaspe
+    #collaspe (one row for one run)
     df = df.drop(columns=["radius", "fs", "total", "reproduced", "weighted_fs", 
                           "total_boundary", "weighted_fs_sum", "normalized_total"])
     df = df.drop_duplicates()
@@ -93,23 +101,58 @@ def create_pop_features(df):
     return df
 
 
-def create_fragmentation_matrix(df):
+'''
+Data Exploration / Visualization
+'''
+def create_fragmentation_matrix(exp_dir, features, labels, binning_method):
+    #initializations
     ddit = DDIT()
-    for column in df.columns:
-        column_data = df[column].values
-        if column != "game":
+    label_name = list(labels.columns)[0]
+    feature_names = features.columns
+    feature_name_map = {name:str(i) for i,name in enumerate(feature_names)}
+    num_features = len(feature_names)
+
+    #bin and register features
+    for feature_name in feature_names:
+        feature_name_index = feature_name_map[feature_name]
+        column_data = features[feature_name].values
+        if binning_method == "round":
             column_data = [round(x,2) for x in column_data]
-        column_data = tuple(column_data)
-        ddit.register_column_tuple(column, column_data)
-    features = list(df.columns)
-    features.remove("game")
-    feature_powerset = chain.from_iterable(combinations(features, r) for r in range(len(features)+1))
-    game_entropy = ddit.H("game")
-    for entry in feature_powerset:
-        if len(entry) == 0:
+        elif binning_method == "equal":
+            _, bin_edges = np.histogram(column_data, bins=10)
+            column_data = np.digitize(column_data, bin_edges)
+        else:
+            print("Invalid binning method  provided to create_fragmentation_matrix().")
+            return
+        ddit.register_column_tuple(feature_name_index, tuple(column_data))
+    ddit.register_column_tuple(label_name, tuple(labels[label_name].values))
+    
+    #calculate entropies
+    feature_powerset = chain.from_iterable(combinations(feature_name_map.values(), r) for r in range(num_features+1))
+    label_entropy = ddit.H(label_name)
+    entropies = dict()
+    for feature_set in feature_powerset:
+        if len(feature_set) == 0:
             continue
-        ent = ddit.recursively_solve_formula("game:"+"&".join(entry)) / game_entropy
-        print("game:"+"&".join(entry), ent)
+        ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
+        entropies[tuple(feature_set)] = ent
+
+    #visualize
+    num_feature_sets = len(entropies)
+    entropy_values = list(entropies.values())
+    fig, ax = plt.subplots(figsize=(15,5))
+    ax.imshow(np.array(entropy_values).reshape(1, -1), cmap="Greens")
+    ax.set_xticks(np.arange(num_feature_sets), labels=["".join(x) for x in entropies.keys()])
+    ax.set_yticks([])
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    for j in range(num_feature_sets):
+        ax.text(j, 0, round(entropy_values[j], 2), ha="center", va="center", color="hotpink")
+    ax.set_title("Fragmentation Matrix")
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/fragmentation.png", bbox_inches="tight")
+    plt.close()
+    print(feature_name_map)
 
 
 def main(exp_dir, dimension):
@@ -118,10 +161,11 @@ def main(exp_dir, dimension):
     except:
         print("Please save the dataframe.")
         exit()
+    
     df = create_pop_features(create_fs_features(df))
-    features = df.drop(columns=["model", "time", "sensitive", "resistant", "dimension",
-                                "rep", "initial_fr", "initial_cells", "subgame", "uid"])
-    create_fragmentation_matrix(features)
+    features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density"]]
+    labels = df[["game"]]
+    create_fragmentation_matrix(exp_dir, features, labels, "equal")
 
 
 if __name__ == "__main__":
