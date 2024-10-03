@@ -104,6 +104,26 @@ def create_pop_features(df):
 '''
 Data Exploration / Visualization
 '''
+def feature_boxplots(exp_dir, features, labels):
+    label_name = list(labels.columns)[0]
+    label_data = list(labels[label_name].values)
+    label_categories = set(label_data)
+    feature_names = features.columns
+    num_features = len(feature_names)
+    boxplot_spacing = np.arange(len(label_categories))+1
+    fig, ax = plt.subplots(1, num_features, figsize=(8*num_features,8))
+    for f,feature_name in enumerate(feature_names):
+        feature_data = list(features[feature_name].values)
+        feature_data_by_label = [[feature_data[i] for i in range(len(feature_data)) if label_data[i] == label] for label in label_categories]
+        ax[f].boxplot(feature_data_by_label, positions=boxplot_spacing, notch=True)
+        ax[f].set_xticks(np.arange(1,len(label_categories)+1), labels=label_categories)
+        ax[f].set_title(feature_name)
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/feature_boxplots.png", bbox_inches="tight")
+    plt.close()
+
+
 def create_fragmentation_matrix(exp_dir, features, labels, binning_method):
     #initializations
     ddit = DDIT()
@@ -165,7 +185,8 @@ def main(exp_dir, dimension):
     df = create_pop_features(create_fs_features(df))
     features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density"]]
     labels = df[["game"]]
-    create_fragmentation_matrix(exp_dir, features, labels, "equal")
+    feature_boxplots(exp_dir, features, labels)
+    create_fragmentation_matrix(exp_dir, features, labels, "round")
 
 
 if __name__ == "__main__":
