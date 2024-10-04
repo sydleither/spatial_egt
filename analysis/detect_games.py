@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.feature_selection import f_classif
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import KFold
+from sklearn.neural_network import MLPClassifier
 
 from common import get_colors, process_fs
 sys.path.insert(0, "DDIT")
@@ -24,50 +28,53 @@ def save_data(exp_dir, dimension):
     df = pd.DataFrame()
     exp_path = f"output/{exp_dir}"
     uid = 0
-    for grid_params in os.listdir(exp_path):
-        grid_path = f"{exp_path}/{grid_params}"
-        if os.path.isfile(grid_path):
+    # for grid_params in os.listdir(exp_path):
+    #     grid_path = f"{exp_path}/{grid_params}"
+    #     if os.path.isfile(grid_path):
+    #         continue
+    for game_dir in os.listdir(exp_path):
+        game_path = f"{exp_path}/{game_dir}"
+        if os.path.isfile(game_path):
             continue
-        for game_dir in os.listdir(grid_path):
-            game_path = f"{grid_path}/{game_dir}"
-            if os.path.isfile(game_path):
+        config = json.load(open(f"{game_path}/{game_dir}.json"))
+        a = config["A"]
+        b = config["B"]
+        c = config["C"]
+        d = config["D"]
+        grid_size = config["x"]*config["y"]
+        cells = config["numCells"]
+        fr = config["proportionResistant"]
+        for rep_dir in os.listdir(game_path):
+            rep_path = f"{game_path}/{rep_dir}"
+            if os.path.isfile(rep_path):
                 continue
-            game = game_dir.split("_")[0]
-            config = json.load(open(f"{game_path}/{game_dir}.json"))
-            a = config["A"]
-            b = config["B"]
-            c = config["C"]
-            d = config["D"]
-            grid_size = config["x"]*config["y"]
-            cells = config["numCells"]
-            fr = config["proportionResistant"]
-            for rep_dir in os.listdir(game_path):
-                rep_path = f"{game_path}/{rep_dir}"
-                if os.path.isfile(rep_path):
-                    continue
-                pop_file = f"{rep_path}/{dimension}populations.csv"
-                fs_file = f"{rep_path}/{dimension}fs.csv"
-                if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0 or\
-                   not os.path.exists(fs_file) or os.path.getsize(fs_file) == 0:
-                    print(f"File not found in {rep_path}")
-                    continue
-                df_pop_i = pd.read_csv(pop_file)
-                df_pop_i["dimension"] = dimension
-                df_pop_i["rep"] = int(rep_dir)
-                df_pop_i["grid_size"] = grid_size
-                df_pop_i["initial_fr"] = fr
-                df_pop_i["initial_cells"] = cells
-                df_pop_i["game"] = game
-                df_pop_i["A"] = a
-                df_pop_i["B"] = b
-                df_pop_i["C"] = c
-                df_pop_i["D"] = d
-                df_pop_i["uid"] = uid
-                df_fs_i = pd.read_csv(fs_file)
-                df_fs_i = process_fs(df_fs_i, ["model", "time", "radius"])
-                df_i = df_fs_i.merge(df_pop_i, on=["model", "time"])
-                df = pd.concat([df, df_i])
-                uid += 1
+            pop_file = f"{rep_path}/{dimension}populations.csv"
+            fs_file = f"{rep_path}/{dimension}fs.csv"
+            if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0 or\
+                not os.path.exists(fs_file) or os.path.getsize(fs_file) == 0:
+                print(f"File not found in {rep_path}")
+                continue
+            df_pop_i = pd.read_csv(pop_file)
+            df_pop_i["dimension"] = dimension
+            df_pop_i["rep"] = int(rep_dir)
+            df_pop_i["grid_size"] = grid_size
+            df_pop_i["initial_fr"] = fr
+            df_pop_i["initial_cells"] = cells
+            df_pop_i["A"] = a
+            df_pop_i["B"] = b
+            df_pop_i["C"] = c
+            df_pop_i["D"] = d
+            df_pop_i["uid"] = uid
+            df_fs_i = pd.read_csv(fs_file)
+            df_fs_i = process_fs(df_fs_i, ["model", "time", "radius"])
+            df_i = df_fs_i.merge(df_pop_i, on=["model", "time"])
+            df = pd.concat([df, df_i])
+            uid += 1
+    df["game"] = "unknown"
+    df.loc[(df["A"] > df["C"]) & (df["B"] > df["D"]), "game"] = "sensitive_wins"
+    df.loc[(df["A"] < df["C"]) & (df["B"] > df["D"]), "game"] = "coexistence"
+    df.loc[(df["A"] > df["C"]) & (df["B"] < df["D"]), "game"] = "bistability"
+    df.loc[(df["A"] < df["C"]) & (df["B"] < df["D"]), "game"] = "resistant_wins"
     pd.to_pickle(df, f"output/{exp_dir}/{dimension}df.pkl")
 
 
@@ -116,6 +123,20 @@ def create_pop_features(df):
     return df
 
 
+def clean_data(df):
+    #remove unclassifiable games (on the border of the game space)
+    org_size = len(df)
+    df = df.loc[df["game"] != "unknown"]
+    print(f"\tRemoved {org_size-len(df)} unknown games.")
+
+    #remove grids with basically extinct cell lines
+    org_size = len(df)
+    df = df.loc[(df["sensitive"] >= 100) & (df["resistant"] >= 100)]
+    print(f"\tRemoved {org_size-len(df)} appraoching extinction cell lines.")
+
+    return df
+
+
 '''
 Data Exploration / Visualization
 '''
@@ -125,7 +146,7 @@ def feature_pairplot(exp_dir, df, label_hue):
     plt.close()
 
 
-def features_by_labels(exp_dir, df, label_names):
+def features_by_labels_plot(exp_dir, df, label_names):
     feature_names = list(df.columns)
     [feature_names.remove(ln) for ln in label_names]
     num_features = len(feature_names)
@@ -147,7 +168,7 @@ def features_by_labels(exp_dir, df, label_names):
     plt.close()
 
 
-def create_fragmentation_matrix(exp_dir, df, label_names, binning_method):
+def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
     #initializations
     ddit = DDIT()
     feature_names = list(df.columns)
@@ -178,7 +199,7 @@ def create_fragmentation_matrix(exp_dir, df, label_names, binning_method):
     entropies = [[] for _ in range(num_labels)]
     for l,label_name in enumerate(label_names):
         label_entropy = ddit.H(label_name)
-        print(f"{label_name} {label_entropy}")
+        print(f"\t{label_name} entropy: {label_entropy}")
         for feature_set in feature_powerset:
             ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
             entropies[l].append(ent)
@@ -198,25 +219,72 @@ def create_fragmentation_matrix(exp_dir, df, label_names, binning_method):
     fig.tight_layout()
     fig.savefig(f"output/{exp_dir}/fragmentation{num_labels}.png", bbox_inches="tight")
     plt.close()
-    print(feature_name_map)
+    print("\t", feature_name_map)
+
+
+'''
+Classification
+'''
+def machine_learning(exp_dir, features, label_name):
+    feature_names = list(features.columns)
+    feature_names.remove(label_name)
+    label_categories = features[label_name].unique()
+    category_to_int = {lc:i for i,lc in enumerate(label_categories)}
+    int_to_category = {lc:i for i,lc in enumerate(label_categories)}
+    X = list(features[feature_names].values)
+    y = [category_to_int[x] for x in features[label_name].values]
+
+    f_statistic, p_values = f_classif(X, y)
+    print(f"\t{f_statistic} {p_values}")
+
+    avg_acc = 0
+    cross_validation = KFold(n_splits=5, shuffle=True)
+    for _, (train_i, test_i) in enumerate(cross_validation.split(X)):
+        X_train = [X[i] for i in train_i]
+        X_test = [X[i] for i in test_i]
+        y_train = [y[i] for i in train_i]
+        y_test = [y[i] for i in test_i]
+        clf = MLPClassifier(hidden_layer_sizes=(400,200,100,50)).fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        acc = round(sum([y_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test), 2)
+        avg_acc += acc
+        print("Accuracy:", acc)
+        print(confusion_matrix(y_test, y_pred, normalize="true"))
+    print("Average Accuracy:", avg_acc/5)
+    print(int_to_category)
 
 
 def main(exp_dir, dimension):
+    print("Reading in data...")
     try:
         df = pd.read_pickle(f"output/{exp_dir}/{dimension}df.pkl")
     except:
         print("Please save the dataframe.")
         exit()
-    
-    df = create_pop_features(create_fs_features(df))
-    features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "game"]]
-    labels = ["game"]
-    # features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "A", "B", "C", "D"]]
-    # labels = ["A", "B", "C", "D"]
 
-    features_by_labels(exp_dir, features, labels)
-    create_fragmentation_matrix(exp_dir, features, labels, "round")
-    feature_pairplot(exp_dir, features, labels[0])
+    print("\nCreating features and cleaning data...")
+    df = create_pop_features(create_fs_features(df))
+    df = clean_data(df)
+
+    classify_game = True
+    if classify_game:
+        features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "game"]]
+        labels = ["game"]
+    else:
+        features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "A", "B", "C", "D"]]
+        labels = ["A", "B", "C", "D"]
+
+    print("\nAnalyzing and exploring data...")
+    features_by_labels_plot(exp_dir, features, labels)
+    fragmentation_matrix_plot(exp_dir, features, labels, "equal")
+    if classify_game:
+        feature_pairplot(exp_dir, features, "game")
+    else:
+        feature_pairplot(exp_dir, features, None)
+
+    print("\nRunning machine learning...")
+    if classify_game:
+        machine_learning(exp_dir, features, "game")
 
 
 if __name__ == "__main__":
