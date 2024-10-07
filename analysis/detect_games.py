@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import (f_classif, f_regression, 
+                                       mutual_info_classif, mutual_info_regression)
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import KFold
 from sklearn.neural_network import MLPClassifier
@@ -132,7 +133,7 @@ def clean_data(df):
     #remove grids with basically extinct cell lines
     org_size = len(df)
     df = df.loc[(df["sensitive"] >= 100) & (df["resistant"] >= 100)]
-    print(f"\tRemoved {org_size-len(df)} appraoching extinction cell lines.")
+    print(f"\tRemoved {org_size-len(df)} approaching extinction cell lines.")
 
     return df
 
@@ -200,6 +201,7 @@ def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
     for l,label_name in enumerate(label_names):
         label_entropy = ddit.H(label_name)
         print(f"\t{label_name} entropy: {label_entropy}")
+        print(f"\t\tideal: log({len(df[label_name].unique())}) = {np.log2(len(df[label_name].unique()))}")
         for feature_set in feature_powerset:
             ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
             entropies[l].append(ent)
@@ -219,23 +221,48 @@ def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
     fig.tight_layout()
     fig.savefig(f"output/{exp_dir}/fragmentation{num_labels}.png", bbox_inches="tight")
     plt.close()
-    print("\t", feature_name_map)
+
+
+def feature_selection(df, label_names):
+    feature_names = list(df.columns)
+    [feature_names.remove(ln) for ln in label_names]
+
+    for label_name in label_names:
+        label_dtype = df[label_name].dtypes
+        X = list(df[feature_names].values)
+        
+        if label_dtype == float:
+            y = np.array(df[label_name].values)
+            mutual_info = mutual_info_regression(X, y)
+            f_statistic, p_values = f_regression(X, y)
+        else:
+            label_categories = df[label_name].unique()
+            category_to_int = {lc:i for i,lc in enumerate(label_categories)}
+            int_to_category = {i:lc for i,lc in enumerate(label_categories)}
+            y = [category_to_int[x] for x in df[label_name].values]
+            mutual_info = mutual_info_classif(X, y)
+            f_statistic, p_values = f_classif(X, y)
+
+        print(f"\tMutual Information {label_name}")
+        for i in range(len(feature_names)):
+            print(f"\t\t{feature_names[i]} info:{mutual_info[i]}")
+
+        print(f"\tANOVA F-Statistics {label_name}")
+        for i in range(len(feature_names)):
+            print(f"\t\t{feature_names[i]} F:{round(f_statistic[i])} p-value:{p_values[i]}")
 
 
 '''
 Classification
 '''
-def machine_learning(exp_dir, features, label_name):
-    feature_names = list(features.columns)
+def machine_learning(exp_dir, df, label_name):
+    feature_names = list(df.columns)
     feature_names.remove(label_name)
-    label_categories = features[label_name].unique()
+    label_categories = df[label_name].unique()
     category_to_int = {lc:i for i,lc in enumerate(label_categories)}
-    int_to_category = {lc:i for i,lc in enumerate(label_categories)}
-    X = list(features[feature_names].values)
-    y = [category_to_int[x] for x in features[label_name].values]
-
-    f_statistic, p_values = f_classif(X, y)
-    print(f"\t{f_statistic} {p_values}")
+    int_to_category = {i:lc for i,lc in enumerate(label_categories)}
+    X = list(df[feature_names].values)
+    y = [category_to_int[x] for x in df[label_name].values]
 
     avg_acc = 0
     cross_validation = KFold(n_splits=5, shuffle=True)
@@ -277,14 +304,15 @@ def main(exp_dir, dimension):
     print("\nAnalyzing and exploring data...")
     features_by_labels_plot(exp_dir, features, labels)
     fragmentation_matrix_plot(exp_dir, features, labels, "equal")
+    feature_selection(features, labels)
     if classify_game:
-        feature_pairplot(exp_dir, features, "game")
+        feature_pairplot(exp_dir, features, labels[0])
     else:
         feature_pairplot(exp_dir, features, None)
 
     print("\nRunning machine learning...")
     if classify_game:
-        machine_learning(exp_dir, features, "game")
+        machine_learning(exp_dir, features, labels[0])
 
 
 if __name__ == "__main__":
