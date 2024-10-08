@@ -15,7 +15,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
-from common import get_colors, process_fs
+from common import get_colors
 sys.path.insert(0, "DDIT")
 from DDIT import DDIT
 
@@ -27,13 +27,11 @@ COLORS = get_colors()
 Aggregate HAL Runs
 '''
 def save_data(exp_dir, dimension):
-    df = pd.DataFrame()
+    df_entries = []
     exp_path = f"output/{exp_dir}"
     uid = 0
-    # for grid_params in os.listdir(exp_path):
-    #     grid_path = f"{exp_path}/{grid_params}"
-    #     if os.path.isfile(grid_path):
-    #         continue
+    extinct = 0
+    unknwon_game = 0
     for game_dir in os.listdir(exp_path):
         game_path = f"{exp_path}/{game_dir}"
         if os.path.isfile(game_path):
@@ -52,102 +50,108 @@ def save_data(exp_dir, dimension):
                 continue
             pop_file = f"{rep_path}/{dimension}populations.csv"
             fs_file = f"{rep_path}/{dimension}fs.csv"
-            if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0 or\
-                not os.path.exists(fs_file) or os.path.getsize(fs_file) == 0:
+            rk_file = f"{rep_path}/{dimension}ripleysK.csv"
+            if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0:
                 print(f"File not found in {rep_path}")
                 continue
-            df_pop_i = pd.read_csv(pop_file)
-            df_pop_i["dimension"] = dimension
-            df_pop_i["rep"] = int(rep_dir)
-            df_pop_i["grid_size"] = grid_size
-            df_pop_i["initial_fr"] = fr
-            df_pop_i["initial_cells"] = cells
-            df_pop_i["A"] = a
-            df_pop_i["B"] = b
-            df_pop_i["C"] = c
-            df_pop_i["D"] = d
-            df_pop_i["uid"] = uid
-            df_fs_i = pd.read_csv(fs_file)
-            df_fs_i = process_fs(df_fs_i, ["model", "time", "radius"])
-            df_i = df_fs_i.merge(df_pop_i, on=["model", "time"])
-            df = pd.concat([df, df_i])
+            sample_dict = {}
+            sample_dict["rep"] = int(rep_dir)
+            sample_dict["initial_fr"] = fr
+            sample_dict["initial_cells"] = cells
+            sample_dict["A"] = a
+            sample_dict["B"] = b
+            sample_dict["C"] = c
+            sample_dict["D"] = d
+            if a > c and b > d:
+                game = "sensitive_wins"
+            elif a < c and b > d:
+                game = "coexistence"
+            elif a > c and b < d:
+                game = "bistability"
+            elif a < c and b < d:
+                game = "resistant_wins"
+            else:
+                game = "unknown"
+            sample_dict["game"] = game
+            sample_dict["uid"] = uid
+            pop_features, num_R, num_S, num_all = create_pop_features(pd.read_csv(pop_file), grid_size)
+            if num_R < 100 or num_S < 100:
+                extinct += 1
+                continue
+            if game == "unknown":
+                unknwon_game += 1
+                continue
+            fs_features = create_fs_features(pd.read_csv(fs_file), num_R)
+            rk_features = create_rk_features(pd.read_csv(rk_file), num_R, num_S, num_all, grid_size)
+            sample_dict = sample_dict | pop_features | fs_features | rk_features
+            df_entries.append(sample_dict)
             uid += 1
-    df["game"] = "unknown"
-    df.loc[(df["A"] > df["C"]) & (df["B"] > df["D"]), "game"] = "sensitive_wins"
-    df.loc[(df["A"] < df["C"]) & (df["B"] > df["D"]), "game"] = "coexistence"
-    df.loc[(df["A"] > df["C"]) & (df["B"] < df["D"]), "game"] = "bistability"
-    df.loc[(df["A"] < df["C"]) & (df["B"] < df["D"]), "game"] = "resistant_wins"
+        if uid % 100 == 0:
+            print(f"Processed {uid} samples...")
+    print(f"Skipped {extinct} samples nearing extinction.")
+    print(f"Skipped {unknwon_game} samples with unknown games.")
+    print(f"Total samples: {len(df_entries)}")
+    df = pd.DataFrame(data=df_entries)
     pd.to_pickle(df, f"output/{exp_dir}/{dimension}df.pkl")
 
 
 '''
 Feature Engineering
 '''
-def create_fs_features(df):
-    #slope of average fs over neighborhood radii
-    df_r1 = df.loc[df["radius"] == 1]
-    df_r1["avg_fs_r1"] = df_r1["average_fs"]
-    df_r5 = df.loc[df["radius"] == 5]
-    df_r5["avg_fs_r5"] = df_r5["average_fs"]
-    df_slope = df_r1[["uid", "avg_fs_r1"]].merge(df_r5[["uid", "avg_fs_r5"]], on=["uid"])
-    df_slope = df_slope.drop_duplicates()
-    df_slope["avg_fs_slope"] = df_slope["avg_fs_r5"] - df_slope["avg_fs_r1"]
-    df_slope = df_slope.drop(columns=["avg_fs_r1", "avg_fs_r5"])
-    df = df.merge(df_slope, on=["uid"])
+def create_pop_features(df, grid_size):
+    features = {}
+    df = df.loc[df["time"] == df["time"].max()]
+    num_resistant = df["resistant"].values[0]
+    num_sensitive = df["sensitive"].values[0]
+    num_total = num_resistant + num_sensitive
 
-    #proportion of boundary cells
-    df_r1 = df.loc[df["radius"] == 1]
-    df_r1["s_in_neighborhood"] = df_r1["total_boundary"] / df_r1["resistant"]
-    df_r1 = df_r1[["uid", "s_in_neighborhood"]].drop_duplicates()
-    df = df.merge(df_r1, on=["uid"])
+    #proportion of cells that are resistant
+    features["prop_r"] = num_resistant / num_total
 
-    #average fs
-    df_r3 = df.loc[df["radius"] == 3]
-    df = df.drop(columns=["average_fs"])
-    df_r3 = df_r3[["uid", "average_fs"]].drop_duplicates()
-    df = df.merge(df_r3, on=["uid"])
+    return features, num_resistant, num_sensitive, num_total
+
+
+def create_fs_features(df, num_resistant):
+    features = {}
+    df = df.loc[(df["fs"] > 0) & (df["radius"] <= 5) & (df["time"] == df["time"].max())]
 
     #fs distribution summary statistics
-    df_r3 = df.loc[df["radius"] == 3]
     fs_expand = pd.DataFrame({
-        "uid": np.repeat(df_r3["uid"], df_r3["total"]),
-        "fs": np.repeat(df_r3["fs"], df_r3["total"])
+        "radius": np.repeat(df["radius"], df["total"]),
+        "fs": np.repeat(df["fs"], df["total"])
     })
-    fs_stats = fs_expand.groupby("uid")["fs"].agg(["skew", "std"])
-    fs_stats = fs_stats.rename(columns={"skew":"skew_fs",
-                                        "std":"std_fs"})
-    df = df.merge(fs_stats, on=["uid"])
+    agg_funcs = ["mean", "skew", "std", "count"]
+    fs_stats = fs_expand.groupby("radius")["fs"].agg(agg_funcs)
+    features["fs_mean"] = fs_stats["mean"][3]
+    features["fs_skew"] = fs_stats["skew"][3]
+    features["fs_std"] = fs_stats["std"][3]
 
-    #collaspe (one row for one run)
-    df = df.drop(columns=["radius", "fs", "total", "reproduced", "weighted_fs", 
-                          "total_boundary", "weighted_fs_sum", "normalized_total"])
-    df = df.drop_duplicates()
-    
-    return df
+    #slope of mean fs over neighborhood radii
+    fs_slope = fs_stats["mean"][5] - fs_stats["mean"][1]
+    features["fs_slope"] = fs_slope
 
+    #proportion of R cells that are boundary cells
+    r_boundary_prop = fs_stats["count"][1] / num_resistant
+    features["r_boundary_prop"] = r_boundary_prop
 
-def create_pop_features(df):
-    #proportion of cells that are resistant
-    df["proportion_resistant"] = df["resistant"] / (df["resistant"] + df["sensitive"])
-
-    #amount of grid filled
-    df["density"] = (df["resistant"] + df["sensitive"]) / df["grid_size"]
-
-    return df
+    return features
 
 
-def clean_data(df):
-    #remove unclassifiable games (on the border of the game space)
-    org_size = len(df)
-    df = df.loc[df["game"] != "unknown"]
-    print(f"\tRemoved {org_size-len(df)} unknown games.")
+def create_rk_features(df, num_resistant, num_sensitive, num_total, grid_size):
+    features = {}
+    df = df.loc[(df["time"] == df["time"].max())]
+    df["ripleys_k"] = 0
+    df.loc[df["pair"] == "SS", "ripleys_k"] = (num_sensitive/grid_size)*df["normalized_count"]
+    df.loc[df["pair"] == "SR", "ripleys_k"] = (num_total/grid_size)*df["normalized_count"]
+    df.loc[df["pair"] == "RR", "ripleys_k"] = (num_resistant/grid_size)*df["normalized_count"]
+    df["ripleys_k"] = np.sqrt(df["ripleys_k"]/np.pi)
 
-    #remove grids with basically extinct cell lines
-    org_size = len(df)
-    df = df.loc[(df["sensitive"] >= 100) & (df["resistant"] >= 100)]
-    print(f"\tRemoved {org_size-len(df)} approaching extinction cell lines.")
+    #ripleys k for each pair
+    for pair in ["SS", "SR", "RR"]:
+        rk = df.loc[(df["radius"] == 3) & (df["pair"] == pair)]["ripleys_k"].values[0]
+        features["rk_"+pair] = rk
 
-    return df
+    return features
 
 
 '''
@@ -181,6 +185,27 @@ def features_by_labels_plot(exp_dir, df, label_names):
     plt.close()
 
 
+def feature_correlation(exp_dir, df, label_names):
+    feature_names = list(df.columns)
+    [feature_names.remove(ln) for ln in label_names]
+    num_features = len(feature_names)
+
+    fig, ax = plt.subplots()
+    correlation_matrix = df[feature_names].corr()
+    ax.imshow(correlation_matrix, cmap="PiYG")
+    ax.set_xticks(np.arange(num_features), labels=feature_names)
+    ax.set_yticks(np.arange(num_features), labels=feature_names)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    for l,name1 in enumerate(feature_names):
+        for j,name2 in enumerate(feature_names):
+            ax.text(j, l, round(correlation_matrix[name1][name2], 2), ha="center", va="center")
+    ax.set_title("Correlation Matrix")
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"output/{exp_dir}/correlations.png", bbox_inches="tight")
+    plt.close()
+
+
 def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
     #initializations
     ddit = DDIT()
@@ -210,25 +235,30 @@ def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
     feature_powerset = chain.from_iterable(combinations(feature_name_map.values(), r) for r in range(num_features+1))
     feature_powerset = list(feature_powerset)[1:]
     entropies = [[] for _ in range(num_labels)]
+    valid_feature_sets = []
     for l,label_name in enumerate(label_names):
         label_entropy = ddit.H(label_name)
         print(f"\t{label_name} entropy: {label_entropy}")
         print(f"\t\tideal: log({len(df[label_name].unique())}) = {np.log2(len(df[label_name].unique()))}")
         for feature_set in feature_powerset:
+            if len(feature_set) > 2 and len(feature_set) < num_features and num_features > 5:
+                continue
             ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
             entropies[l].append(ent)
+            if l == 0:
+                valid_feature_sets.append("".join(feature_set))
 
     #visualize
     num_feature_sets = len(entropies[0])
-    fig, ax = plt.subplots(figsize=(15,5))
+    fig, ax = plt.subplots(figsize=(30,5))
     ax.imshow(np.array(entropies), cmap="Greens")
-    ax.set_xticks(np.arange(num_feature_sets), labels=["".join(x) for x in feature_powerset])
+    ax.set_xticks(np.arange(num_feature_sets), labels=valid_feature_sets)
     ax.set_yticks(np.arange(num_labels), labels=label_names)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
     for l in range(num_labels):
         for j in range(num_feature_sets):
             ax.text(j, l, round(entropies[l][j], 2), ha="center", va="center", color="hotpink")
-    ax.set_title("Fragmentation Matrix")
+    ax.set_title(f"Fragmentation Matrix\n{feature_name_map}")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
     fig.savefig(f"output/{exp_dir}/fragmentation{num_labels}.png", bbox_inches="tight")
@@ -264,7 +294,7 @@ def feature_selection(df, label_names):
             print(f"\t\t{feature_names[i]} F:{round(f_statistic[i])} p-value:{p_values[i]}")
 
         print(f"\tSequential Feature Selection {label_name}")
-        clf = MLPClassifier(hidden_layer_sizes=(100,75,50))
+        clf = MLPClassifier(hidden_layer_sizes=(100,))
         sfs = SequentialFeatureSelector(clf, tol=0.05, cv=5).fit(X, y)
         print(f"\t\t{sfs.get_feature_names_out()}")
 
@@ -298,6 +328,9 @@ def machine_learning(exp_dir, df, label_name):
     print(int_to_category)
 
 
+'''
+Run Script
+'''
 def main(exp_dir, dimension):
     print("Reading in data...")
     try:
@@ -305,18 +338,17 @@ def main(exp_dir, dimension):
     except:
         print("Please save the dataframe.")
         exit()
-
-    print("\nCreating features and cleaning data...")
-    df = create_pop_features(create_fs_features(df))
-    df = clean_data(df)
+    nonfeature_cols = ["uid", "rep", "initial_fr", "initial_cells",
+                       "A", "B", "C", "D", "game"]
 
     classify_game = True
     labels = ["game"] if classify_game else ["A", "B", "C", "D"]
-    #feature_names = ['s_in_neighborhood', 'skew_fs', 'std_fs']
-    feature_names = ["s_in_neighborhood", "average_fs", "proportion_resistant", "skew_fs", "std_fs", "avg_fs_slope", "density"]
+    feature_names = [x for x in df.columns if x not in nonfeature_cols]
+    # feature_names = ["fs_mean", "fs_std"]
     features = df[feature_names+labels]
 
     print("\nAnalyzing and exploring data...")
+    feature_correlation(exp_dir, features, labels)
     features_by_labels_plot(exp_dir, features, labels)
     fragmentation_matrix_plot(exp_dir, features, labels, "equal")
     feature_selection(features, labels)
