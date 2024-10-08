@@ -9,9 +9,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.feature_selection import (f_classif, f_regression, 
-                                       mutual_info_classif, mutual_info_regression)
+                                       mutual_info_classif, mutual_info_regression,
+                                       SequentialFeatureSelector)
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
 from common import get_colors, process_fs
@@ -105,6 +106,17 @@ def create_fs_features(df):
     df = df.drop(columns=["average_fs"])
     df_r3 = df_r3[["uid", "average_fs"]].drop_duplicates()
     df = df.merge(df_r3, on=["uid"])
+
+    #fs distribution summary statistics
+    df_r3 = df.loc[df["radius"] == 3]
+    fs_expand = pd.DataFrame({
+        "uid": np.repeat(df_r3["uid"], df_r3["total"]),
+        "fs": np.repeat(df_r3["fs"], df_r3["total"])
+    })
+    fs_stats = fs_expand.groupby("uid")["fs"].agg(["skew", "std"])
+    fs_stats = fs_stats.rename(columns={"skew":"skew_fs",
+                                        "std":"std_fs"})
+    df = df.merge(fs_stats, on=["uid"])
 
     #collaspe (one row for one run)
     df = df.drop(columns=["radius", "fs", "total", "reproduced", "weighted_fs", 
@@ -229,7 +241,7 @@ def feature_selection(df, label_names):
 
     for label_name in label_names:
         label_dtype = df[label_name].dtypes
-        X = list(df[feature_names].values)
+        X = df[feature_names]
         
         if label_dtype == float:
             y = np.array(df[label_name].values)
@@ -251,6 +263,11 @@ def feature_selection(df, label_names):
         for i in range(len(feature_names)):
             print(f"\t\t{feature_names[i]} F:{round(f_statistic[i])} p-value:{p_values[i]}")
 
+        print(f"\tSequential Feature Selection {label_name}")
+        clf = MLPClassifier(hidden_layer_sizes=(100,75,50))
+        sfs = SequentialFeatureSelector(clf, tol=0.05, cv=5).fit(X, y)
+        print(f"\t\t{sfs.get_feature_names_out()}")
+
 
 '''
 Classification
@@ -265,8 +282,8 @@ def machine_learning(exp_dir, df, label_name):
     y = [category_to_int[x] for x in df[label_name].values]
 
     avg_acc = 0
-    cross_validation = KFold(n_splits=5, shuffle=True)
-    for _, (train_i, test_i) in enumerate(cross_validation.split(X)):
+    cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
+    for _, (train_i, test_i) in enumerate(cross_validation.split(X, y)):
         X_train = [X[i] for i in train_i]
         X_test = [X[i] for i in test_i]
         y_train = [y[i] for i in train_i]
@@ -294,12 +311,10 @@ def main(exp_dir, dimension):
     df = clean_data(df)
 
     classify_game = True
-    if classify_game:
-        features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "game"]]
-        labels = ["game"]
-    else:
-        features = df[["avg_fs_slope", "s_in_neighborhood", "average_fs", "proportion_resistant", "density", "A", "B", "C", "D"]]
-        labels = ["A", "B", "C", "D"]
+    labels = ["game"] if classify_game else ["A", "B", "C", "D"]
+    #feature_names = ['s_in_neighborhood', 'skew_fs', 'std_fs']
+    feature_names = ["s_in_neighborhood", "average_fs", "proportion_resistant", "skew_fs", "std_fs", "avg_fs_slope", "density"]
+    features = df[feature_names+labels]
 
     print("\nAnalyzing and exploring data...")
     features_by_labels_plot(exp_dir, features, labels)
