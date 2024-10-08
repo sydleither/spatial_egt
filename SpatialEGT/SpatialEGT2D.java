@@ -47,6 +47,56 @@ public class SpatialEGT2D {
         return fsListBinned;
     }
 
+    public static Map<Integer, float[]> GetRipleysK(Model2D model, int maxDistance, int area) {
+        List<Cell2D> cells = new ArrayList<Cell2D>();
+        for (Cell2D cell : model) {
+            cells.add(cell);
+        }
+
+        Map<Integer, float[]> radiusRow = new HashMap<>();
+        for (int i = 1; i < maxDistance; i++) {
+            float radiusStartingList[] = {0, 0, 0, 0};
+            radiusRow.put(i, radiusStartingList);
+        }
+
+        int numCells = cells.size();
+        for (int a = 0; a < numCells; a++) {
+            for (int b = 0; b < numCells; b++) {
+                if (a == b) {
+                    continue;
+                }
+
+                Cell2D cellA = cells.get(a);
+                Cell2D cellB = cells.get(b);
+                int cellAtype = cellA.type;
+                int cellBtype = cellB.type;
+                float euclideanDistance = Math.sqrt(Math.pow(cellA.Xsq() - cellB.Xsq(), 2) + Math.pow(cellA.Ysq() - cellB.Ysq(), 2));
+
+                int pairType;
+                if (cellAtype == 0 && cellBtype == 0)
+                    pairType = 0;
+                else if (cellAtype == 1 && cellBtype == 1)
+                    pairType = 1;
+                else if (cellAtype == 1 && cellBtype == 0)
+                    pairType = 2;
+                else if (cellAtype == 0 && cellBtype == 1)
+                    pairType = 3;
+                else
+                    pairType = -9;
+
+                int radius = 1;
+                while (euclideanDistance < radius) {
+                    List<Integer> tableKey = Arrays.asList(cellA.Xsq(), cellA.Ysq(), radius);
+                    float normalized_count = 1/numCells;
+                    annulusRow.get(radius)[pairType] = annulusRow.get(radius)[pairType]+normalized_count;
+                    radius++;
+                }
+            }
+        }
+
+        return radiusRow;
+    }
+
     public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance, int area, Map<List<Integer>, Integer> annulusAreaLookupTable) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
         for (Cell2D cell : model) {
@@ -202,9 +252,11 @@ public class SpatialEGT2D {
         FileIO pcOut = null;
         if (writePc) {
             maxDistance = x;
-            annulusAreaLookupTable = GetAnnulusAreaLookupTable(x, y, maxDistance);
-            pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
-            pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
+            // annulusAreaLookupTable = GetAnnulusAreaLookupTable(x, y, maxDistance);
+            // pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
+            // pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
+            pcOut = new FileIO(saveLoc+"ripleysK.csv", "w");
+            pcOut.Write("model,time,pair,radius,normalized_count\n");
         }
         FileIO fsOut = null;
         if (writeFs) {
@@ -236,11 +288,20 @@ public class SpatialEGT2D {
                 }
                 if (writePc) {
                     if (tick % writePcFrequency == 0) {
-                        Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance, x*y, annulusAreaLookupTable);
+                    //     Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance, x*y, annulusAreaLookupTable);
+                    //     String pairTypes[] = {"SS", "RR", "RS", "SR"};
+                    //     for (int dist = 1; dist < maxDistance; dist++) {
+                    //         for (int i = 0; i < 4; i++) {
+                    //             pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
+                    //         }
+                    //     }
+                    // }
+                    if (tick % writePcFrequency == 0) {
+                        Map<Integer, Integer[]> radiusRows = GetRipleysK(model, maxDistance, x*y);
                         String pairTypes[] = {"SS", "RR", "RS", "SR"};
                         for (int dist = 1; dist < maxDistance; dist++) {
                             for (int i = 0; i < 4; i++) {
-                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+dist+","+radiusRows.get(dist)[i]+"\n");
                             }
                         }
                     }
