@@ -14,178 +14,30 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static Map<List<Double>, List<Integer>> GetFsList(Model2D model, int maxRadius) {
-        ArrayList<List<Object>> fsList = new ArrayList<List<Object>>();
-        for (Cell2D cell: model) {
-            if (cell.type == 0) {
-                continue;
-            }
-            HashMap<Integer,Double> fsListCell = cell.Fs(maxRadius);
-            for (int radius = 1; radius <= maxRadius; radius++) {
-                List<Object> listEntry = Arrays.asList(cell.reproduced, (double) radius, fsListCell.get(radius));
-                fsList.add(listEntry);
-            }
-        }
-
-        Map<List<Double>, List<Integer>> fsListBinned = new HashMap<>();
-        for (List<Object> listEntry : fsList) {
-            int reproduced = (boolean) listEntry.get(0) ? 1 : 0;
-            double radius = (double) listEntry.get(1);
-            double fs = (double) listEntry.get(2);
-            fs = Math.round(fs * Math.pow(10, 2)) / Math.pow(10, 2);
-            List<Double> listBinnedKey = Arrays.asList(radius, fs);
-            if (fsListBinned.get(listBinnedKey) == null) {
-                List<Integer> listBinnedEntry = Arrays.asList(reproduced, 1);
-                fsListBinned.put(listBinnedKey, listBinnedEntry);
-            }
-            else {
-                List<Integer> listBinnedEntry = Arrays.asList(fsListBinned.get(listBinnedKey).get(0)+reproduced, fsListBinned.get(listBinnedKey).get(1)+1);
-                fsListBinned.put(listBinnedKey, listBinnedEntry);
-            }
-        }
-
-        return fsListBinned;
-    }
-
-    public static Map<Integer, float[]> GetRipleysK(Model2D model, int maxDistance, int area) {
-        List<Cell2D> cells = new ArrayList<Cell2D>();
-        int numScells = 0;
-        int numRcells = 0;
-        for (Cell2D cell : model) {
-            cells.add(cell);
-            if (cell.type == 0) {
-                numScells++;
-            }
-            else {
-                numRcells++;
-            }
-        }
-
-        Map<Integer, float[]> radiusRow = new HashMap<>();
-        for (int i = 1; i <= maxDistance; i++) {
-            float radiusStartingList[] = {0, 0, 0, 0};
-            radiusRow.put(i, radiusStartingList);
-        }
-
-        int numCells = cells.size();
-        for (int a = 0; a < numCells; a++) {
-            for (int b = 0; b < numCells; b++) {
-                if (a == b) {
-                    continue;
+    public static void SaveModelState(FileIO modelOut, Model2D model, int x, int y) {
+        String row;
+        for (int i = 0; i < x; i++) {
+            row = "";
+            for (int j = 0; j < y; j++) {
+                Cell2D cell = model.GetAgent(i,j);
+                String state;
+                if (cell == null) {
+                    state = "*";
                 }
-
-                Cell2D cellA = cells.get(a);
-                Cell2D cellB = cells.get(b);
-                int cellAtype = cellA.type;
-                int cellBtype = cellB.type;
-                double euclideanDistance = Math.sqrt(Math.pow(cellA.Xsq() - cellB.Xsq(), 2) + Math.pow(cellA.Ysq() - cellB.Ysq(), 2));
-
-                int pairType;
-                int numPairCells;
-                if (cellAtype == 0 && cellBtype == 0) {
-                    pairType = 0;
-                    numPairCells = numScells;
+                else if (cell.type == 0) {
+                    state = "S";
                 }
-                else if (cellAtype == 1 && cellBtype == 1) {
-                    pairType = 1;
-                    numPairCells = numRcells;
-                }
-                else if (cellAtype == 1 && cellBtype == 0) {
-                    pairType = 2;
-                    numPairCells = numCells;
-                }
-                else if (cellAtype == 0 && cellBtype == 1) {
-                    pairType = 3;
-                    numPairCells = numCells;
+                else if (cell.type == 1) {
+                    state = "R";
                 }
                 else {
-                    pairType = -9;
-                    numPairCells = numCells;
+                    state = "?";
                 }
-
-                int radius = maxDistance;
-                while (euclideanDistance < radius) {
-                    float normalized_count = 1/(float)numPairCells;
-                    radiusRow.get(radius)[pairType] = radiusRow.get(radius)[pairType]+normalized_count;
-                    radius--;
-                }
+                row += state;
             }
+            modelOut.Write(row+"\n");
         }
-
-        return radiusRow;
-    }
-
-    public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance, int area, Map<List<Integer>, Integer> annulusAreaLookupTable) {
-        List<Cell2D> cells = new ArrayList<Cell2D>();
-        for (Cell2D cell : model) {
-            cells.add(cell);
-        }
-
-        Map<Integer, Integer[]> annulusRow = new HashMap<>();
-        for (int i = 1; i < maxDistance; i++) {
-            Integer annulusStartingList[] = {0, 0, 0, 0};
-            annulusRow.put(i, annulusStartingList);
-        }
-
-        for (int a = 0; a < cells.size(); a++) {
-            for (int b = 0; b < cells.size(); b++) {
-                if (a == b) {
-                    continue;
-                }
-
-                Cell2D cellA = cells.get(a);
-                Cell2D cellB = cells.get(b);
-                int cellAtype = cellA.type;
-                int cellBtype = cellB.type;
-                int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq());
-                int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq());
-                int annulus = xDistance + yDistance;
-
-                if (annulus >= maxDistance) {
-                    continue;
-                }
-
-                int pairType;
-                if (cellAtype == 0 && cellBtype == 0)
-                    pairType = 0;
-                else if (cellAtype == 1 && cellBtype == 1)
-                    pairType = 1;
-                else if (cellAtype == 1 && cellBtype == 0)
-                    pairType = 2;
-                else if (cellAtype == 0 && cellBtype == 1)
-                    pairType = 3;
-                else
-                    pairType = -9;
-
-                List<Integer> tableKey = Arrays.asList(cellA.Xsq(), cellA.Ysq(), annulus);
-                int normalized_count = (int)(area/annulusAreaLookupTable.get(tableKey));
-                annulusRow.get(annulus)[pairType] = annulusRow.get(annulus)[pairType]+normalized_count;
-            }
-        }
-
-        return annulusRow;
-    }
-
-    public static Map<List<Integer>, Integer> GetAnnulusAreaLookupTable(int x, int y, int maxDistance) {
-        //TODO make more efficient (don't calculate area when radius is not near boundary, reflections)
-        Map<List<Integer>, Integer> table = new HashMap<>();
-        for (int r = 1; r < maxDistance; r++) {
-            for (int x1 = 0; x1 < x; x1++) {
-                for (int y1 = 0; y1 < y; y1++) {
-                    List<Integer> tableKey = Arrays.asList(x1, y1, r);
-                    int area = 0;
-                    for (int x2 = Math.max(x1-r,0); x2 <= Math.min(x1+r,x); x2++) {
-                        for (int y2 = Math.max(y1-r,0); y2 <= Math.min(y1+r,y); y2++) {
-                            if (Math.abs(x1-x2) + Math.abs(y1-y2) == r) {
-                                area += 1;
-                            }
-                        }
-                    }
-                    table.put(tableKey, area);
-                }
-            }
-        }
-        return table;
+        modelOut.Close();
     }
 
     public static int[] GetPopulationSize(Model2D model) {
@@ -208,9 +60,8 @@ public class SpatialEGT2D {
         int runNull = (int) params.get("null");
         int runContinuous = (int) params.get("continuous");
         int runAdaptive = (int) params.get("adaptive");
+        int writeModelFrequency = (int) params.get("writeModelFrequency");
         int writePopFrequency = (int) params.get("writePopFrequency");
-        int writePcFrequency = (int) params.get("writePcFrequency");
-        int writeFsFrequency = (int) params.get("writeFsFrequency");
         int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
@@ -228,10 +79,6 @@ public class SpatialEGT2D {
         payoff[1][0] = (double) params.get("C");
         payoff[1][1] = (double) params.get("D");
 
-        // calculations for pair correlation
-        int maxDistance = 0;
-        Map<List<Integer>, Integer> annulusAreaLookupTable = null;
-
         // initialize with specified models
         HashMap<String,Model2D> models = new HashMap<String,Model2D>();
         if (runNull == 1) {
@@ -248,9 +95,8 @@ public class SpatialEGT2D {
         }
 
         // check what to run and initialize output
+        boolean writeModel = writeModelFrequency != 0;
         boolean writePop = writePopFrequency != 0;
-        boolean writePc = writePcFrequency != 0;
-        boolean writeFs = writeFsFrequency != 0;
         boolean visualize = visualizationFrequency != 0;
 
         GridWindow win = null;
@@ -259,27 +105,12 @@ public class SpatialEGT2D {
             win = new GridWindow("SpatialEGT", x, y, 4);
             gifWin = new GifMaker(saveLoc+"growth.gif", 0, false);
             writePop = false;
-            writePc = false;
-            writeFs = false;
+            writeModel = false;
         }
         FileIO popsOut = null;
         if (writePop) {
             popsOut = new FileIO(saveLoc+"populations.csv", "w");
             popsOut.Write("model,time,sensitive,resistant\n");
-        }
-        FileIO pcOut = null;
-        if (writePc) {
-            maxDistance = 10;
-            // annulusAreaLookupTable = GetAnnulusAreaLookupTable(x, y, maxDistance);
-            // pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
-            // pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
-            pcOut = new FileIO(saveLoc+"ripleysK.csv", "w");
-            pcOut.Write("model,time,pair,radius,normalized_count\n");
-        }
-        FileIO fsOut = null;
-        if (writeFs) {
-            fsOut = new FileIO(saveLoc+"fs.csv", "w");
-            fsOut.Write("model,time,radius,fs,reproduced,total\n");
         }
         
         // run models
@@ -304,34 +135,10 @@ public class SpatialEGT2D {
                         popsOut.Write(modelName+","+tick+","+pop[0]+","+pop[1]+"\n");
                     }
                 }
-                if (writePc) {
-                    // if (tick % writePcFrequency == 0) {
-                    //     Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance, x*y, annulusAreaLookupTable);
-                    //     String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                    //     for (int dist = 1; dist < maxDistance; dist++) {
-                    //         for (int i = 0; i < 4; i++) {
-                    //             pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
-                    //         }
-                    //     }
-                    // }
-                    if (tick % writePcFrequency == 0) {
-                        Map<Integer, float[]> radiusRows = GetRipleysK(model, maxDistance, x*y);
-                        String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                        for (int dist = 1; dist <= maxDistance; dist++) {
-                            for (int i = 0; i < 4; i++) {
-                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+","+dist+","+radiusRows.get(dist)[i]+"\n");
-                            }
-                        }
-                    }
-                }
-                if (writeFs) {
-                    if (tick % writeFsFrequency == 0) {
-                        Map<List<Double>, List<Integer>> fsList = GetFsList(model, 10);
-                        for (Map.Entry<List<Double>,List<Integer>> entry : fsList.entrySet()) {
-                        List<Double> key = entry.getKey();
-                        List<Integer> value = entry.getValue();
-                            fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+value.get(0)+","+value.get(1)+"\n");
-                        }
+                if (writeModel) {
+                    if ((tick % writeModelFrequency == 0) && (tick > 0)) {
+                        FileIO modelOut = new FileIO(saveLoc+"model"+tick+".csv", "w");
+                        SaveModelState(modelOut, model, x, y);
                     }
                 }
                 if (visualize) {
@@ -352,12 +159,6 @@ public class SpatialEGT2D {
         }
         if (writePop) {
             popsOut.Close();
-        }
-        if (writePc) {
-            pcOut.Close();
-        }
-        if (writeFs) {
-            fsOut.Close();
         }
     }
 }
