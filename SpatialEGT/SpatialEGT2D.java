@@ -49,12 +49,20 @@ public class SpatialEGT2D {
 
     public static Map<Integer, float[]> GetRipleysK(Model2D model, int maxDistance, int area) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
+        int numScells = 0;
+        int numRcells = 0;
         for (Cell2D cell : model) {
             cells.add(cell);
+            if (cell.type == 0) {
+                numScells++;
+            }
+            else {
+                numRcells++;
+            }
         }
 
         Map<Integer, float[]> radiusRow = new HashMap<>();
-        for (int i = 1; i < maxDistance; i++) {
+        for (int i = 1; i <= maxDistance; i++) {
             float radiusStartingList[] = {0, 0, 0, 0};
             radiusRow.put(i, radiusStartingList);
         }
@@ -70,26 +78,36 @@ public class SpatialEGT2D {
                 Cell2D cellB = cells.get(b);
                 int cellAtype = cellA.type;
                 int cellBtype = cellB.type;
-                float euclideanDistance = Math.sqrt(Math.pow(cellA.Xsq() - cellB.Xsq(), 2) + Math.pow(cellA.Ysq() - cellB.Ysq(), 2));
+                double euclideanDistance = Math.sqrt(Math.pow(cellA.Xsq() - cellB.Xsq(), 2) + Math.pow(cellA.Ysq() - cellB.Ysq(), 2));
 
                 int pairType;
-                if (cellAtype == 0 && cellBtype == 0)
+                int numPairCells;
+                if (cellAtype == 0 && cellBtype == 0) {
                     pairType = 0;
-                else if (cellAtype == 1 && cellBtype == 1)
+                    numPairCells = numScells;
+                }
+                else if (cellAtype == 1 && cellBtype == 1) {
                     pairType = 1;
-                else if (cellAtype == 1 && cellBtype == 0)
+                    numPairCells = numRcells;
+                }
+                else if (cellAtype == 1 && cellBtype == 0) {
                     pairType = 2;
-                else if (cellAtype == 0 && cellBtype == 1)
+                    numPairCells = numCells;
+                }
+                else if (cellAtype == 0 && cellBtype == 1) {
                     pairType = 3;
-                else
+                    numPairCells = numCells;
+                }
+                else {
                     pairType = -9;
+                    numPairCells = numCells;
+                }
 
-                int radius = 1;
+                int radius = maxDistance;
                 while (euclideanDistance < radius) {
-                    List<Integer> tableKey = Arrays.asList(cellA.Xsq(), cellA.Ysq(), radius);
-                    float normalized_count = 1/numCells;
-                    annulusRow.get(radius)[pairType] = annulusRow.get(radius)[pairType]+normalized_count;
-                    radius++;
+                    float normalized_count = 1/(float)numPairCells;
+                    radiusRow.get(radius)[pairType] = radiusRow.get(radius)[pairType]+normalized_count;
+                    radius--;
                 }
             }
         }
@@ -251,7 +269,7 @@ public class SpatialEGT2D {
         }
         FileIO pcOut = null;
         if (writePc) {
-            maxDistance = x;
+            maxDistance = 10;
             // annulusAreaLookupTable = GetAnnulusAreaLookupTable(x, y, maxDistance);
             // pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
             // pcOut.Write("model,time,pair,measure,radius,normalized_count\n");
@@ -287,7 +305,7 @@ public class SpatialEGT2D {
                     }
                 }
                 if (writePc) {
-                    if (tick % writePcFrequency == 0) {
+                    // if (tick % writePcFrequency == 0) {
                     //     Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance, x*y, annulusAreaLookupTable);
                     //     String pairTypes[] = {"SS", "RR", "RS", "SR"};
                     //     for (int dist = 1; dist < maxDistance; dist++) {
@@ -297,11 +315,11 @@ public class SpatialEGT2D {
                     //     }
                     // }
                     if (tick % writePcFrequency == 0) {
-                        Map<Integer, Integer[]> radiusRows = GetRipleysK(model, maxDistance, x*y);
+                        Map<Integer, float[]> radiusRows = GetRipleysK(model, maxDistance, x*y);
                         String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                        for (int dist = 1; dist < maxDistance; dist++) {
+                        for (int dist = 1; dist <= maxDistance; dist++) {
                             for (int i = 0; i < 4; i++) {
-                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+dist+","+radiusRows.get(dist)[i]+"\n");
+                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+","+dist+","+radiusRows.get(dist)[i]+"\n");
                             }
                         }
                     }

@@ -12,7 +12,6 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
         "null": runNull,
         "adaptive": runAdaptive,
         "continuous": runContinuous,
-        "visualizationFrequency": 0,
         "writePopFrequency": writePopFrequency,
         "writePcFrequency": writePcFrequency,
         "writeFsFrequency": writeFsFrequency,
@@ -262,6 +261,23 @@ if __name__ == "__main__":
                                 turnover=0.009, init_cells=sample["cells"], prop_res=sample["fr"], 
                                 runtime=250, runContinuous=0, writePcFrequency=0, radius=2, 
                                 replicates=1, spaces=["2D"])
+            submit_output += s
+            analysis_output += a
+    elif experiment_name == "sample3":
+        N = 5000
+        samples = lhs_sample(N, 
+                             ["A", "B", "C", "D", "fr", "cells"],
+                             [0, 0, 0, 0, 0.1, 625], 
+                             [0.1, 0.1, 0.1, 0.1, 0.9, 15625], 
+                             [False, False, False, False, False, True], 
+                             seed=42)
+        for i in range(N):
+            sample = samples[i]
+            s, a = sample_games(writePopFrequency=250, writeFsFrequency=250, writePcFrequency=250,
+                                exp_dir=experiment_name, name=str(i), a=sample["A"], 
+                                b=sample["B"], c=sample["C"], d=sample["D"], initialTumor=0, 
+                                turnover=0.009, init_cells=sample["cells"], prop_res=sample["fr"], 
+                                runtime=250, runContinuous=0, radius=2, replicates=1, spaces=["2D"])
             submit_output += s
             analysis_output += a
     else:
