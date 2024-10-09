@@ -94,7 +94,8 @@ def main(exp_dir, exp_name, dimension):
     df = process_fs(read_specific(exp_dir, exp_name, dimension, "fs"), df_key)
 
     times = list(df["time"].unique())
-    times.remove(0)
+    if 0 in times:
+        times.remove(0)
     radii = [1, 2, 3]
     for time in times:
         plot_average_fs(df, exp_name, exp_dir, dimension, "nodrug", time)
