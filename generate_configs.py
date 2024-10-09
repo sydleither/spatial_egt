@@ -5,14 +5,15 @@ import sys
 from scipy.stats import qmc
 
 
-def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency,
-                      writeModelFrequency, numTicks, radius, deathRate, drugGrowthReduction, numCells, 
-                      proportionResistant, adaptiveTreatmentThreshold, initialTumor, toyGap, payoff):
+def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous, writePopFrequency, 
+                      writeFsFrequency, writeModelFrequency, numTicks, radius, deathRate, drugGrowthReduction,
+                      numCells, proportionResistant, adaptiveTreatmentThreshold, initialTumor, toyGap, payoff):
     config = {
         "null": runNull,
         "adaptive": runAdaptive,
         "continuous": runContinuous,
         "writePopFrequency": writePopFrequency,
+        "writeFsFrequency": writeFsFrequency,
         "writeModelFrequency": writeModelFrequency,
         "x": 125,
         "y": 125,
@@ -37,15 +38,16 @@ def experiment_config(exp_dir, config_name, runNull, runAdaptive, runContinuous,
 
 
 def sample_games(exp_dir, name, a, b, c, d, runNull=1, runAdaptive=0, runContinuous=0, 
-                 writePopFrequency=1, writeModelFrequency=0, radius=1, turnover=0.009,
-                 drug_reduction=0.5, init_cells=4375, prop_res=0.01, adaptiveTreatmentThreshold=0.5,
-                 initialTumor=0, toyGap=5, runtime=500, replicates=10, spaces=["2D", "3D", "WM"]):
+                 writePopFrequency=1, writeFsFrequency=0, writeModelFrequency=0, radius=1, 
+                 turnover=0.009, drug_reduction=0.5, init_cells=4375, prop_res=0.01, 
+                 adaptiveTreatmentThreshold=0.5, initialTumor=0, toyGap=5, runtime=500, 
+                 replicates=10, spaces=["2D", "3D", "WM"]):
     payoff = [a, b, c, d]
     exp_name = name
     os.makedirs("output/"+exp_dir+"/"+exp_name)
     for i in range(replicates):
         os.mkdir("output/"+exp_dir+"/"+exp_name+"/"+str(i))
-    experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency,
+    experiment_config(exp_dir, exp_name, runNull, runAdaptive, runContinuous, writePopFrequency, writeFsFrequency,
                         writeModelFrequency, runtime, radius, turnover, drug_reduction, init_cells, 
                         prop_res, adaptiveTreatmentThreshold, initialTumor, toyGap, payoff)
     submit_output, analysis_output = generate_scripts_batch(exp_dir, [exp_name], spaces)
@@ -99,8 +101,8 @@ if __name__ == "__main__":
                              seed=42)
         for i in range(N):
             sample = samples[i]
-            s, a = sample_games(writePopFrequency=0, writeModelFrequency=250, runtime=250,
-                                exp_dir=experiment_name, name=str(i), a=sample["A"], 
+            s, a = sample_games(writePopFrequency=0, writeModelFrequency=250, writeFsFrequency=250,
+                                runtime=250, exp_dir=experiment_name, name=str(i), a=sample["A"], 
                                 b=sample["B"], c=sample["C"], d=sample["D"], initialTumor=0, 
                                 turnover=0.009, init_cells=sample["cells"], prop_res=sample["fr"], 
                                 runContinuous=0, radius=2, replicates=1, spaces=["2D"])

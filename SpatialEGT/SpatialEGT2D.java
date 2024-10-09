@@ -40,6 +40,39 @@ public class SpatialEGT2D {
         modelOut.Close();
     }
 
+    public static Map<List<Double>, List<Integer>> GetFsList(Model2D model, int maxRadius) {
+        ArrayList<List<Object>> fsList = new ArrayList<List<Object>>();
+        for (Cell2D cell: model) {
+            if (cell.type == 0) {
+                continue;
+            }
+            HashMap<Integer,Double> fsListCell = cell.Fs(maxRadius);
+            for (int radius = 1; radius <= maxRadius; radius++) {
+                List<Object> listEntry = Arrays.asList(cell.reproduced, (double) radius, fsListCell.get(radius));
+                fsList.add(listEntry);
+            }
+        }
+
+        Map<List<Double>, List<Integer>> fsListBinned = new HashMap<>();
+        for (List<Object> listEntry : fsList) {
+            int reproduced = (boolean) listEntry.get(0) ? 1 : 0;
+            double radius = (double) listEntry.get(1);
+            double fs = (double) listEntry.get(2);
+            fs = Math.round(fs * Math.pow(10, 2)) / Math.pow(10, 2);
+            List<Double> listBinnedKey = Arrays.asList(radius, fs);
+            if (fsListBinned.get(listBinnedKey) == null) {
+                List<Integer> listBinnedEntry = Arrays.asList(reproduced, 1);
+                fsListBinned.put(listBinnedKey, listBinnedEntry);
+            }
+            else {
+                List<Integer> listBinnedEntry = Arrays.asList(fsListBinned.get(listBinnedKey).get(0)+reproduced, fsListBinned.get(listBinnedKey).get(1)+1);
+                fsListBinned.put(listBinnedKey, listBinnedEntry);
+            }
+        }
+
+        return fsListBinned;
+    }
+
     public static int[] GetPopulationSize(Model2D model) {
         int numResistant = 0;
         int numSensitive = 0;
@@ -61,6 +94,7 @@ public class SpatialEGT2D {
         int runContinuous = (int) params.get("continuous");
         int runAdaptive = (int) params.get("adaptive");
         int writeModelFrequency = (int) params.get("writeModelFrequency");
+        int writeFsFrequency = (int) params.get("writeFsFrequency");
         int writePopFrequency = (int) params.get("writePopFrequency");
         int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
@@ -97,6 +131,7 @@ public class SpatialEGT2D {
         // check what to run and initialize output
         boolean writeModel = writeModelFrequency != 0;
         boolean writePop = writePopFrequency != 0;
+        boolean writeFs = writeFsFrequency != 0;
         boolean visualize = visualizationFrequency != 0;
 
         GridWindow win = null;
@@ -111,6 +146,11 @@ public class SpatialEGT2D {
         if (writePop) {
             popsOut = new FileIO(saveLoc+"populations.csv", "w");
             popsOut.Write("model,time,sensitive,resistant\n");
+        }
+        FileIO fsOut = null;
+        if (writeFs) {
+            fsOut = new FileIO(saveLoc+"fs.csv", "w");
+            fsOut.Write("model,time,radius,fs,reproduced,total\n");
         }
         
         // run models
@@ -141,6 +181,16 @@ public class SpatialEGT2D {
                         SaveModelState(modelOut, model, x, y);
                     }
                 }
+                if (writeFs) {
+                    if (tick % writeFsFrequency == 0) {
+                        Map<List<Double>, List<Integer>> fsList = GetFsList(model, 10);
+                        for (Map.Entry<List<Double>,List<Integer>> entry : fsList.entrySet()) {
+                        List<Double> key = entry.getKey();
+                        List<Integer> value = entry.getValue();
+                            fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+value.get(0)+","+value.get(1)+"\n");
+                        }
+                    }
+                }
                 if (visualize) {
                     model.DrawModel(win, 0);
                     if (tick % visualizationFrequency == 0) {
@@ -159,6 +209,9 @@ public class SpatialEGT2D {
         }
         if (writePop) {
             popsOut.Close();
+        }
+        if (writeFs) {
+            fsOut.Close();
         }
     }
 }
