@@ -9,13 +9,15 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.feature_selection import (f_classif, f_regression, 
-                                       mutual_info_classif, mutual_info_regression,
-                                       SequentialFeatureSelector)
+                                       mutual_info_classif, mutual_info_regression)
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
 from common import get_colors
+from spatial_statistics import (create_fs_features, create_pop_features, 
+                                create_ripleysk_features, 
+                                model_state_to_coords, read_model_state)
 sys.path.insert(0, "DDIT")
 from DDIT import DDIT
 
@@ -26,6 +28,13 @@ COLORS = get_colors()
 '''
 Aggregate HAL Runs
 '''
+def get_cell_counts(df_pop):
+    df_pop = df_pop.loc[df_pop["time"] == df_pop["time"].max()]
+    num_resistant = df_pop["resistant"].values[0]
+    num_sensitive = df_pop["sensitive"].values[0]
+    return num_sensitive, num_resistant
+
+
 def save_data(exp_dir, dimension):
     df_entries = []
     exp_path = f"output/{exp_dir}"
@@ -41,7 +50,6 @@ def save_data(exp_dir, dimension):
         b = config["B"]
         c = config["C"]
         d = config["D"]
-        grid_size = config["x"]*config["y"]
         cells = config["numCells"]
         fr = config["proportionResistant"]
         for rep_dir in os.listdir(game_path):
@@ -50,7 +58,7 @@ def save_data(exp_dir, dimension):
                 continue
             pop_file = f"{rep_path}/{dimension}populations.csv"
             fs_file = f"{rep_path}/{dimension}fs.csv"
-            rk_file = f"{rep_path}/{dimension}ripleysK.csv"
+            model_file = f"{rep_path}/{dimension}model250.csv" #TODO
             if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0:
                 print(f"File not found in {rep_path}")
                 continue
@@ -73,19 +81,20 @@ def save_data(exp_dir, dimension):
             else:
                 game = "unknown"
             sample_dict["game"] = game
+            uid += 1
             sample_dict["uid"] = uid
-            pop_features, num_R, num_S, num_all = create_pop_features(pd.read_csv(pop_file), grid_size)
-            if num_R < 100 or num_S < 100:
+            df_pop = pd.read_csv(pop_file)
+            num_sensitive, num_resistant = get_cell_counts(df_pop)
+            if num_resistant < 100 or num_sensitive < 100:
                 extinct += 1
                 continue
             if game == "unknown":
                 unknwon_game += 1
                 continue
-            fs_features = create_fs_features(pd.read_csv(fs_file), num_R)
-            rk_features = create_rk_features(pd.read_csv(rk_file), num_R, num_S, num_all, grid_size)
-            sample_dict = sample_dict | pop_features | fs_features | rk_features
+            df_fs = pd.read_csv(fs_file)
+            model_state = read_model_state(model_file)
+            sample_dict = create_all_features(df_fs, model_state, num_sensitive, num_resistant)
             df_entries.append(sample_dict)
-            uid += 1
         if uid % 100 == 0:
             print(f"Processed {uid} samples...")
     print(f"Skipped {extinct} samples nearing extinction.")
@@ -98,59 +107,14 @@ def save_data(exp_dir, dimension):
 '''
 Feature Engineering
 '''
-def create_pop_features(df, grid_size):
-    features = {}
-    df = df.loc[df["time"] == df["time"].max()]
-    num_resistant = df["resistant"].values[0]
-    num_sensitive = df["sensitive"].values[0]
-    num_total = num_resistant + num_sensitive
+def create_all_features(df_fs, model_state, num_sensitive, num_resistant):
+    features = dict()
+    features = features | create_pop_features(num_sensitive, num_resistant)
+    features = features | create_fs_features(df_fs, num_resistant)
 
-    #proportion of cells that are resistant
-    features["prop_r"] = num_resistant / num_total
-
-    return features, num_resistant, num_sensitive, num_total
-
-
-def create_fs_features(df, num_resistant):
-    features = {}
-    df = df.loc[(df["fs"] > 0) & (df["radius"] <= 5) & (df["time"] == df["time"].max())]
-
-    #fs distribution summary statistics
-    fs_expand = pd.DataFrame({
-        "radius": np.repeat(df["radius"], df["total"]),
-        "fs": np.repeat(df["fs"], df["total"])
-    })
-    agg_funcs = ["mean", "skew", "std", "count"]
-    fs_stats = fs_expand.groupby("radius")["fs"].agg(agg_funcs)
-    features["fs_mean"] = fs_stats["mean"][3]
-    features["fs_skew"] = fs_stats["skew"][3]
-    features["fs_std"] = fs_stats["std"][3]
-
-    #slope of mean fs over neighborhood radii
-    fs_slope = fs_stats["mean"][5] - fs_stats["mean"][1]
-    features["fs_slope"] = fs_slope
-
-    #proportion of R cells that are boundary cells
-    r_boundary_prop = fs_stats["count"][1] / num_resistant
-    features["r_boundary_prop"] = r_boundary_prop
-
-    return features
-
-
-def create_rk_features(df, num_resistant, num_sensitive, num_total, grid_size):
-    features = {}
-    df = df.loc[(df["time"] == df["time"].max())]
-    df["ripleys_k"] = 0
-    df.loc[df["pair"] == "SS", "ripleys_k"] = (num_sensitive/grid_size)*df["normalized_count"]
-    df.loc[df["pair"] == "SR", "ripleys_k"] = (num_total/grid_size)*df["normalized_count"]
-    df.loc[df["pair"] == "RR", "ripleys_k"] = (num_resistant/grid_size)*df["normalized_count"]
-    df["ripleys_k"] = np.sqrt(df["ripleys_k"]/np.pi)
-
-    #ripleys k for each pair
-    for pair in ["SS", "SR", "RR"]:
-        rk = df.loc[(df["radius"] == 3) & (df["pair"] == pair)]["ripleys_k"].values[0]
-        features["rk_"+pair] = rk
-
+    s_coords, r_coords = model_state_to_coords(model_state)
+    features = features | create_ripleysk_features(s_coords, r_coords)
+    
     return features
 
 
@@ -241,7 +205,7 @@ def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
         print(f"\t{label_name} entropy: {label_entropy}")
         print(f"\t\tideal: log({len(df[label_name].unique())}) = {np.log2(len(df[label_name].unique()))}")
         for feature_set in feature_powerset:
-            if len(feature_set) > 2 and len(feature_set) < num_features and num_features > 5:
+            if len(feature_set) > 2 and len(feature_set) < num_features and num_features > 6:
                 continue
             ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
             entropies[l].append(ent)
@@ -293,11 +257,6 @@ def feature_selection(df, label_names):
         for i in range(len(feature_names)):
             print(f"\t\t{feature_names[i]} F:{round(f_statistic[i])} p-value:{p_values[i]}")
 
-        print(f"\tSequential Feature Selection {label_name}")
-        clf = MLPClassifier(hidden_layer_sizes=(100,))
-        sfs = SequentialFeatureSelector(clf, tol=0.05, cv=5).fit(X, y)
-        print(f"\t\t{sfs.get_feature_names_out()}")
-
 
 '''
 Classification
@@ -344,7 +303,6 @@ def main(exp_dir, dimension):
     classify_game = True
     labels = ["game"] if classify_game else ["A", "B", "C", "D"]
     feature_names = [x for x in df.columns if x not in nonfeature_cols]
-    # feature_names = ["fs_mean", "fs_std"]
     features = df[feature_names+labels]
 
     print("\nAnalyzing and exploring data...")
