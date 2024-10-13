@@ -49,10 +49,10 @@ def create_ripleysk_features(s_coords, r_coords):
     for i in range(len(k_dists)):
         dist_name = k_dists_names[i]
         k_dist = k_dists[i]
-        features[f"k{dist_name}_mean"] = np.mean(k_dist)
-        features[f"k{dist_name}_std"] = np.std(k_dist)
-        features[f"k{dist_name}_skew"] = skew(k_dist)
-        features[f"k{dist_name}_slope"] = k_dist[-1] - k_dist[0]
+        features[f"k_{dist_name}_mean"] = np.mean(k_dist)
+        features[f"k_{dist_name}_std"] = np.std(k_dist)
+        features[f"k_{dist_name}_skew"] = skew(k_dist)
+        features[f"k_{dist_name}_slope"] = k_dist[-1] - k_dist[0]
 
     return features
 
@@ -63,6 +63,23 @@ def create_pop_features(num_sensitive, num_resistant):
 
     #proportion of cells that are resistant
     features["prop_r"] = num_resistant / num_total
+
+    return features
+
+
+def create_pc_features(df, num_sensitive, num_resistant):
+    features = dict()
+    df["pc"] = df["normalized_count"] / (num_sensitive*num_resistant)
+    df = df.loc[(df["radius"] <= 5) & (df["time"] == df["time"].max())]
+
+    #pc distribution summary statistics
+    pairs = df["pair"].unique()
+    for pair in pairs:
+        pair_dist = df.loc[df["pair"] == pair]["pc"].values
+        features[f"pc_{pair}_mean"] = np.mean(pair_dist)
+        features[f"pc_{pair}_std"] = np.std(pair_dist)
+        features[f"pc_{pair}_skew"] = skew(pair_dist)
+        features[f"pc_{pair}_slope"] = pair_dist[-1] - pair_dist[0]
 
     return features
 
@@ -91,7 +108,3 @@ def create_fs_features(df, num_resistant):
     features["r_boundary_prop"] = r_boundary_prop
 
     return features
-
-
-# model_state = read_model_state("output/sample10/0/0/2Dmodel250.csv")
-# s_coords, r_coords = model_state_to_coords(model_state)

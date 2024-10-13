@@ -266,7 +266,7 @@ public class SpatialEGT2D {
                     }
                 }
                 if (writePc) {
-                    if (tick % writePcFrequency == 0) {
+                    if ((tick % writePcFrequency == 0) && (tick > 0)) {
                         Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance, x*y, annulusAreaLookupTable);
                         String pairTypes[] = {"SS", "RR", "RS", "SR"};
                         for (int dist = 1; dist < maxDistance; dist++) {
@@ -277,7 +277,7 @@ public class SpatialEGT2D {
                     }
                 }
                 if (writeFs) {
-                    if (tick % writeFsFrequency == 0) {
+                    if ((tick % writeFsFrequency == 0) && (tick > 0)) {
                         Map<List<Double>, List<Integer>> fsList = GetFsList(model, 10);
                         for (Map.Entry<List<Double>,List<Integer>> entry : fsList.entrySet()) {
                         List<Double> key = entry.getKey();

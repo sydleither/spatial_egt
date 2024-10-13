@@ -92,7 +92,7 @@ if __name__ == "__main__":
     experiment_name = sys.argv[1]
     submit_output = []
     analysis_output = []
-    N = 10
+    N = 2500
     if experiment_name == "sample":
         experiment_name = "sample"+str(N)
         samples = lhs_sample(N, 

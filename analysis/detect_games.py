@@ -16,7 +16,8 @@ from sklearn.neural_network import MLPClassifier
 
 from common import get_colors
 from spatial_statistics import (create_fs_features, create_pop_features, 
-                                create_ripleysk_features, create_voroni_features,
+                                create_ripleysk_features, 
+                                create_voroni_features, create_pc_features,
                                 model_state_to_coords, read_model_state)
 sys.path.insert(0, "DDIT")
 from DDIT import DDIT
@@ -58,7 +59,7 @@ def save_data(exp_dir, dimension):
                 continue
             pop_file = f"{rep_path}/{dimension}populations.csv"
             fs_file = f"{rep_path}/{dimension}fs.csv"
-            pc_file = f"{rep_path}/{dimension}pairCorrelation.csv"
+            pc_file = f"{rep_path}/{dimension}pairCorrelations.csv"
             model_file = f"{rep_path}/{dimension}model250.csv" #TODO
             if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0:
                 print(f"File not found in {rep_path}")
@@ -93,8 +94,9 @@ def save_data(exp_dir, dimension):
                 unknwon_game += 1
                 continue
             df_fs = pd.read_csv(fs_file)
+            df_pc = pd.read_csv(pc_file)
             model_state = read_model_state(model_file)
-            sample_dict = create_all_features(df_fs, model_state, num_sensitive, num_resistant)
+            sample_dict = create_all_features(df_fs, df_pc, model_state, num_sensitive, num_resistant)
             df_entries.append(sample_dict)
         if uid % 100 == 0:
             print(f"Processed {uid} samples...")
@@ -108,10 +110,11 @@ def save_data(exp_dir, dimension):
 '''
 Feature Engineering
 '''
-def create_all_features(df_fs, model_state, num_sensitive, num_resistant):
+def create_all_features(df_fs, df_pc, model_state, num_sensitive, num_resistant):
     features = dict()
     features = features | create_pop_features(num_sensitive, num_resistant)
     features = features | create_fs_features(df_fs, num_resistant)
+    features = features | create_pc_features(df_pc, num_sensitive, num_resistant)
 
     s_coords, r_coords = model_state_to_coords(model_state)
     features = features | create_ripleysk_features(s_coords, r_coords)
