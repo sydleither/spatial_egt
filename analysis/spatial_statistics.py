@@ -1,10 +1,10 @@
 from csv import reader
 
-# import libpysal as ps
 import numpy as np
 import pandas as pd
 import pointpats as pp
 from scipy.stats import skew
+from scipy.spatial import Voronoi
 
 
 def read_model_state(file_loc):
@@ -23,6 +23,18 @@ def model_state_to_coords(model_state):
             elif model_state[x][y] == "R":
                 r_coords.append((x,y))
     return s_coords, r_coords
+
+
+def create_voroni_features(s_coords, r_coords):
+    features = dict()
+
+    s_vor = Voronoi(s_coords)
+    r_vor = Voronoi(r_coords)
+
+    features["vor_s"] = len(s_vor.regions)
+    features["vor_r"] = len(r_vor.regions)
+
+    return features
 
 
 def create_ripleysk_features(s_coords, r_coords):
@@ -83,4 +95,3 @@ def create_fs_features(df, num_resistant):
 
 # model_state = read_model_state("output/sample10/0/0/2Dmodel250.csv")
 # s_coords, r_coords = model_state_to_coords(model_state)
-# print(create_ripleysk_features(s_coords, r_coords))

@@ -16,7 +16,7 @@ from sklearn.neural_network import MLPClassifier
 
 from common import get_colors
 from spatial_statistics import (create_fs_features, create_pop_features, 
-                                create_ripleysk_features, 
+                                create_ripleysk_features, create_voroni_features,
                                 model_state_to_coords, read_model_state)
 sys.path.insert(0, "DDIT")
 from DDIT import DDIT
@@ -58,6 +58,7 @@ def save_data(exp_dir, dimension):
                 continue
             pop_file = f"{rep_path}/{dimension}populations.csv"
             fs_file = f"{rep_path}/{dimension}fs.csv"
+            pc_file = f"{rep_path}/{dimension}pairCorrelation.csv"
             model_file = f"{rep_path}/{dimension}model250.csv" #TODO
             if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0:
                 print(f"File not found in {rep_path}")
@@ -114,6 +115,7 @@ def create_all_features(df_fs, model_state, num_sensitive, num_resistant):
 
     s_coords, r_coords = model_state_to_coords(model_state)
     features = features | create_ripleysk_features(s_coords, r_coords)
+    features = features | create_voroni_features(s_coords, r_coords)
     
     return features
 
