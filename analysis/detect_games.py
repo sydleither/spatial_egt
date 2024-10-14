@@ -96,7 +96,8 @@ def save_data(exp_dir, dimension):
             df_fs = pd.read_csv(fs_file)
             df_pc = pd.read_csv(pc_file)
             model_state = read_model_state(model_file)
-            sample_dict = create_all_features(df_fs, df_pc, model_state, num_sensitive, num_resistant)
+            feature_dict = create_all_features(df_fs, df_pc, model_state, num_sensitive, num_resistant)
+            sample_dict = sample_dict | feature_dict
             df_entries.append(sample_dict)
         if uid % 100 == 0:
             print(f"Processed {uid} samples...")
