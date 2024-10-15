@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.feature_selection import (f_classif, f_regression, 
                                        mutual_info_classif, mutual_info_regression)
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
@@ -278,7 +278,7 @@ def machine_learning(exp_dir, df, label_name):
 
     avg_acc = 0
     cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
-    for _, (train_i, test_i) in enumerate(cross_validation.split(X, y)):
+    for k, (train_i, test_i) in enumerate(cross_validation.split(X, y)):
         X_train = [X[i] for i in train_i]
         X_test = [X[i] for i in test_i]
         y_train = [y[i] for i in train_i]
@@ -287,10 +287,13 @@ def machine_learning(exp_dir, df, label_name):
         y_pred = clf.predict(X_test)
         acc = round(sum([y_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test), 2)
         avg_acc += acc
-        print("Accuracy:", acc)
-        print(confusion_matrix(y_test, y_pred, normalize="true"))
-    print("Average Accuracy:", avg_acc/5)
-    print(int_to_category)
+        conf_mat = confusion_matrix(y_test, y_pred, normalize="true")
+        disp_labels = [int_to_category[x] for x in clf.classes_]
+        disp = ConfusionMatrixDisplay(confusion_matrix=conf_mat, display_labels=disp_labels)
+        disp.plot()
+        plt.savefig(f"output/{exp_dir}/confusion_matrix{k}.png", bbox_inches="tight")
+        print(f"\tAccuracy {k}: {acc}")
+    print("\tAverage Accuracy:", avg_acc/5)
 
 
 '''
@@ -308,7 +311,8 @@ def main(exp_dir, dimension):
 
     classify_game = True
     labels = ["game"] if classify_game else ["A", "B", "C", "D"]
-    feature_names = [x for x in df.columns if x not in nonfeature_cols]
+    #feature_names = [x for x in df.columns if x not in nonfeature_cols]
+    feature_names = ["fs_mean", "fs_std", "fs_slope", "fs_skew", "pc_SR_mean"]
     features = df[feature_names+labels]
 
     print("\nAnalyzing and exploring data...")
