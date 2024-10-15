@@ -73,6 +73,39 @@ public class SpatialEGT2D {
         return fsListBinned;
     }
 
+    public static Map<List<Double>, List<Integer>> GetFrList(Model2D model, int maxRadius) {
+        ArrayList<List<Object>> frList = new ArrayList<List<Object>>();
+        for (Cell2D cell: model) {
+            if (cell.type == 1) {
+                continue;
+            }
+            HashMap<Integer,Double> frListCell = cell.Fr(maxRadius);
+            for (int radius = 1; radius <= maxRadius; radius++) {
+                List<Object> listEntry = Arrays.asList(cell.reproduced, (double) radius, frListCell.get(radius));
+                frList.add(listEntry);
+            }
+        }
+
+        Map<List<Double>, List<Integer>> frListBinned = new HashMap<>();
+        for (List<Object> listEntry : fsList) {
+            int reproduced = (boolean) listEntry.get(0) ? 1 : 0;
+            double radius = (double) listEntry.get(1);
+            double fr = (double) listEntry.get(2);
+            fr = Math.round(fr * Math.pow(10, 2)) / Math.pow(10, 2);
+            List<Double> listBinnedKey = Arrays.asList(radius, fr);
+            if (frListBinned.get(listBinnedKey) == null) {
+                List<Integer> listBinnedEntry = Arrays.asList(reproduced, 1);
+                frListBinned.put(listBinnedKey, listBinnedEntry);
+            }
+            else {
+                List<Integer> listBinnedEntry = Arrays.asList(frListBinned.get(listBinnedKey).get(0)+reproduced, frListBinned.get(listBinnedKey).get(1)+1);
+                frListBinned.put(listBinnedKey, listBinnedEntry);
+            }
+        }
+
+        return frListBinned;
+    }
+
     public static Map<Integer, Integer[]> GetPairCorrelation(Model2D model, int maxDistance, int area, Map<List<Integer>, Integer> annulusAreaLookupTable) {
         List<Cell2D> cells = new ArrayList<Cell2D>();
         for (Cell2D cell : model) {
@@ -223,9 +256,12 @@ public class SpatialEGT2D {
             popsOut.Write("model,time,sensitive,resistant\n");
         }
         FileIO fsOut = null;
+        FileIO frOut = null;
         if (writeFs) {
             fsOut = new FileIO(saveLoc+"fs.csv", "w");
             fsOut.Write("model,time,radius,fs,reproduced,total\n");
+            frOut = new FileIO(saveLoc+"fr.csv", "w");
+            frOut.Write("model,time,radius,fr,reproduced,total\n");
         }
         FileIO pcOut = null;
         int maxDistance = 0;
@@ -284,6 +320,12 @@ public class SpatialEGT2D {
                         List<Integer> value = entry.getValue();
                             fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+value.get(0)+","+value.get(1)+"\n");
                         }
+                        Map<List<Double>, List<Integer>> frList = GetFsList(model, 10);
+                        for (Map.Entry<List<Double>,List<Integer>> entry : frList.entrySet()) {
+                        List<Double> key = entry.getKey();
+                        List<Integer> value = entry.getValue();
+                            frOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+value.get(0)+","+value.get(1)+"\n");
+                        }
                     }
                 }
                 if (visualize) {
@@ -310,6 +352,7 @@ public class SpatialEGT2D {
         }
         if (writeFs) {
             fsOut.Close();
+            frOut.Close();
         }
     }
 }
