@@ -87,7 +87,7 @@ public class SpatialEGT2D {
         }
 
         Map<List<Double>, List<Integer>> frListBinned = new HashMap<>();
-        for (List<Object> listEntry : fsList) {
+        for (List<Object> listEntry : frList) {
             int reproduced = (boolean) listEntry.get(0) ? 1 : 0;
             double radius = (double) listEntry.get(1);
             double fr = (double) listEntry.get(2);
@@ -320,7 +320,7 @@ public class SpatialEGT2D {
                         List<Integer> value = entry.getValue();
                             fsOut.Write(modelName+","+tick+","+key.get(0)+","+key.get(1)+","+value.get(0)+","+value.get(1)+"\n");
                         }
-                        Map<List<Double>, List<Integer>> frList = GetFsList(model, 10);
+                        Map<List<Double>, List<Integer>> frList = GetFrList(model, 10);
                         for (Map.Entry<List<Double>,List<Integer>> entry : frList.entrySet()) {
                         List<Double> key = entry.getKey();
                         List<Integer> value = entry.getValue();

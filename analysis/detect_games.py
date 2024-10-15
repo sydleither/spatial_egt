@@ -15,7 +15,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
 from common import get_colors
-from spatial_statistics import (create_fs_features, create_pop_features, 
+from spatial_statistics import (create_fsfr_features, create_pop_features, 
                                 create_ripleysk_features, 
                                 create_voroni_features, create_pc_features,
                                 model_state_to_coords, read_model_state)
@@ -59,6 +59,7 @@ def save_data(exp_dir, dimension):
                 continue
             pop_file = f"{rep_path}/{dimension}populations.csv"
             fs_file = f"{rep_path}/{dimension}fs.csv"
+            fr_file = f"{rep_path}/{dimension}fr.csv"
             pc_file = f"{rep_path}/{dimension}pairCorrelations.csv"
             model_file = f"{rep_path}/{dimension}model250.csv" #TODO
             if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0:
@@ -94,9 +95,10 @@ def save_data(exp_dir, dimension):
                 unknwon_game += 1
                 continue
             df_fs = pd.read_csv(fs_file)
+            df_fr = pd.read_csv(fr_file)
             df_pc = pd.read_csv(pc_file)
             model_state = read_model_state(model_file)
-            feature_dict = create_all_features(df_fs, df_pc, model_state, num_sensitive, num_resistant)
+            feature_dict = create_all_features(df_fs, df_fr, df_pc, model_state, num_sensitive, num_resistant)
             sample_dict = sample_dict | feature_dict
             df_entries.append(sample_dict)
         if uid % 100 == 0:
@@ -111,10 +113,10 @@ def save_data(exp_dir, dimension):
 '''
 Feature Engineering
 '''
-def create_all_features(df_fs, df_pc, model_state, num_sensitive, num_resistant):
+def create_all_features(df_fs, df_fr, df_pc, model_state, num_sensitive, num_resistant):
     features = dict()
     features = features | create_pop_features(num_sensitive, num_resistant)
-    features = features | create_fs_features(df_fs, num_resistant)
+    features = features | create_fsfr_features(df_fs, df_fr, num_resistant, num_sensitive)
     features = features | create_pc_features(df_pc, num_sensitive, num_resistant)
 
     s_coords, r_coords = model_state_to_coords(model_state)

@@ -84,27 +84,33 @@ def create_pc_features(df, num_sensitive, num_resistant):
     return features
 
 
-def create_fs_features(df, num_resistant):
+def create_fsfr_features(df_fs, df_fr, num_resistant, num_sensitive):
     features = dict()
-    df = df.loc[(df["fs"] > 0) & (df["radius"] <= 5) & (df["time"] == df["time"].max())]
 
-    #fs distribution summary statistics
-    fs_expand = pd.DataFrame({
-        "radius": np.repeat(df["radius"], df["total"]),
-        "fs": np.repeat(df["fs"], df["total"])
-    })
-    agg_funcs = ["mean", "skew", "std", "count"]
-    fs_stats = fs_expand.groupby("radius")["fs"].agg(agg_funcs)
-    features["fs_mean"] = fs_stats["mean"][3]
-    features["fs_skew"] = fs_stats["skew"][3]
-    features["fs_std"] = fs_stats["std"][3]
+    for fi in ["fr", "fs"]:
+        if fi == "fr":
+            df = df_fr.loc[(df_fr[fi] > 0) & (df_fr["radius"] <= 5) & (df_fr["time"] == df_fr["time"].max())]
+        else:
+            df = df_fs.loc[(df_fs[fi] > 0) & (df_fs["radius"] <= 5) & (df_fs["time"] == df_fs["time"].max())]
 
-    #slope of mean fs over neighborhood radii
-    fs_slope = fs_stats["mean"][5] - fs_stats["mean"][1]
-    features["fs_slope"] = fs_slope
+        #fs distribution summary statistics
+        fs_expand = pd.DataFrame({
+            "radius": np.repeat(df["radius"], df["total"]),
+            fi: np.repeat(df[fi], df["total"])
+        })
+        agg_funcs = ["mean", "skew", "std", "count"]
+        fs_stats = fs_expand.groupby("radius")[fi].agg(agg_funcs)
+        features[f"{fi}_mean"] = fs_stats["mean"][3]
+        features[f"{fi}_skew"] = fs_stats["skew"][3]
+        features[f"{fi}_std"] = fs_stats["std"][3]
 
-    #proportion of R cells that are boundary cells
-    r_boundary_prop = fs_stats["count"][1] / num_resistant
-    features["r_boundary_prop"] = r_boundary_prop
+        #slope of mean fs over neighborhood radii
+        fs_slope = fs_stats["mean"][5] - fs_stats["mean"][1]
+        features[f"{fi}_slope"] = fs_slope
+
+        #proportion of R cells that are boundary cells
+        num_i = num_resistant if fi == "fs" else num_sensitive
+        r_boundary_prop = fs_stats["count"][1] / num_i
+        features[f"{fi[-1]}_boundary_prop"] = r_boundary_prop
 
     return features
