@@ -15,7 +15,7 @@ def read_specific(exp_dir, exp_name, dimension, file_name):
             continue
         result_file = f"{rep_path}/{dimension}{file_name}.csv"
         if not os.path.exists(result_file) or os.path.getsize(result_file) == 0:
-            print(f"File not found for rep {rep_dir}")
+            print(f"File not found {result_file}")
             continue
         df_i = pd.read_csv(result_file)
         df_i["dimension"] = dimension
@@ -37,13 +37,13 @@ def read_all(exp_dir, file_name, dimension=""):
     return df
 
 
-def process_fs(df, key):
-    df = df.loc[(df["fs"] > 0) & (df["radius"] <= 5)]
-    df["weighted_fs"] = df["fs"]*df["total"]
-    df_grp = df[key+["total", "weighted_fs"]].groupby(key).sum().reset_index()
-    df_grp = df_grp.rename(columns={"total":"total_boundary", "weighted_fs":"weighted_fs_sum"})
+def process_fi(df, fi, key):
+    df = df.loc[(df[fi] > 0) & (df["radius"] <= 5)]
+    df[f"weighted_{fi}"] = df[fi]*df["total"]
+    df_grp = df[key+["total", f"weighted_{fi}"]].groupby(key).sum().reset_index()
+    df_grp = df_grp.rename(columns={"total":"total_boundary", f"weighted_{fi}":f"weighted_{fi}_sum"})
     df = df.merge(df_grp, on=key)
-    df["average_fs"] = df["weighted_fs_sum"] / df["total_boundary"]
+    df[f"average_{fi}"] = df[f"weighted_{fi}_sum"] / df["total_boundary"]
     df["normalized_total"] = df["total"] / df["total_boundary"]
     return df
 
