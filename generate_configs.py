@@ -111,6 +111,25 @@ if __name__ == "__main__":
                                 runContinuous=0, radius=2, replicates=1, spaces=["2D"])
             submit_output += s
             analysis_output += a
+    elif experiment_name == "games":
+        games = ["sensitive", "coexistence", "bistability", "resistant"]
+        subgames = [["agtb", "bgta", "equal"], ["bgtc", "cgtb", "equal"],
+                    ["equal", "agtd", "dgta"], ["cgtd", "dgtc", "equal"]]
+        pa = [[0.09, 0.06, 0.06], [0.03, 0.06, 0.03], [0.06, 0.09, 0.06], [0.06, 0.03, 0.03]]
+        pb = [[0.06, 0.09, 0.06], [0.09, 0.06, 0.06], [0.03, 0.03, 0.06], [0.03, 0.06, 0.03]]
+        pc = [[0.06, 0.03, 0.03], [0.06, 0.09, 0.06], [0.03, 0.06, 0.03], [0.09, 0.06, 0.06]]
+        pd = [[0.03, 0.06, 0.03], [0.06, 0.03, 0.03], [0.06, 0.06, 0.09], [0.06, 0.09, 0.06]]
+        for i in range(len(games)):
+            for j in range(len(subgames[i])):
+                name = games[i]+"_"+subgames[i][j]
+                s, a = sample_games(writePopFrequency=500, writeModelFrequency=0, writeFsFrequency=500,
+                                    writePcFrequency=0,
+                                    runtime=500, exp_dir=experiment_name, name=name, a=pa[i][j], 
+                                    b=pb[i][j], c=pc[i][j], d=pd[i][j], initialTumor=0, 
+                                    turnover=0.009, init_cells=15625, prop_res=0.5, 
+                                    runContinuous=0, radius=2, replicates=5, spaces=["2D"])
+                submit_output += s
+                analysis_output += a
     else:
         print("Invalid experiment name.")
         exit()

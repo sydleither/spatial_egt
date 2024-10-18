@@ -239,6 +239,8 @@ public class SpatialEGT2D {
             gifWin = new GifMaker(saveLoc+"growth.gif", 0, false);
             writePop = false;
             writeModel = false;
+            writePc = false;
+            writeFs = false;
         }
         FileIO modelOut = null;
         if (writeModel) {
@@ -296,8 +298,8 @@ public class SpatialEGT2D {
                         List<Integer> cellTypes = coordLists.get(0);
                         List<Integer> xCoords = coordLists.get(1);
                         List<Integer> yCoords = coordLists.get(2);
-                        for (int i = 0; i < coordLists.get(0).size(); i++) {
-                            pcOut.Write(modelName+","+tick+","+cellTypes.get(i)+","+xCoords.get(i)+","+yCoords.get(i)+"\n");
+                        for (int i = 0; i < cellTypes.size(); i++) {
+                            modelOut.Write(modelName+","+tick+","+cellTypes.get(i)+","+xCoords.get(i)+","+yCoords.get(i)+"\n");
                         }
                     }
                 }
