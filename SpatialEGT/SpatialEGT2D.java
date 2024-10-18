@@ -14,30 +14,20 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT2D {
-    public static void SaveModelState(FileIO modelOut, Model2D model, int x, int y) {
-        String row;
-        for (int i = 0; i < x; i++) {
-            row = "";
-            for (int j = 0; j < y; j++) {
-                Cell2D cell = model.GetAgent(i,j);
-                String state;
-                if (cell == null) {
-                    state = "*";
-                }
-                else if (cell.type == 0) {
-                    state = "S";
-                }
-                else if (cell.type == 1) {
-                    state = "R";
-                }
-                else {
-                    state = "?";
-                }
-                row += state;
-            }
-            modelOut.Write(row+"\n");
+    public static List<List<Integer>> GetModelCoords(Model2D model) {
+        List<Integer> cellTypes = new ArrayList<Integer>();
+        List<Integer> xCoords = new ArrayList<Integer>();
+        List<Integer> yCoords = new ArrayList<Integer>();
+        for (Cell2D cell: model) {
+            cellTypes.add(cell.type);
+            xCoords.add(cell.Xsq());
+            yCoords.add(cell.Ysq());
         }
-        modelOut.Close();
+        List<List<Integer>> returnList = new ArrayList<List<Integer>>();
+        returnList.add(cellTypes);
+        returnList.add(xCoords);
+        returnList.add(yCoords);
+        return returnList;
     }
 
     public static Map<List<Double>, List<Integer>> GetFsList(Model2D model, int maxRadius) {
@@ -250,6 +240,11 @@ public class SpatialEGT2D {
             writePop = false;
             writeModel = false;
         }
+        FileIO modelOut = null;
+        if (writeModel) {
+            modelOut = new FileIO(saveLoc+"coords.csv", "w");
+            modelOut.Write("model,time,type,x,y\n");
+        }
         FileIO popsOut = null;
         if (writePop) {
             popsOut = new FileIO(saveLoc+"populations.csv", "w");
@@ -297,8 +292,13 @@ public class SpatialEGT2D {
                 }
                 if (writeModel) {
                     if ((tick % writeModelFrequency == 0) && (tick > 0)) {
-                        FileIO modelOut = new FileIO(saveLoc+"model"+tick+".csv", "w");
-                        SaveModelState(modelOut, model, x, y);
+                        List<List<Integer>> coordLists = GetModelCoords(model);
+                        List<Integer> cellTypes = coordLists.get(0);
+                        List<Integer> xCoords = coordLists.get(1);
+                        List<Integer> yCoords = coordLists.get(2);
+                        for (int i = 0; i < coordLists.get(0).size(); i++) {
+                            pcOut.Write(modelName+","+tick+","+cellTypes.get(i)+","+xCoords.get(i)+","+yCoords.get(i)+"\n");
+                        }
                     }
                 }
                 if (writePc) {
@@ -343,6 +343,9 @@ public class SpatialEGT2D {
         if (visualize) {
             win.Close();
             gifWin.Close();
+        }
+        if (writeModel) {
+            modelOut.Close();
         }
         if (writePop) {
             popsOut.Close();
