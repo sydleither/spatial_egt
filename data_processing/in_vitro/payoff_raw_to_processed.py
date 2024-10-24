@@ -5,7 +5,7 @@ from common import (cell_type_map, experiment_names,
                     processed_data_path, raw_data_path)
 
 
-def calculate_fraction_sensitive(df):
+def calculate_starting_fs(df):
     df_sum = df.groupby(["PlateId", "WellId"])["Count"].sum()
     df_sum = df_sum.reset_index()
     df_sum = df_sum.rename(columns={"Count":"TotalCells"})
@@ -70,7 +70,7 @@ def raw_to_processed():
                        "DrugConcentration", "GrowthRate", "Intercept"]]
         df_gr["CellType"] = df_gr["CellType"].map(cell_type_map)
         df_gr = df_gr.merge(df_counts, on=["PlateId", "WellId", "CellType"])
-        df_gr = calculate_fraction_sensitive(df_gr).dropna()
+        df_gr = calculate_starting_fs(df_gr).dropna()
         df_gr = calculate_payoff(df_gr)
         df_gr = df_gr[["PlateId", "WellId",
                        "DrugConcentration",
