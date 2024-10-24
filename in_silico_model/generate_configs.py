@@ -37,8 +37,8 @@ def experiment_config(data_dir, exp_dir, config_name, runNull, runAdaptive,
 
 
 def sample_games(data_dir, exp_dir, name, a, b, c, d, runNull=1, runAdaptive=0, runContinuous=0, 
-                 writeModelFrequency=0, radius=1, turnover=0.009, drug_reduction=0.5, 
-                 init_cells=4375, prop_res=0.01, adaptiveTreatmentThreshold=0.5, 
+                 writeModelFrequency=500, radius=1, turnover=0.009, drug_reduction=0.5, 
+                 init_cells=4375, prop_res=0.5, adaptiveTreatmentThreshold=0.5, 
                  initialTumor=0, toyGap=5, runtime=500, replicates=10, spaces=["2D","3D","WM"]):
     payoff = [a, b, c, d]
     for i in range(replicates):
@@ -82,8 +82,14 @@ def lhs_sample(num_samples, param_names, lower_bounds, upper_bounds, ints, seed=
 def main(data_dir, experiment_name):
     run_output = []
     visual_output = []
-    if experiment_name == "raw":
-        N = 5
+    if experiment_name == "test":
+        s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=100,
+                            a=0.03, b=0.03, c=0.02, d=0.02, radius=2, replicates=1,
+                            spaces=["2D"], name="test", writeModelFrequency=100)
+        run_output += s
+        visual_output += v
+    elif experiment_name == "raw":
+        N = 2500
         samples = lhs_sample(N, 
                              ["A", "B", "C", "D", "fr", "cells"],
                              [0, 0, 0, 0, 0.1, 625], 
@@ -95,7 +101,7 @@ def main(data_dir, experiment_name):
             s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=250,
                                 a=sample["A"], b=sample["B"], c=sample["C"], d=sample["D"],
                                 initialTumor=0, turnover=0.009, init_cells=sample["cells"],
-                                prop_res=sample["fr"], runContinuous=0, radius=2, replicates=1,
+                                prop_res=sample["fr"], radius=2, replicates=1,
                                 spaces=["2D"], name=str(i), writeModelFrequency=250)
             run_output += s
             visual_output += v

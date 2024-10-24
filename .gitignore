@@ -23,11 +23,15 @@
 hs_err_pid*
 replay_pid*
 
-# other
+# Other
 .vscode/
+__pycache__
+
 output/
 data/
-*.out
+
+build/
+lib/
 sources.txt
-__pycache__
-temp.py
+
+*.out
