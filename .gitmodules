@@ -1,6 +1,6 @@
 [submodule "HAL"]
-	path = HAL
+	path = in_silico_model/HAL
 	url = https://github.com/MathOnco/HAL
 [submodule "DDIT"]
-	path = DDIT
+	path = analysis/DDIT
 	url = https://github.com/VincentRagusa/DDIT

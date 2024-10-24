@@ -1,9 +1,15 @@
+<<<<<<< HEAD
+import numpy as np
+import pandas as pd
+
+=======
 import sys
 
 import numpy as np
 import pandas as pd
 
 sys.path.insert(0, "data_processing")
+>>>>>>> a87b7eef878b254b7b519c1b28b13ebb163c7e6b
 from common import (cell_type_map, experiment_names, 
                     processed_data_path, raw_data_path)
 
@@ -81,7 +87,11 @@ def raw_to_processed():
         df_gr = df_gr.drop_duplicates().reset_index(drop=True)
 
         # Save processed payoff dataframe
+<<<<<<< HEAD
+        df_gr.to_csv(f"{processed_data_path}/payoff_{experiment_name}.csv", index=False)
+=======
         df_gr.to_csv(f"{processed_data_path}/payoff.csv")
+>>>>>>> a87b7eef878b254b7b519c1b28b13ebb163c7e6b
 
 
 if __name__ == "__main__":

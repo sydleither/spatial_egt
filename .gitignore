@@ -26,5 +26,8 @@ replay_pid*
 # other
 .vscode/
 output/
+data/
 *.out
 sources.txt
+__pycache__
+temp.py
