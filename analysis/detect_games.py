@@ -9,121 +9,18 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.feature_selection import (f_classif, f_regression, 
-                                       mutual_info_classif, mutual_info_regression)
+                                       mutual_info_classif, 
+                                       mutual_info_regression)
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
 from common import get_colors
-from spatial_statistics import (create_fsfr_features, create_pop_features, 
-                                create_ripleysk_features, 
-                                create_voroni_features, create_pc_features,
-                                model_state_to_coords, read_model_state)
-sys.path.insert(0, "DDIT")
+sys.path.insert(0, "analysis/DDIT")
 from DDIT import DDIT
 
 warnings.filterwarnings("ignore")
 COLORS = get_colors()
-
-
-'''
-Aggregate HAL Runs
-'''
-def get_cell_counts(df_pop):
-    df_pop = df_pop.loc[df_pop["time"] == df_pop["time"].max()]
-    num_resistant = df_pop["resistant"].values[0]
-    num_sensitive = df_pop["sensitive"].values[0]
-    return num_sensitive, num_resistant
-
-
-def save_data(exp_dir, dimension):
-    df_entries = []
-    exp_path = f"output/{exp_dir}"
-    uid = 0
-    extinct = 0
-    unknwon_game = 0
-    for game_dir in os.listdir(exp_path):
-        game_path = f"{exp_path}/{game_dir}"
-        if os.path.isfile(game_path):
-            continue
-        config = json.load(open(f"{game_path}/{game_dir}.json"))
-        a = config["A"]
-        b = config["B"]
-        c = config["C"]
-        d = config["D"]
-        cells = config["numCells"]
-        fr = config["proportionResistant"]
-        for rep_dir in os.listdir(game_path):
-            rep_path = f"{game_path}/{rep_dir}"
-            if os.path.isfile(rep_path):
-                continue
-            pop_file = f"{rep_path}/{dimension}populations.csv"
-            fs_file = f"{rep_path}/{dimension}fs.csv"
-            fr_file = f"{rep_path}/{dimension}fr.csv"
-            pc_file = f"{rep_path}/{dimension}pairCorrelations.csv"
-            model_file = f"{rep_path}/{dimension}model250.csv" #TODO
-            if not os.path.exists(pop_file) or os.path.getsize(pop_file) == 0:
-                print(f"File not found in {rep_path}")
-                continue
-            sample_dict = {}
-            sample_dict["rep"] = int(rep_dir)
-            sample_dict["initial_fr"] = fr
-            sample_dict["initial_cells"] = cells
-            sample_dict["A"] = a
-            sample_dict["B"] = b
-            sample_dict["C"] = c
-            sample_dict["D"] = d
-            if a > c and b > d:
-                game = "sensitive_wins"
-            elif a < c and b > d:
-                game = "coexistence"
-            elif a > c and b < d:
-                game = "bistability"
-            elif a < c and b < d:
-                game = "resistant_wins"
-            else:
-                game = "unknown"
-            sample_dict["game"] = game
-            uid += 1
-            sample_dict["uid"] = uid
-            df_pop = pd.read_csv(pop_file)
-            num_sensitive, num_resistant = get_cell_counts(df_pop)
-            if num_resistant < 100 or num_sensitive < 100:
-                extinct += 1
-                continue
-            if game == "unknown":
-                unknwon_game += 1
-                continue
-            df_fs = pd.read_csv(fs_file)
-            df_fr = pd.read_csv(fr_file)
-            df_pc = pd.read_csv(pc_file)
-            model_state = read_model_state(model_file)
-            feature_dict = create_all_features(df_fs, df_fr, df_pc, model_state, num_sensitive, num_resistant)
-            sample_dict = sample_dict | feature_dict
-            df_entries.append(sample_dict)
-        if uid % 100 == 0:
-            print(f"Processed {uid} samples...")
-    print(f"Skipped {extinct} samples nearing extinction.")
-    print(f"Skipped {unknwon_game} samples with unknown games.")
-    print(f"Total samples: {len(df_entries)}")
-    df = pd.DataFrame(data=df_entries)
-    pd.to_pickle(df, f"output/{exp_dir}/{dimension}df.pkl")
-
-
-'''
-Feature Engineering
-'''
-def create_all_features(df_fs, df_fr, df_pc, model_state, num_sensitive, num_resistant):
-    features = dict()
-    features = features | create_pop_features(num_sensitive, num_resistant)
-    features = features | create_fsfr_features(df_fs, df_fr, num_resistant, num_sensitive)
-    features = features | create_pc_features(df_pc, num_sensitive, num_resistant)
-
-    s_coords, r_coords = model_state_to_coords(model_state)
-    features = features | create_ripleysk_features(s_coords, r_coords)
-    features = features | create_voroni_features(s_coords, r_coords)
-    
-    return features
 
 
 '''
@@ -314,7 +211,7 @@ def main(exp_dir, dimension):
     classify_game = True
     labels = ["game"] if classify_game else ["A", "B", "C", "D"]
     #feature_names = [x for x in df.columns if x not in nonfeature_cols]
-    feature_names = ["fs_mean", "fs_std", "fs_slope", "fs_skew", "pc_SR_mean"]
+    feature_names = ["fs_mean", "fs_std", "fs_slope", "fs_skew", "fr_mean", "fr_std", "fr_slope", "fr_skew", "pc_SR_mean", "pc_RS_mean"]
     features = df[feature_names+labels]
 
     print("\nAnalyzing and exploring data...")
@@ -333,13 +230,7 @@ def main(exp_dir, dimension):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        if sys.argv[3] == "save":
-            save_data(sys.argv[1], sys.argv[2])
-        else:
-            print("Please provide am experiment directory, dimension, and \"save\"")
-            print("if the dataframe has not yet been saved.")
-    elif len(sys.argv) == 3:
+    if len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
     else:
         print("Please provide the experiment directory and dimension, if the dataframe has been saved.")
