@@ -5,6 +5,10 @@ raw_data_path = "data/in_vitro/raw"
 processed_data_path = "data/in_vitro/processed"
 cell_colors = ["#4C956C", "#EF7C8E"]
 
+cell_type_map = {"S-3E9": "sensitive", "BRAF-mCherry":"resistant",
+                 "S-NLS": "sensitive", "R-NLS": "resistant",
+                 "mCherry": "resistant"}
+
 
 def make_image_dir(exp_name):
     if not os.path.exists(f"data/in_vitro/images/{exp_name}"):
