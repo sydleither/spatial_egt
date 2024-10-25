@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from common import (cell_type_map, experiment_names,
-                    make_data_dirs, processed_data_path, 
-                    raw_data_path)
+from common import (cell_type_map, get_data_path, in_vitro_exp_names)
 
 
 def calculate_payoff(df):
@@ -43,8 +41,10 @@ def calculate_payoff(df):
 
 
 def raw_to_processed():
-    make_data_dirs()
-    for experiment_name in experiment_names:
+    raw_data_path = get_data_path("in_vitro", "raw")
+    processed_data_path = get_data_path("in_vitro", "processed")
+
+    for experiment_name in in_vitro_exp_names:
         # Process growth rate file to calculate payoff matrix
         growth_name = f"growth_rate_df_{experiment_name}_plate1.csv"
         df_gr = pd.read_csv(f"{raw_data_path}/{growth_name}")

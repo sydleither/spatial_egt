@@ -3,10 +3,12 @@ import os
 
 import pandas as pd
 
-from common import processed_data_path, raw_data_path
+from common import get_data_path
 
 
 def raw_to_processed():
+    raw_data_path = get_data_path("in_silico", "raw")
+    processed_data_path = get_data_path("in_silico", "processed")
     df_entries = []
     for experiment_dir in os.listdir(raw_data_path):
         experiment_path = f"{raw_data_path}/{experiment_dir}"

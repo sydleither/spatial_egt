@@ -2,11 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import (cell_colors, get_experiment_names, 
-                    make_image_dir, processed_data_path)
+from common import (cell_colors, in_vitro_exp_names, get_data_path)
 
 
-def plot_plate_sections(df, exp_name):
+def plot_plate_sections(df, save_loc, exp_name):
     for drugcon in df["DrugConcentration"].unique():
         df_dc = df[df["DrugConcentration"] == drugcon]
         well_letters = sorted(df_dc["WellId"].str[0].unique())
@@ -28,10 +27,10 @@ def plot_plate_sections(df, exp_name):
         fig.patch.set_alpha(0.0)
         fig.tight_layout()
         drugcon_str = "{:10.3f}".format(drugcon).strip().replace(".", "")
-        plt.savefig(f"data/in_vitro/images/{exp_name}/plate_{drugcon_str}uM.png")
+        plt.savefig(f"{save_loc}/{exp_name}/plate_{drugcon_str}uM.png")
 
 
-def plot_single_well(df, exp_name, well):
+def plot_single_well(df, save_loc, exp_name, well):
     fig, ax = plt.subplots()
     sns.scatterplot(data=df[df["WellId"] == well], x="x", y="y", 
                     hue="type", legend=False, ax=ax,
@@ -43,15 +42,16 @@ def plot_single_well(df, exp_name, well):
     ax.set_facecolor("lightgrey")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    plt.savefig(f"data/in_vitro/images/{exp_name}/well_{well}.png")
+    plt.savefig(f"{save_loc}/{exp_name}/well_{well}.png")
 
 
-def main():
-    for exp_name in get_experiment_names():
-        make_image_dir(exp_name)
+def main(): #TODO change so spatial doesn't have drugconcentration, payoff must be referenced for that column
+    processed_data_path = get_data_path("in_vitro", "processed")
+    image_data_path = get_data_path("in_vitro", "images")
+    for exp_name in in_vitro_exp_names:
         df = pd.read_csv(f"{processed_data_path}/spatial_{exp_name}.csv")
-        plot_plate_sections(df, exp_name)
-        plot_single_well(df, exp_name, "F5")
+        plot_plate_sections(df, image_data_path, exp_name)
+        plot_single_well(df, image_data_path, exp_name, "F5")
 
 
 if __name__ == "__main__":

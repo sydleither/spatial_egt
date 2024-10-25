@@ -53,13 +53,26 @@ def create_ripleysk_features(s_coords, r_coords):
 #                 neighbors[s_cell][0] += 1
 
 
-def create_all_features(df_coords, num_sensitive, num_resistant):
+def create_all_features(df, num_sensitive, num_resistant):
     features = dict()
-    s_coords = list(df_coords.loc[df_coords["type"] == 0][["x", "y"]].values)
-    r_coords = list(df_coords.loc[df_coords["type"] == 1][["x", "y"]].values)
+    s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
+    r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
 
     features = features | {"proportion_r": num_resistant/(num_resistant+num_sensitive)}
     features = features | create_ripleysk_features(s_coords, r_coords)
     features = features | create_voroni_features(s_coords, r_coords)
     
     return features
+
+
+def get_cell_type_counts(df):
+    counts = df.groupby("type").count().reset_index()
+    s = counts[counts["type"] == "sensitive"]["x"].values[0]
+    r = counts[counts["type"] == "resistant"]["x"].values[0]
+    return s,r
+
+
+def process_sample(df):
+    num_sensitive, num_resistant = get_cell_type_counts(df)
+    features = create_all_features(df, num_sensitive, num_resistant)
+    print(features)

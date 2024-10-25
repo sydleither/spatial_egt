@@ -2,11 +2,12 @@ import os
 
 import pandas as pd
 
-from common import (cell_type_map, dimension, 
-                    processed_data_path, raw_data_path)
+from common import (cell_type_map, dimension, get_data_path)
 
 
 def raw_to_processed():
+    raw_data_path = get_data_path("in_silico", "raw")
+    processed_data_path = get_data_path("in_silico", "processed")
     for experiment_dir in os.listdir(raw_data_path):
         experiment_path = f"{raw_data_path}/{experiment_dir}"
         if os.path.isfile(experiment_path):
@@ -25,7 +26,7 @@ def raw_to_processed():
             df["type"] = df["type"].map(cell_type_map)
             df["sample"] = rep_dir
             df = df[["sample", "type", "x", "y"]]
-            df.to_csv(f"{processed_data_path}/spatial_{rep_dir}.csv", index=False)
+            df.to_csv(f"{processed_data_path}/spatial_{experiment_dir}.csv", index=False)
 
 
 if __name__ == "__main__":

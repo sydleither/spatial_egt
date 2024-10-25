@@ -1,13 +1,13 @@
 import pandas as pd
 
-from common import (cell_type_map, experiment_names,
-                    make_data_dirs, processed_data_path, 
-                    raw_data_path)
+from common import (cell_type_map, get_data_path, in_vitro_exp_names)
 
 
 def raw_to_processed():
-    make_data_dirs()
-    for experiment_name in experiment_names:
+    raw_data_path = get_data_path("in_vitro", "raw")
+    processed_data_path = get_data_path("in_vitro", "processed")
+
+    for experiment_name in in_vitro_exp_names:
         # Get latest time
         spatial_name = f"locations_df_processed_{experiment_name}_plate1.csv"
         max_time = 0
