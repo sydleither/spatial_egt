@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 
-from common import (cell_type_map, experiment_names, 
-                    processed_data_path, raw_data_path)
+from common import (cell_type_map, experiment_names,
+                    make_data_dirs, processed_data_path, 
+                    raw_data_path)
 
 
 def calculate_starting_fs(df):
@@ -54,6 +55,7 @@ def calculate_payoff(df):
 
 
 def raw_to_processed():
+    make_data_dirs()
     for experiment_name in experiment_names:
         # Process counts file, which is necessary for game assay,
         # since the game assay uses the initial proportion sensitive
