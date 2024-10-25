@@ -57,15 +57,29 @@ def plot_plate_fs(df, exp_name, fs_time):
     plt.savefig(f"data/in_vitro/images/{exp_name}/plate_fs_{fs_time}.png")
 
 
+def plot_game_gr(df, exp_name):
+    sns.lmplot(data=df, x="Fraction_Sensitive", y="GrowthRate", 
+               hue="CellType", col="DrugConcentration", legend=False,
+               palette=cell_colors, hue_order=["sensitive", "resistant"],
+               facet_kws=dict(sharey=False))
+    plt.savefig(f"data/in_vitro/images/{exp_name}/gr_by_fs.png")
+
+
 def main():
     for exp_name in get_experiment_names():
         make_image_dir(exp_name)
+
         counts_name = f"counts_df_processed_{exp_name}_plate1.csv"
         df = pd.read_csv(f"{raw_data_path}/{counts_name}")
         df["CellType"] = df["CellType"].map(cell_type_map)
         plot_growth_over_time(df, exp_name)
         plot_plate_fs(df[df["Time"] == df["Time"].max()], exp_name, "end")
         plot_plate_fs(df[df["Time"] == df["Time"].min()], exp_name, "start")
+
+        growth_name = f"growth_rate_df_{exp_name}_plate1.csv"
+        df = pd.read_csv(f"{raw_data_path}/{growth_name}")
+        df["CellType"] = df["CellType"].map(cell_type_map)
+        plot_game_gr(df, exp_name)
 
 
 if __name__ == "__main__":
