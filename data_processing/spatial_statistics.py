@@ -1,3 +1,4 @@
+from collections import Counter
 from csv import reader
 
 import numpy as np
@@ -39,6 +40,30 @@ def create_ripleysk_features(s_coords, r_coords):
     return features
 
 
+def create_fp_features(s_coords, r_coords):
+    features = ()
+    all_coords = [("s", s_coords[i][0], s_coords[i][1]) for i in range(len(s_coords))]
+    all_coords += [("r", r_coords[i][0], r_coords[i][1]) for i in range(len(r_coords))]
+
+    max_x = max([x[1] for x in all_coords])
+    max_y = max([x[2] for x in all_coords])
+    max_coord = max(max_x, max_y)
+
+    fs_counts = []
+    subset_size = 10
+    for s in range(max_coord//subset_size):
+        lower = s*subset_size
+        upper = (s+1)*subset_size
+        subset = [t for t,x,y in all_coords if lower <= x <= upper and lower <= y <= upper]
+        subset_total = len(subset)
+        subset_s = len([x for x in subset if x[0] == "s"])
+        fs_counts.append(subset_s/subset_total)
+    
+    features["fp_fs_mean"] = np.mean(fs_counts)
+    features["fp_fs_std"] = np.std(fs_counts)
+    return features
+
+
 # def create_frfs_features(s_coords, r_coords):
 #     features = dict()
 #     all_coords = [(i,"s",s_coords[i]) for i in range(len(s_coords))]
@@ -58,21 +83,40 @@ def create_all_features(df, num_sensitive, num_resistant):
     s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
     r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
 
-    features = features | {"proportion_r": num_resistant/(num_resistant+num_sensitive)}
-    features = features | create_ripleysk_features(s_coords, r_coords)
-    features = features | create_voroni_features(s_coords, r_coords)
+    features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
+    features = features | create_fp_features(s_coords, r_coords)
     
     return features
 
 
 def get_cell_type_counts(df):
     counts = df.groupby("type").count().reset_index()
-    s = counts[counts["type"] == "sensitive"]["x"].values[0]
-    r = counts[counts["type"] == "resistant"]["x"].values[0]
-    return s,r
+    s = counts[counts["type"] == "sensitive"]["x"].iloc[0]
+    r = counts[counts["type"] == "resistant"]["x"].iloc[0]
+    return s, r
 
 
-def process_sample(df):
+def calculate_game(payoff):
+    a = payoff["a"].iloc[0]
+    b = payoff["b"].iloc[0]
+    c = payoff["c"].iloc[0]
+    d = payoff["d"].iloc[0]
+    if a > c and b > d:
+        game = "sensitive_wins"
+    elif c > a and b > d:
+        game = "coexistence"
+    elif a > c and d > b:
+        game = "bistability"
+    elif c > a and d > b:
+        game = "resistant_wins"
+    else:
+        game = "unknown"
+    return game
+
+
+def process_sample(df, payoff):
     num_sensitive, num_resistant = get_cell_type_counts(df)
     features = create_all_features(df, num_sensitive, num_resistant)
-    print(features)
+    features["game"] = calculate_game(payoff)
+    
+    return features
