@@ -15,12 +15,11 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
-from common import get_colors
-sys.path.insert(0, "analysis/DDIT")
-from DDIT import DDIT
+from common import get_data_path
+from data_analysis.DDIT.DDIT import DDIT
 
 warnings.filterwarnings("ignore")
-COLORS = get_colors()
+COLORS = ["#4C956C", "#EF7C8E", "#f97306", "#029386"]
 
 
 '''
@@ -28,7 +27,7 @@ Data Exploration / Visualization
 '''
 def feature_pairplot(exp_dir, df, label_hue):
     sns.pairplot(df, hue=label_hue)
-    plt.savefig(f"output/{exp_dir}/feature_pairplot_{label_hue}.png", bbox_inches="tight")
+    plt.savefig(f"{exp_dir}/feature_pairplot_{label_hue}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -50,7 +49,7 @@ def features_by_labels_plot(exp_dir, df, label_names):
                             legend=False, notch=True, palette=COLORS, ax=axis)
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    fig.savefig(f"output/{exp_dir}/feature_labels{num_labels}.png", bbox_inches="tight")
+    fig.savefig(f"{exp_dir}/feature_labels{num_labels}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -71,7 +70,7 @@ def feature_correlation(exp_dir, df, label_names):
     ax.set_title("Correlation Matrix")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    fig.savefig(f"output/{exp_dir}/correlations.png", bbox_inches="tight")
+    fig.savefig(f"{exp_dir}/correlations.png", bbox_inches="tight")
     plt.close()
 
 
@@ -130,7 +129,7 @@ def fragmentation_matrix_plot(exp_dir, df, label_names, binning_method):
     ax.set_title(f"Fragmentation Matrix\n{feature_name_map}")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    fig.savefig(f"output/{exp_dir}/fragmentation{num_labels}.png", bbox_inches="tight")
+    fig.savefig(f"{exp_dir}/fragmentation{num_labels}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -182,15 +181,21 @@ def machine_learning(exp_dir, df, label_name):
         X_test = [X[i] for i in test_i]
         y_train = [y[i] for i in train_i]
         y_test = [y[i] for i in test_i]
-        clf = MLPClassifier(hidden_layer_sizes=(400,200,100,50)).fit(X_train, y_train)
+        clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         acc = round(sum([y_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test), 2)
         avg_acc += acc
         conf_mat = confusion_matrix(y_test, y_pred, normalize="true")
         disp_labels = [int_to_category[x] for x in clf.classes_]
+
+        fig, ax = plt.subplots(figsize=(5, 4))
         disp = ConfusionMatrixDisplay(confusion_matrix=conf_mat, display_labels=disp_labels)
-        disp.plot()
-        plt.savefig(f"output/{exp_dir}/confusion_matrix{k}.png", bbox_inches="tight")
+        disp.plot(ax=ax)
+        for tick in ax.xaxis.get_major_ticks()[1::2]:
+            tick.set_pad(15)
+        ax.set_title(f"Accuracy: {acc}")
+        fig.tight_layout()
+        fig.savefig(f"{exp_dir}/confusion_matrix{k}.png", bbox_inches="tight", transparent=True)
         print(f"\tAccuracy {k}: {acc}")
     print("\tAverage Accuracy:", avg_acc/5)
 
@@ -198,39 +203,35 @@ def machine_learning(exp_dir, df, label_name):
 '''
 Run Script
 '''
-def main(exp_dir, dimension):
+def main():
+    exp_dir = get_data_path("in_silico", "images")
     print("Reading in data...")
     try:
-        df = pd.read_pickle(f"output/{exp_dir}/{dimension}df.pkl")
+        features_data_path = get_data_path("in_silico", "features")
+        df = pd.read_csv(f"{features_data_path}/features.csv")
     except:
-        print("Please save the dataframe.")
+        print("Please save the feature dataframe.")
         exit()
-    nonfeature_cols = ["uid", "rep", "initial_fr", "initial_cells",
-                       "A", "B", "C", "D", "game"]
 
-    classify_game = True
-    labels = ["game"] if classify_game else ["A", "B", "C", "D"]
-    #feature_names = [x for x in df.columns if x not in nonfeature_cols]
-    feature_names = ["fs_mean", "fs_std", "fs_slope", "fs_skew", "fr_mean", "fr_std", "fr_slope", "fr_skew", "pc_SR_mean", "pc_RS_mean"]
+    df = df[df["game"] != "unknown"]
+    df = df[df["proportion_s"] != 1]
+    df = df[df["proportion_s"] != 0]
+    df = df.dropna()
+
+    labels = ["game"]
+    feature_names = ["fs_mean", "fs_std", "fs_skew", "fr_mean", "fr_std", "fr_skew"]
     features = df[feature_names+labels]
 
-    print("\nAnalyzing and exploring data...")
-    feature_correlation(exp_dir, features, labels)
-    features_by_labels_plot(exp_dir, features, labels)
-    fragmentation_matrix_plot(exp_dir, features, labels, "equal")
-    feature_selection(features, labels)
-    if classify_game:
-        feature_pairplot(exp_dir, features, labels[0])
-    else:
-        feature_pairplot(exp_dir, features, None)
+    # print("\nAnalyzing and exploring data...")
+    # feature_correlation(exp_dir, features, labels)
+    # features_by_labels_plot(exp_dir, features, labels)
+    # fragmentation_matrix_plot(exp_dir, features, labels, "equal")
+    # feature_selection(features, labels)
+    # feature_pairplot(exp_dir, features, labels[0])
 
     print("\nRunning machine learning...")
-    if classify_game:
-        machine_learning(exp_dir, features, labels[0])
+    machine_learning(exp_dir, features, labels[0])
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        main(sys.argv[1], sys.argv[2])
-    else:
-        print("Please provide the experiment directory and dimension, if the dataframe has been saved.")
+    main()

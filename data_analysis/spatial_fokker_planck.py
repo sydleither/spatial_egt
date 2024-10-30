@@ -1,8 +1,7 @@
-from collections import Counter, OrderedDict
+from collections import Counter
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from common import cell_colors, get_data_path
@@ -12,7 +11,7 @@ from data_processing.spatial_statistics import calculate_game, get_cell_type_cou
 def plot_fps(all_fs_counts, save_loc):
     colors = {"sensitive_wins":cell_colors[0], "coexistence":"#f97306",
               "bistability":"#029386", "resistant_wins":cell_colors[1]}
-    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4))
     for game in all_fs_counts.keys():
         game_fs_counts = all_fs_counts[game]
         color = colors[game]
@@ -20,21 +19,18 @@ def plot_fps(all_fs_counts, save_loc):
             a = 0
         else:
             a = 1
-        for d in range(len(game_fs_counts)):
-            if d == 0:
-                label = game
-            else:
-                label = None
-            dist = game_fs_counts[d]
-            ax[a].hist(dist, bins=np.arange(0,1.1,0.05), color=color, alpha=0.25, label=label, density=True)
-    #fig.patch.set_alpha(0.0)
+        label = game
+        counts = Counter(game_fs_counts)
+        y_sum = sum(counts.values())
+        freqs = [y/y_sum for y in counts.values()]
+        ax[a].bar(counts.keys(), freqs, width=0.1, color=color, alpha=0.75, label=label)
     ax[0].legend()
     ax[1].legend()
-    fig.suptitle("Spatial Fokker-Planck Distributions\nAcross 100 Random Samples with Differing Initital Density, Initital Fraction Sensitive, and Payoff")
+    fig.suptitle("Spatial Fokker-Planck Distributions\nAcross 1000 Random Samples\nwith Differing Initital Density, Initital Fraction Sensitive, and Payoff")
     fig.supxlabel("Fraction Sensitive")
-    fig.supylabel("Probability Density Across Subsamples")
+    fig.supylabel("Frequency Across Subsamples")
     fig.tight_layout()
-    plt.savefig(f"{save_loc}/spatial_fokker_planck.png")
+    plt.savefig(f"{save_loc}/spatial_fokker_planck.png", transparent=True)
 
 
 def calculate_dist(s_coords, r_coords):
@@ -55,7 +51,7 @@ def calculate_dist(s_coords, r_coords):
         subset_s = len([x for x in subset if x[0] == "s"])
         if subset_total < 10:
             continue
-        fs_counts.append(subset_s/subset_total)
+        fs_counts.append(round(subset_s/subset_total, 1))
     return fs_counts
 
 
@@ -80,9 +76,9 @@ def get_data():
         s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
         r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
         fs_counts = calculate_dist(s_coords, r_coords)
-        all_fs_counts[game].append(fs_counts)
+        all_fs_counts[game] += fs_counts
         cnt += 1
-        if cnt > 100:
+        if cnt > 1000:
             break
     return all_fs_counts
 

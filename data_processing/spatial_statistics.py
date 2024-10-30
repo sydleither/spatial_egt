@@ -1,10 +1,7 @@
-from collections import Counter
-from csv import reader
-
 import numpy as np
-import pandas as pd
 import pointpats as pp
 from scipy.stats import skew
+from scipy.spatial import KDTree
 from scipy.spatial import Voronoi
 
 
@@ -41,7 +38,7 @@ def create_ripleysk_features(s_coords, r_coords):
 
 
 def create_fp_features(s_coords, r_coords):
-    features = ()
+    features = dict()
     all_coords = [("s", s_coords[i][0], s_coords[i][1]) for i in range(len(s_coords))]
     all_coords += [("r", r_coords[i][0], r_coords[i][1]) for i in range(len(r_coords))]
 
@@ -57,25 +54,44 @@ def create_fp_features(s_coords, r_coords):
         subset = [t for t,x,y in all_coords if lower <= x <= upper and lower <= y <= upper]
         subset_total = len(subset)
         subset_s = len([x for x in subset if x[0] == "s"])
+        if subset_total == 0:
+            continue
         fs_counts.append(subset_s/subset_total)
     
     features["fp_fs_mean"] = np.mean(fs_counts)
     features["fp_fs_std"] = np.std(fs_counts)
+    features["fp_fs_skew"] = skew(fs_counts)
     return features
 
 
-# def create_frfs_features(s_coords, r_coords):
-#     features = dict()
-#     all_coords = [(i,"s",s_coords[i]) for i in range(len(s_coords))]
-#     all_coords += [(i+len(s_coords),"r",r_coords[i]) for i in range(len(r_coords))]
+def create_frfs_features(s_coords, r_coords):
+    features = dict()
+    all_coords = s_coords + r_coords
+    radius = 3
 
-#     radius = 3
-#     neighbors = dict()
-#     for c1_idx,c1_type,c1_coords in all_coords:
-#         neighbors[c1_idx] = (0,0)
-#         for c2_idx,c2_type,c2_coords in all_coords:
-#             if abs(s_cell[0] - r_cell[0]) < radius and abs(s_cell[1] - r_cell[1]) < radius:
-#                 neighbors[s_cell][0] += 1
+    s_stop = len(s_coords)
+    tree = KDTree(all_coords)
+    fs = []
+    fr = []
+    for p,point in enumerate(all_coords):
+        neighbor_indices = tree.query_ball_point(point, radius)
+        all_neighbors = len(neighbor_indices)-1
+        if p <= s_stop: #sensitive cell
+            r_neighbors = len([x for x in neighbor_indices if x > s_stop])
+            if all_neighbors != 0 and r_neighbors != 0:
+                fr.append(r_neighbors/all_neighbors)
+        else: #resistant cell
+            s_neighbors = len([x for x in neighbor_indices if x <= s_stop])
+            if all_neighbors != 0 and s_neighbors != 0:
+                fs.append(s_neighbors/all_neighbors)
+    
+    features["fs_mean"] = np.mean(fs)
+    features["fs_std"] = np.std(fs)
+    features["fs_skew"] = skew(fs)
+    features["fr_mean"] = np.mean(fr)
+    features["fr_std"] = np.std(fr)
+    features["fr_skew"] = skew(fr)
+    return features
 
 
 def create_all_features(df, num_sensitive, num_resistant):
@@ -84,6 +100,7 @@ def create_all_features(df, num_sensitive, num_resistant):
     r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
 
     features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
+    features = features | create_frfs_features(s_coords, r_coords)
     features = features | create_fp_features(s_coords, r_coords)
     
     return features
@@ -118,5 +135,4 @@ def process_sample(df, payoff):
     num_sensitive, num_resistant = get_cell_type_counts(df)
     features = create_all_features(df, num_sensitive, num_resistant)
     features["game"] = calculate_game(payoff)
-    
     return features

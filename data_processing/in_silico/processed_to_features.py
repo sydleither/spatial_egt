@@ -18,11 +18,9 @@ def processed_to_features():
         df_sample = pd.read_csv(f"{processed_data_path}/{sample}")
         sample_payoff = df_payoff[df_payoff["sample"] == sample_id]
         features = process_sample(df_sample, sample_payoff)
-        print(features)
-        exit()
         df_entries.append(features)
     df = pd.DataFrame(df_entries)
-    df.to_csv(f"{features_data_path}/features.csv")
+    df.to_csv(f"{features_data_path}/features.csv", index=False)
 
 
 if __name__ == "__main__":
