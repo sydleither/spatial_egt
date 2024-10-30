@@ -30,17 +30,19 @@ def raw_to_processed():
         header = header.strip().split(",")
 
         # Convert to dataframe
-        df_sp = pd.DataFrame(data=rows, columns=header)
-        df_sp = df_sp.rename(columns={"Location_Center_X":"x",
-                                      "Location_Center_Y":"y",
-                                      "CellType": "type"})
-        df_sp = df_sp[["PlateId", "WellId", "DrugConcentration", "type", "x", "y"]]
-        df_sp["type"] = df_sp["type"].map(cell_type_map)
-        df_sp["x"] = df_sp["x"].astype(float).round(0).astype(int)
-        df_sp["y"] = df_sp["y"].astype(float).round(0).astype(int)
+        df = pd.DataFrame(data=rows, columns=header)
+        df = df.rename(columns={"Location_Center_X":"x",
+                                            "Location_Center_Y":"y",
+                                            "CellType": "type"})
+        df = df[["PlateId", "WellId", "type", "x", "y"]]
+        df["type"] = df["type"].map(cell_type_map)
+        df["x"] = df["x"].astype(float).round(0).astype(int)
+        df["y"] = df["y"].astype(float).round(0).astype(int)
 
-        # Save processed spatial dataframe
-        df_sp.to_csv(f"{processed_data_path}/spatial_{experiment_name}.csv", index=False)
+        # Save wells separately
+        for well in df["WellId"].unique():
+            df_well = df[df["WellId"] == well]
+            df_well.to_csv(f"{processed_data_path}/spatial_{experiment_name}_{well}.csv", index=False)
 
 
 if __name__ == "__main__":

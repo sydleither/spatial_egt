@@ -24,7 +24,7 @@ def raw_to_processed():
             df = df[df["time"] == df["time"].max()]
             df = df[df["model"] == "nodrug"]
             df["type"] = df["type"].map(cell_type_map)
-            df["sample"] = rep_dir
+            df["sample"] = experiment_dir
             df = df[["sample", "type", "x", "y"]]
             df.to_csv(f"{processed_data_path}/spatial_{experiment_dir}.csv", index=False)
 

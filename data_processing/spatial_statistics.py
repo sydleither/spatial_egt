@@ -84,7 +84,7 @@ def create_frfs_features(s_coords, r_coords):
             s_neighbors = len([x for x in neighbor_indices if x <= s_stop])
             if all_neighbors != 0 and s_neighbors != 0:
                 fs.append(s_neighbors/all_neighbors)
-    
+
     features["fs_mean"] = np.mean(fs)
     features["fs_std"] = np.std(fs)
     features["fs_skew"] = skew(fs)
@@ -131,8 +131,7 @@ def calculate_game(payoff):
     return game
 
 
-def process_sample(df, payoff):
+def process_sample(df):
     num_sensitive, num_resistant = get_cell_type_counts(df)
     features = create_all_features(df, num_sensitive, num_resistant)
-    features["game"] = calculate_game(payoff)
     return features
