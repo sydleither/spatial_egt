@@ -4,17 +4,15 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import cell_colors, get_data_path
+from common import game_colors, get_data_path
 from data_processing.spatial_statistics import calculate_game, get_cell_type_counts
 
 
 def plot_fps(all_fs_counts, save_loc):
-    colors = {"sensitive_wins":cell_colors[0], "coexistence":"#f97306",
-              "bistability":"#029386", "resistant_wins":cell_colors[1]}
     fig, ax = plt.subplots(1, 2, figsize=(8, 4))
     for game in all_fs_counts.keys():
         game_fs_counts = all_fs_counts[game]
-        color = colors[game]
+        color = game_colors[game]
         if "wins" in game:
             a = 0
         else:

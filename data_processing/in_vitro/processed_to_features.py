@@ -27,7 +27,7 @@ def processed_to_features():
         features["game"] = calculate_game(sample_payoff)
         df_entries.append(features)
     df = pd.DataFrame(df_entries)
-    df.to_csv(f"{features_data_path}/features.csv", index=False)
+    df.to_csv(f"{features_data_path}/all.csv", index=False)
 
 
 if __name__ == "__main__":

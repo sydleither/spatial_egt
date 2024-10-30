@@ -5,17 +5,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.spatial import KDTree
 
-from common import cell_colors, get_data_path
+from common import game_colors, get_data_path
 from data_processing.spatial_statistics import calculate_game, get_cell_type_counts
 
 
 def plot_dist(fi, save_loc, main_cell, neighbor_cell):
-    colors = {"sensitive_wins":cell_colors[0], "coexistence":"#f97306",
-              "bistability":"#047495", "resistant_wins":cell_colors[1]}
     fig, ax = plt.subplots(1, 2, figsize=(8, 4))
     for game in fi.keys():
         game_fs_counts = fi[game]
-        color = colors[game]
+        color = game_colors[game]
         if "wins" in game:
             a = 0
         else:

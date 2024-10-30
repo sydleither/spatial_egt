@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import (cell_colors, in_vitro_exp_names, get_data_path)
+from common import game_colors, in_vitro_exp_names, get_data_path
+
+cell_colors = [game_colors["sensitive_wins"], game_colors["resistant_wins"]]
 
 
 def plot_plate_sections(df, save_loc, exp_name):
@@ -45,7 +47,7 @@ def plot_single_well(df, save_loc, exp_name, well):
     plt.savefig(f"{save_loc}/{exp_name}/well_{well}.png")
 
 
-def main(): #TODO change so spatial doesn't have drugconcentration, payoff must be referenced for that column
+def main(): #TODO this doesn't work with new data saving method
     processed_data_path = get_data_path("in_vitro", "processed")
     image_data_path = get_data_path("in_vitro", "images")
     for exp_name in in_vitro_exp_names:
