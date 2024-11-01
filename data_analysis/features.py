@@ -1,3 +1,4 @@
+from collections import Counter
 from itertools import chain, combinations
 import sys
 import warnings
@@ -156,13 +157,24 @@ def feature_selection(df, label_names):
             print(f"\t\t{feature_names[i]} F:{round(f_statistic[i])} p-value:{p_values[i]}")
 
 
+def class_balance(df, label_names):
+    for label_name in label_names:
+        print(label_name)
+        counts = dict(Counter(df[label_name]))
+        total = sum(counts.values())
+        proportions = {k:round(v/total, 3) for k,v in counts.items()}
+        print(f"\tTotal: {total}")
+        print(f"\tCounts: {counts}")
+        print(f"\tProportions: {proportions}")
+
+
 def clean_data(df):
     org_size = len(df)
     df = df[df["game"] != "unknown"]
     valid_games_size = len(df)
     print(f"{org_size - valid_games_size} samples with unknown games removed.")
-    df = df[df["proportion_s"] <= 0.9]
-    df = df[df["proportion_s"] >= 0.1]
+    df = df[df["proportion_s"] <= 0.95]
+    df = df[df["proportion_s"] >= 0.05]
     nonextinct_size = len(df)
     print(f"{valid_games_size - nonextinct_size} samples with near-extinct cell lines removed.")
     skew_features = [x for x in df.columns if "skew" in x]
@@ -185,6 +197,7 @@ def main(data_type):
     else:
         feature_df = df[features+label]
     
+    class_balance(df, label)
     feature_correlation(images_data_path, feature_df, label)
     features_by_labels_plot(images_data_path, feature_df, label, 
                             game_colors.values(), game_colors.keys())
