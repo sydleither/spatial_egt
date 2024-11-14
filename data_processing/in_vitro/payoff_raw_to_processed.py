@@ -5,7 +5,7 @@ from common import (cell_type_map, get_data_path, in_vitro_exp_names)
 
 
 def calculate_payoff(df):
-    if len(df["PlateId"].unique()) > 1:
+    if len(df["source"].unique()) > 1:
         print("Only calculate the payoff of one plate at a time.")
         exit()
     df["a"] = -1.0
@@ -43,6 +43,7 @@ def calculate_payoff(df):
 def raw_to_processed():
     raw_data_path = get_data_path("in_vitro", "raw")
     processed_data_path = get_data_path("in_vitro", "processed")
+    df = pd.DataFrame()
 
     for experiment_name in in_vitro_exp_names:
         # Process growth rate file to calculate payoff matrix
@@ -50,14 +51,16 @@ def raw_to_processed():
         df_gr = pd.read_csv(f"{raw_data_path}/{growth_name}")
         df_gr = df_gr[["PlateId", "WellId", "CellType", "Fraction_Sensitive",
                        "DrugConcentration", "GrowthRate", "Intercept"]]
+        df_gr = df_gr.rename(columns={"PlateId":"source", "WellId":"sample"})
         df_gr["CellType"] = df_gr["CellType"].map(cell_type_map)
+        df_gr["source"] = df_gr["source"].str.split("_").str[0]
         df_gr = df_gr.dropna()
         df_gr = calculate_payoff(df_gr)
-        df_gr = df_gr[["PlateId", "WellId",
-                       "a", "b", "c", "d"]]
+        df_gr = df_gr[["source", "sample", "a", "b", "c", "d"]]
         df_gr = df_gr.drop_duplicates().reset_index(drop=True)
-        # Save processed payoff dataframe
-        df_gr.to_csv(f"{processed_data_path}/payoff_{experiment_name}.csv", index=False)
+        # Concat all experiments into one payoff.csv
+        df = pd.concat([df, df_gr])
+    df.to_csv(f"{processed_data_path}/payoff.csv", index=False)
 
 
 if __name__ == "__main__":

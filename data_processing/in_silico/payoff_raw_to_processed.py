@@ -16,6 +16,7 @@ def raw_to_processed():
             continue
         df_row = {}
         config = json.load(open(f"{experiment_path}/{experiment_dir}.json"))
+        df_row["source"] = "HAL"
         df_row["sample"] = experiment_dir
         df_row["initial_density"] = config["numCells"]
         df_row["initial_fr"] = config["proportionResistant"]

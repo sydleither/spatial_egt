@@ -32,8 +32,8 @@ def raw_to_processed():
         # Convert to dataframe
         df = pd.DataFrame(data=rows, columns=header)
         df = df.rename(columns={"Location_Center_X":"x",
-                                            "Location_Center_Y":"y",
-                                            "CellType": "type"})
+                                "Location_Center_Y":"y",
+                                "CellType": "type"})
         df = df[["PlateId", "WellId", "type", "x", "y"]]
         df["type"] = df["type"].map(cell_type_map)
         df["x"] = df["x"].astype(float).round(0).astype(int)
@@ -41,7 +41,7 @@ def raw_to_processed():
 
         # Save wells separately
         for well in df["WellId"].unique():
-            df_well = df[df["WellId"] == well]
+            df_well = df[df["WellId"] == well][["type", "x", "y"]]
             df_well.to_csv(f"{processed_data_path}/spatial_{experiment_name}_{well}.csv", index=False)
 
 
