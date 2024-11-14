@@ -11,7 +11,7 @@ Coming soon
 ### Java
 Java version: 21.0.2
 
-`cd in_silico_model`
+`cd ABM`
 
 `mkdir lib`
 
@@ -25,7 +25,7 @@ Place the three jar files in lib/
 `conda create --name spatial-egt --file requirements.txt` or use a different virtual environment
 
 ### Test Installation
-`cd in_silico_model`
+`cd ABM`
 
 `python3 generate_configs.py output test`
 - Create directories and config for test data
@@ -45,9 +45,9 @@ Place the three jar files in lib/
 ## Replicate Results
 
 ### Generate *in silico* Data
-`cd in_silico_model`
+`cd ABM`
 
 `python3 generate_configs.py ../data/in_silico raw`
 
-`bash ../data/in_silico/raw/run`i`.sh`
+`bash ../data/in_silico/raw/run`{i}`.sh`
 - MSU HPCC can only accept 1000 jobs at a time so the submission scripts are batched.

@@ -1,5 +1,5 @@
 [submodule "HAL"]
-	path = in_silico_model/HAL
+	path = ABM/HAL
 	url = https://github.com/MathOnco/HAL
 [submodule "DDIT"]
 	path = data_analysis/DDIT

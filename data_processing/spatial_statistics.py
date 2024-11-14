@@ -2,46 +2,12 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import numpy as np
-import pointpats as pp
 from scipy.stats import skew
 from scipy.spatial import KDTree
-from scipy.spatial import Voronoi
 
 
-def create_voroni_features(s_coords, r_coords):
-    features = dict()
-
-    s_vor = Voronoi(s_coords)
-    r_vor = Voronoi(r_coords)
-
-    features["vor_s"] = len(s_vor.regions)
-    features["vor_r"] = len(r_vor.regions)
-
-    return features
-
-
-def create_ripleysk_features(s_coords, r_coords):
-    features = dict()
-
-    s_k = pp.l(np.array(s_coords), support=(2,6,5))[1]
-    r_k = pp.l(np.array(r_coords), support=(2,6,5))[1]
-    all_k = pp.l(np.array(s_coords+r_coords), support=(2,6,5))[1]
-
-    k_dists = [s_k, r_k, all_k]
-    k_dists_names = ["s", "r", "all"]
-    for i in range(len(k_dists)):
-        dist_name = k_dists_names[i]
-        k_dist = k_dists[i]
-        features[f"k_{dist_name}_mean"] = np.mean(k_dist)
-        features[f"k_{dist_name}_std"] = np.std(k_dist)
-        features[f"k_{dist_name}_skew"] = skew(k_dist)
-        features[f"k_{dist_name}_slope"] = k_dist[-1] - k_dist[0]
-
-    return features
-
-
-def create_fp_features(s_coords, r_coords):
-    features = dict()
+# Spatial Fokker Planck
+def create_sfp_dist(s_coords, r_coords):
     all_coords = [("s", s_coords[i][0], s_coords[i][1]) for i in range(len(s_coords))]
     all_coords += [("r", r_coords[i][0], r_coords[i][1]) for i in range(len(r_coords))]
 
@@ -61,17 +27,13 @@ def create_fp_features(s_coords, r_coords):
             continue
         fs_counts.append(subset_s/subset_total)
     
-    features["fp_fs_mean"] = np.mean(fs_counts)
-    features["fp_fs_std"] = np.std(fs_counts)
-    features["fp_fs_skew"] = skew(fs_counts)
-    return features
+    return fs_counts
 
 
-def create_frfs_features(s_coords, r_coords):
-    features = dict()
+# Neighborhood Composition
+def create_nc_dists(s_coords, r_coords):
     all_coords = s_coords + r_coords
     radius = 3
-
     s_stop = len(s_coords)
     tree = KDTree(all_coords)
     fs = []
@@ -87,13 +49,14 @@ def create_frfs_features(s_coords, r_coords):
             s_neighbors = len([x for x in neighbor_indices if x <= s_stop])
             if all_neighbors != 0 and s_neighbors != 0:
                 fs.append(s_neighbors/all_neighbors)
+    return fs, fr
 
-    features["fs_mean"] = np.mean(fs)
-    features["fs_std"] = np.std(fs)
-    features["fs_skew"] = skew(fs)
-    features["fr_mean"] = np.mean(fr)
-    features["fr_std"] = np.std(fr)
-    features["fr_skew"] = skew(fr)
+
+def get_dist_statistics(name, dist):
+    features = dict()
+    features[f"{name}_mean"] = np.mean(dist)
+    features[f"{name}_std"] = np.std(dist)
+    features[f"{name}_skew"] = skew(dist)
     return features
 
 
@@ -103,8 +66,11 @@ def create_all_features(df, num_sensitive, num_resistant):
     r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
 
     features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
-    features = features | create_frfs_features(s_coords, r_coords)
-    features = features | create_fp_features(s_coords, r_coords)
+    fs, fr = create_nc_dists(s_coords, r_coords)
+    features = features | get_dist_statistics("nc_fs", fs)
+    features = features | get_dist_statistics("nc_fr", fr)
+    sfp = create_sfp_dist(s_coords, r_coords)
+    features = features | get_dist_statistics("sfp_fs", sfp)
     
     return features
 
