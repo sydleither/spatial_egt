@@ -18,6 +18,6 @@
 
 #SBATCH --array=0
 
-cd /mnt/home/leithers/cancer_grant/spatial-egt/in_silico_model
+cd /mnt/home/leithers/cancer_grant/spatial-egt/ABM
 java -cp build/:lib/* SpatialEGT.SpatialEGT ${1} ${2} ${3} ${4} ${SLURM_ARRAY_TASK_ID}
 

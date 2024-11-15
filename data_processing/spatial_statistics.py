@@ -31,9 +31,9 @@ def create_sfp_dist(s_coords, r_coords):
 
 
 # Neighborhood Composition
-def create_nc_dists(s_coords, r_coords):
+def create_nc_dists(s_coords, r_coords, data_type):
     all_coords = s_coords + r_coords
-    radius = 3
+    radius = 3 if data_type == "in_silico" else 10
     s_stop = len(s_coords)
     tree = KDTree(all_coords)
     fs = []
@@ -60,13 +60,13 @@ def get_dist_statistics(name, dist):
     return features
 
 
-def create_all_features(df, num_sensitive, num_resistant):
+def create_all_features(df, num_sensitive, num_resistant, data_type):
     features = dict()
     s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
     r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
 
     features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
-    fs, fr = create_nc_dists(s_coords, r_coords)
+    fs, fr = create_nc_dists(s_coords, r_coords, data_type)
     features = features | get_dist_statistics("nc_fs", fs)
     features = features | get_dist_statistics("nc_fr", fr)
     sfp = create_sfp_dist(s_coords, r_coords)
@@ -100,7 +100,7 @@ def calculate_game(payoff):
     return game
 
 
-def process_sample(df):
+def sample_to_features(df, data_type):
     num_sensitive, num_resistant = get_cell_type_counts(df)
-    features = create_all_features(df, num_sensitive, num_resistant)
+    features = create_all_features(df, num_sensitive, num_resistant, data_type)
     return features
