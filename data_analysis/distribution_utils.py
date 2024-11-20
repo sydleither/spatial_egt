@@ -1,6 +1,6 @@
-from collections import Counter
+from collections import Counter, OrderedDict
 import os
-import sys
+from random import sample
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,10 +12,11 @@ from data_processing.spatial_statistics import (create_nc_dists,
                                                 get_cell_type_counts)
 
 
-def plot_dist(game_dists, save_loc, title, xlabel, ylabel, rnd):
+def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel, rnd):
     fig, ax = plt.subplots(1, 2, figsize=(8, 4))
     for game in game_dists.keys():
         game_fs_counts = game_dists[game]
+        game_fs_counts = [x for y in game_fs_counts for x in y]
         game_fs_counts = [round(x, rnd) for x in game_fs_counts]
         color = game_colors[game]
         if "wins" in game:
@@ -33,10 +34,32 @@ def plot_dist(game_dists, save_loc, title, xlabel, ylabel, rnd):
     fig.supxlabel(xlabel)
     fig.supylabel(ylabel)
     fig.tight_layout()
-    plt.savefig(f"{save_loc}/{title}.png", transparent=True)
+    fig.patch.set_alpha(0.0)
+    plt.savefig(f"{save_loc}/{file_name}.png")
 
 
-def get_data(data_type, dist_func):
+def plot_idv_dist(game_dists, save_loc, file_name, title, xlabel, ylabel, rnd):
+    fig, ax = plt.subplots(1, 4, figsize=(16, 4))
+    for a,game in enumerate(game_dists.keys()):
+        game_fs_counts = game_dists[game]
+        game_fs_counts = sample(game_fs_counts, 10)
+        for dist in game_fs_counts:
+            dist = [round(x, rnd) for x in dist]
+            counts = Counter(dist)
+            counts = OrderedDict(sorted(counts.items()))
+            y_sum = sum(counts.values())
+            freqs = [y/y_sum for y in counts.values()]
+            ax[a].plot(counts.keys(), freqs)
+            ax[a].set(title=game, xlim=(0,1), ylim=(0,1))
+    fig.suptitle(title)
+    fig.supxlabel(xlabel)
+    fig.supylabel(ylabel)
+    fig.tight_layout()
+    fig.patch.set_alpha(0.0)
+    plt.savefig(f"{save_loc}/{file_name}.png")
+
+
+def get_data(data_type, dist_func, limit=500):
     cnt = 0
     game_dists = {"sensitive_wins":[], "coexistence":[],
                      "bistability":[], "resistant_wins":[]}
@@ -61,27 +84,8 @@ def get_data(data_type, dist_func):
             dist = create_sfp_dist(s_coords, r_coords)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
-        game_dists[game] += dist
+        game_dists[game].append(dist)
         cnt += 1
-        if cnt > 500:
+        if cnt > limit:
             break
     return game_dists
-
-
-def main(data_type):
-    save_loc = get_data_path(data_type, "images")
-    # all_fs_counts = get_data(data_type, "sfp")
-    # plot_dist(all_fs_counts, save_loc, "Spatial Fokker-Planck Distributions",
-    #           "Fraction Sensitive", "Frequency Across Subsamples", 1)
-    all_fs = get_data(data_type, "nc")
-    plot_dist(all_fs, save_loc, 
-              "Neighborhood Composition Distributions",
-              "Fraction Sensitive in Radius 3 from Resistant", 
-              "Proportion of Resistant", 1)
-
-
-if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
-    else:
-        print("Please provide the data type.")

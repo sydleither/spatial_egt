@@ -14,7 +14,8 @@ def read_processed_sample(processed_data_path, file_name, df_payoff):
     df_sample["source"] = source
     df_sample["sample"] = sample
     sample_payoff = df_payoff[(df_payoff["source"] == source) & (df_payoff["sample"] == sample)]
-    df_sample["game"] = calculate_game(sample_payoff)
+    game = sample_payoff.apply(calculate_game, axis="columns").iloc[0]
+    df_sample["game"] = game
     return df_sample
 
 

@@ -16,15 +16,16 @@ def create_sfp_dist(s_coords, r_coords):
     max_coord = max(max_x, max_y)
 
     fs_counts = []
-    subset_size = 10
-    for s in range(max_coord//subset_size):
+    num_subsets = 25
+    subset_size = max_coord//num_subsets
+    for s in range(num_subsets):
         lower = s*subset_size
         upper = (s+1)*subset_size
         subset = [t for t,x,y in all_coords if lower <= x <= upper and lower <= y <= upper]
         subset_total = len(subset)
-        subset_s = len([x for x in subset if x[0] == "s"])
         if subset_total == 0:
             continue
+        subset_s = len([x for x in subset if x[0] == "s"])
         fs_counts.append(subset_s/subset_total)
     
     return fs_counts
@@ -83,10 +84,10 @@ def get_cell_type_counts(df):
 
 
 def calculate_game(payoff):
-    a = payoff["a"].iloc[0]
-    b = payoff["b"].iloc[0]
-    c = payoff["c"].iloc[0]
-    d = payoff["d"].iloc[0]
+    a = payoff["a"]
+    b = payoff["b"]
+    c = payoff["c"]
+    d = payoff["d"]
     if a > c and b > d:
         game = "sensitive_wins"
     elif c > a and b > d:
