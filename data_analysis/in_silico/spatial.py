@@ -1,53 +1,33 @@
-import os
+import random
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import game_colors, in_vitro_exp_names, get_data_path
+from common import game_colors, get_data_path
 from data_processing.spatial_statistics import calculate_game
 
 cell_colors = [game_colors["sensitive_wins"], game_colors["resistant_wins"]]
 
 
-def plot_plate_sections(df, save_loc, exp_name):
-    for drugcon in df["DrugConcentration"].unique():
-        df_dc = df[df["DrugConcentration"] == drugcon]
-        well_letters = sorted(df_dc["sample"].str[0].unique())
-        well_nums = sorted(df_dc["sample"].str[1:].astype(int).unique())
-        num_letters = len(well_letters)
-        num_nums = len(well_nums)
-        fig, ax = plt.subplots(num_letters, num_nums, figsize=(10*num_nums, 10*num_letters))
-        for l in range(len(well_letters)):
-            for n in range(len(well_nums)):
-                well = well_letters[l]+str(well_nums[n])
-                sns.scatterplot(data=df[df["sample"] == well], x="x", y="y", 
-                                hue="type", legend=False, ax=ax[l][n],
-                                palette=cell_colors, 
-                                hue_order=["sensitive", "resistant"])
-                ax[l][n].set(xlabel="", ylabel="")
-                ax[l][n].get_xaxis().set_ticks([])
-                ax[l][n].get_yaxis().set_ticks([])
-                ax[l][n].set_facecolor("lightgrey")
-        fig.patch.set_alpha(0.0)
-        fig.tight_layout()
-        drugcon_str = "{:10.3f}".format(drugcon).strip().replace(".", "")
-        plt.savefig(f"{save_loc}/{exp_name}/plate_{drugcon_str}uM.png")
-
-
-def plot_single_well(df, save_loc, exp_name, well):
-    fig, ax = plt.subplots()
-    sns.scatterplot(data=df[df["sample"] == well], x="x", y="y", 
-                    hue="type", legend=False, ax=ax,
-                    palette=cell_colors, 
-                    hue_order=["sensitive", "resistant"])
-    ax.set(xlabel="", ylabel="")
-    ax.get_xaxis().set_ticks([])
-    ax.get_yaxis().set_ticks([])
-    ax.set_facecolor("lightgrey")
+def plot_games(df, save_loc):
+    fig, ax = plt.subplots(1, 4, figsize=(32, 8))
+    for a,game in enumerate(game_colors):
+        df_game = df[df["game"] == game]
+        sns.scatterplot(data=df_game, x="x", y="y", 
+                        hue="type", legend=False, ax=ax[a],
+                        palette=cell_colors, size=1, markers="s",
+                        hue_order=["sensitive", "resistant"],
+                        edgecolors="none")
+        ax[a].set(title=game)
+        ax[a].set(xlabel="", ylabel="")
+        ax[a].set(xlim=(0,125), ylim=(0,125))
+        ax[a].get_xaxis().set_ticks([])
+        ax[a].get_yaxis().set_ticks([])
+        ax[a].set_facecolor("whitesmoke")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    plt.savefig(f"{save_loc}/{exp_name}/well_{well}.png")
+    plt.savefig(f"{save_loc}/visualization.png")
 
 
 def main():
@@ -55,23 +35,20 @@ def main():
     image_data_path = get_data_path("in_silico", "images")
     df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
     df_payoff["game"] = df_payoff.apply(calculate_game, axis="columns")
+    # df_payoff = df_payoff[(df_payoff["initial_fr"] >= 0.45) & (df_payoff["initial_fr"] <= 0.55)]
+    # df_payoff = df_payoff[(df_payoff["initial_density"] >= 6800) & (df_payoff["initial_density"] <= 8800)]
+    df = pd.DataFrame()
+    sample_ids = dict()
     for game in game_colors:
         game_samples = df_payoff[df_payoff["game"] == game]
-        for sample in game_samples["sample"]:
-            file_name = f"spatial_HAL_{sample}.csv"
-            df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
-    # df = pd.DataFrame()
-    # for file_name in os.listdir(processed_data_path):
-    #     if not file_name.startswith("spatial"):
-    #         continue
-    #     source = file_name.split("_")[1]
-    #     sample = file_name.split("_")[2][:-4]
-    #     df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
-    #     df_sample["source"] = source
-    #     df_sample["sample"] = sample
-    #     df = pd.concat([df, df_sample])
-    # plot_plate_sections(df, image_data_path, exp_name)
-    # plot_single_well(df, image_data_path, exp_name, "F5")
+        sample_id = random.sample(list(game_samples["sample"].values), 1)[0]
+        file_name = f"spatial_HAL_{sample_id}.csv"
+        df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
+        sample_ids[game] = int(sample_id)
+        df_sample["game"] = game
+        df = pd.concat([df, df_sample])
+    plot_games(df, image_data_path)
+    print(sample_ids)
 
 
 if __name__ == "__main__":
