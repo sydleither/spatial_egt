@@ -56,7 +56,7 @@ def raw_to_processed():
         df_gr["source"] = df_gr["source"].str.split("_").str[0]
         df_gr = df_gr.dropna()
         df_gr = calculate_payoff(df_gr)
-        df_gr = df_gr[["source", "sample", "a", "b", "c", "d"]]
+        df_gr = df_gr[["source", "sample", "DrugConcentration", "a", "b", "c", "d"]]
         df_gr = df_gr.drop_duplicates().reset_index(drop=True)
         # Concat all experiments into one payoff.csv
         df = pd.concat([df, df_gr])
