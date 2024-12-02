@@ -71,7 +71,7 @@ def plot_idv_dist(dists, games, save_loc, file_name, title, xlabel, ylabel, rnd)
     plt.savefig(f"{save_loc}/{file_name}.png")
 
 
-def get_data(data_type, dist_func, limit=500):
+def get_data(data_type, source, dist_func, limit=500):
     cnt = 0
     game_dists = {"sensitive_wins":[], "coexistence":[],
                      "bistability":[], "resistant_wins":[]}
@@ -81,7 +81,7 @@ def get_data(data_type, dist_func, limit=500):
     df_payoff["game"] = df_payoff.apply(calculate_game, axis="columns")
     df_payoff = df_payoff[df_payoff["game"] != "unknown"]
     for sample_id in df_payoff["sample"].unique():
-        file_name = f"spatial_HAL_{sample_id}.csv"
+        file_name = f"spatial_{source}_{sample_id}.csv"
         df = read_processed_sample(processed_data_path,
                                    file_name, df_payoff)
         s, r = get_cell_type_counts(df)
@@ -102,14 +102,14 @@ def get_data(data_type, dist_func, limit=500):
     return game_dists
 
 
-def get_data_idv(data_type, dist_func, sample_ids):
+def get_data_idv(data_type, source, dist_func, sample_ids):
     dists = dict()
     games = dict()
     processed_data_path = get_data_path(data_type, "processed")
     df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
     df_payoff["sample"] = df_payoff["sample"].astype(str)
     for sample_id in sample_ids:
-        file_name = f"spatial_HAL_{sample_id}.csv"
+        file_name = f"spatial_{source}_{sample_id}.csv"
         df = read_processed_sample(processed_data_path,
                                    file_name, df_payoff)
         s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)

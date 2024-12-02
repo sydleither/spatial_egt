@@ -30,7 +30,7 @@ def main(data_type):
     bistability_ids = list(df_payoff[df_payoff["game"] == "bistability"]["sample"].values)
     subset_sizes = list(range(2, 10))
     results = {s:[] for s in subset_sizes}
-    for i in range(10):
+    for i in range(5000):
         co_sample = sample(coexist_ids, 1)[0]
         bi_sample = sample(bistability_ids, 1)[0]
         subset_size = sample(subset_sizes, 1)[0]
@@ -39,8 +39,16 @@ def main(data_type):
         bi_dist = get_sfp_dist(processed_data_path, df_payoff, 
                                bi_sample, subset_size, False)
         _, p = mannwhitneyu(co_dist, bi_dist)
-        results[subset_size].append(float(p))
-    print(results)
+        results[subset_size].append(p<0.005)
+    
+    save_loc = get_data_path(data_type, "images")
+    prop_sig = {k:sum(v)/len(v) for k,v in results.items()}
+    fig, ax = plt.subplots()
+    ax.bar(x=prop_sig.keys(), height=prop_sig.values(), color="forestgreen")
+    ax.set(xlabel="subset size", ylabel="proportion significant")
+    fig.tight_layout()
+    fig.patch.set_alpha(0.0)
+    plt.savefig(f"{save_loc}/sfp_paramsweep.png")
 
 
 if __name__ == "__main__":

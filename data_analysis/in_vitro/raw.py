@@ -2,10 +2,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import (cell_colors, cell_type_map, 
+from common import (game_colors, cell_type_map, 
                     in_vitro_exp_names, get_data_path)
 
 pd.set_option('mode.chained_assignment', None)
+cell_colors = [game_colors["sensitive_wins"], game_colors["resistant_wins"]]
 
 
 def plot_growth_over_time(df, save_loc, exp_name):
