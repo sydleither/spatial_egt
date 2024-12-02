@@ -1,5 +1,4 @@
 from collections import Counter, OrderedDict
-import os
 from random import sample
 
 import matplotlib.pyplot as plt
@@ -95,7 +94,7 @@ def get_data(data_type, dist_func, limit=500):
             dist = create_sfp_dist(s_coords, r_coords)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
-        game = df_payoff[df_payoff["sample"] == sample_id]["game"].iloc[0]
+        game = df["game"].iloc[0]
         game_dists[game].append(dist)
         cnt += 1
         if cnt > limit:
@@ -109,7 +108,6 @@ def get_data_idv(data_type, dist_func, sample_ids):
     processed_data_path = get_data_path(data_type, "processed")
     df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
     df_payoff["sample"] = df_payoff["sample"].astype(str)
-    df_payoff["game"] = df_payoff.apply(calculate_game, axis="columns")
     for sample_id in sample_ids:
         file_name = f"spatial_HAL_{sample_id}.csv"
         df = read_processed_sample(processed_data_path,
@@ -120,7 +118,7 @@ def get_data_idv(data_type, dist_func, sample_ids):
             dist = create_sfp_dist(s_coords, r_coords)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
-        game = df_payoff[df_payoff["sample"] == sample_id]["game"].iloc[0]
+        game = df["game"].iloc[0]
         dists[sample_id] = dist
         games[sample_id] = game
     return dists, games
