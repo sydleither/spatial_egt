@@ -28,9 +28,9 @@ def main(data_type):
     df_payoff["game"] = df_payoff.apply(calculate_game, axis="columns")
     coexist_ids = list(df_payoff[df_payoff["game"] == "coexistence"]["sample"].values)
     bistability_ids = list(df_payoff[df_payoff["game"] == "bistability"]["sample"].values)
-    subset_sizes = list(range(2, 10))
+    subset_sizes = list(range(4, 22, 2))
     results = {s:[] for s in subset_sizes}
-    for i in range(5000):
+    for i in range(1000):
         co_sample = sample(coexist_ids, 1)[0]
         bi_sample = sample(bistability_ids, 1)[0]
         subset_size = sample(subset_sizes, 1)[0]

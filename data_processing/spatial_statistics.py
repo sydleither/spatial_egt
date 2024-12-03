@@ -7,7 +7,7 @@ from scipy.spatial import KDTree
 
 
 # Spatial Fokker Planck
-def create_sfp_dist(s_coords, r_coords, subset_size=4, incl_empty=False):
+def create_sfp_dist(s_coords, r_coords, subset_length=7, incl_empty=False):
     all_coords = [("s", s_coords[i][0], s_coords[i][1]) for i in range(len(s_coords))]
     all_coords += [("r", r_coords[i][0], r_coords[i][1]) for i in range(len(r_coords))]
 
@@ -16,25 +16,31 @@ def create_sfp_dist(s_coords, r_coords, subset_size=4, incl_empty=False):
     max_coord = max(max_x, max_y)
 
     fs_counts = []
-    num_subsets = max_coord//subset_size
+    sqrt_num_subsets = max_coord//subset_length
     if incl_empty:
-        num_cells = subset_size**2
-        for s in range(num_subsets):
-            lower = s*subset_size
-            upper = (s+1)*subset_size
-            subset = [t for t,x,y in all_coords if lower <= x < upper and lower <= y < upper]
-            subset_s = len([x for x in subset if x[0] == "s"])
-            fs_counts.append(subset_s/num_cells)
+        num_cells = subset_length**2
+        for sx in range(sqrt_num_subsets):
+            for sy in range(sqrt_num_subsets):
+                lx = sx*subset_length
+                ux = (sx+1)*subset_length
+                ly = sy*subset_length
+                uy = (sy+1)*subset_length
+                subset = [t for t,x,y in all_coords if lx <= x < ux and ly <= y < uy]
+                subset_s = len([x for x in subset if x[0] == "s"])
+                fs_counts.append(subset_s/num_cells)
     else:
-        for s in range(num_subsets):
-            lower = s*subset_size
-            upper = (s+1)*subset_size
-            subset = [t for t,x,y in all_coords if lower <= x < upper and lower <= y < upper]
-            subset_total = len(subset)
-            if subset_total == 0:
-                continue
-            subset_s = len([x for x in subset if x[0] == "s"])
-            fs_counts.append(subset_s/subset_total)
+        for sx in range(sqrt_num_subsets):
+            for sy in range(sqrt_num_subsets):
+                lx = sx*subset_length
+                ux = (sx+1)*subset_length
+                ly = sy*subset_length
+                uy = (sy+1)*subset_length
+                subset = [t for t,x,y in all_coords if lx <= x < ux and ly <= y < uy]
+                subset_total = len(subset)
+                if subset_total == 0:
+                    continue
+                subset_s = len([x for x in subset if x[0] == "s"])
+                fs_counts.append(subset_s/subset_total)
 
     return fs_counts
 

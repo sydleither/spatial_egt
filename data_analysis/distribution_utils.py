@@ -39,9 +39,10 @@ def plot_idv_fs_count(dists, games, save_loc, file_name, title, xlabel, ylabel):
     for a,sample_id in enumerate(dists):
         dist = dists[sample_id]
         game = games[sample_id]
-        ax[a].bar(range(len(dist)), sorted(dist), 
+        axis = ax[a] if len(dists) > 1 else ax
+        axis.bar(range(len(dist)), dist, 
                   color=game_colors[game])
-        ax[a].set(title=game, ylim=(0,1))
+        axis.set(title=game, ylim=(0,1))
     fig.suptitle(title)
     fig.supxlabel(xlabel)
     fig.supylabel(ylabel)
@@ -60,9 +61,10 @@ def plot_idv_dist(dists, games, save_loc, file_name, title, xlabel, ylabel, rnd)
         counts = OrderedDict(sorted(counts.items()))
         y_sum = sum(counts.values())
         freqs = [y/y_sum for y in counts.values()]
-        ax[a].bar(counts.keys(), freqs, width=10**(-rnd),
+        axis = ax[a] if len(dists) > 1 else ax
+        axis.bar(counts.keys(), freqs, width=10**(-rnd),
                   label=game, color=game_colors[game], alpha=0.66)
-        ax[a].set(title=f"{game}\n{sample_id}", xlim=(0,1), ylim=(0,1))
+        axis.set(title=f"{game}\n{sample_id}", xlim=(0,1), ylim=(0,1))
     fig.suptitle(title)
     fig.supxlabel(xlabel)
     fig.supylabel(ylabel)
