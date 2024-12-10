@@ -1,3 +1,4 @@
+from random import choices
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -7,42 +8,42 @@ from scipy.spatial import KDTree
 
 
 # Spatial Fokker Planck
-def create_sfp_dist(s_coords, r_coords, data_type, subset_length=None, incl_empty=False):
-    all_coords = [("s", s_coords[i][0], s_coords[i][1]) for i in range(len(s_coords))]
-    all_coords += [("r", r_coords[i][0], r_coords[i][1]) for i in range(len(r_coords))]
-    max_x = max([x[1] for x in all_coords])
-    max_y = max([x[2] for x in all_coords])
-    max_coord = max(max_x, max_y)
+def create_sfp_dist(s_coords, r_coords, data_type, sample_length=None, num_samples=1000, incl_empty=False):
+    s_coords = np.array(s_coords)
+    r_coords = np.array(r_coords)
+    max_x = max(np.max(s_coords[:, 0]), np.max(r_coords[:, 0]))
+    max_y = max(np.max(s_coords[:, 1]), np.max(r_coords[:, 1]))
 
-    if subset_length is None:
-        subset_length = 7 if data_type == "in_silico" else 70
+    if sample_length is None:
+        sample_length = 7 if data_type == "in_silico" else 70
 
     fs_counts = []
-    sqrt_num_subsets = max_coord//subset_length
+    xs = choices(range(0, max_x-sample_length), k=num_samples)
+    ys = choices(range(0, max_y-sample_length), k=num_samples)
     if incl_empty:
-        num_cells = subset_length**2
-        for sx in range(sqrt_num_subsets):
-            for sy in range(sqrt_num_subsets):
-                lx = sx*subset_length
-                ux = (sx+1)*subset_length
-                ly = sy*subset_length
-                uy = (sy+1)*subset_length
-                subset = [t for t,x,y in all_coords if lx <= x < ux and ly <= y < uy]
-                subset_s = len([x for x in subset if x[0] == "s"])
-                fs_counts.append(subset_s/num_cells)
+        num_cells = sample_length**2
+        for i in range(num_samples):
+            lx = xs[i]
+            ux = lx+sample_length
+            ly = ys[i]
+            uy = ly+sample_length
+            subset_s = np.sum((s_coords[:, 0] >= lx) & (s_coords[:, 0] < ux) & 
+                              (s_coords[:, 1] >= ly) & (s_coords[:, 1] < uy))
+            fs_counts.append(subset_s/num_cells)
     else:
-        for sx in range(sqrt_num_subsets):
-            for sy in range(sqrt_num_subsets):
-                lx = sx*subset_length
-                ux = (sx+1)*subset_length
-                ly = sy*subset_length
-                uy = (sy+1)*subset_length
-                subset = [t for t,x,y in all_coords if lx <= x < ux and ly <= y < uy]
-                subset_total = len(subset)
-                if subset_total == 0:
-                    continue
-                subset_s = len([x for x in subset if x[0] == "s"])
-                fs_counts.append(subset_s/subset_total)
+        for i in range(num_samples):
+            lx = xs[i]
+            ux = lx+sample_length
+            ly = ys[i]
+            uy = ly+sample_length
+            subset_s = np.sum((s_coords[:, 0] >= lx) & (s_coords[:, 0] < ux) & 
+                              (s_coords[:, 1] >= ly) & (s_coords[:, 1] < uy))
+            subset_r = np.sum((r_coords[:, 0] >= lx) & (r_coords[:, 0] < ux) & 
+                              (r_coords[:, 1] >= ly) & (r_coords[:, 1] < uy))
+            subset_total = subset_s + subset_r
+            if subset_total == 0:
+                continue
+            fs_counts.append(subset_s/subset_total)
 
     return fs_counts
 

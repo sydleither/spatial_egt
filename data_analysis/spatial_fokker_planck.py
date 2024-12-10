@@ -5,7 +5,7 @@ from data_analysis.distribution_utils import (get_data, get_data_idv, plot_agg_d
                                               plot_idv_fs_count, plot_idv_dist)
 
 
-def idv_plots(data_type,source, *sample_ids):
+def idv_plots(data_type, source, *sample_ids):
     save_loc = get_data_path(data_type, "images")
     dists, games = get_data_idv(data_type, source, "sfp", sample_ids)
     plot_idv_dist(dists, games, save_loc, source+"_sfp_"+"_".join(sample_ids),
