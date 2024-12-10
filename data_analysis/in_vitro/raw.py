@@ -62,7 +62,7 @@ def plot_game_gr(df, save_loc, exp_name):
                hue="CellType", col="DrugConcentration", legend=False,
                palette=cell_colors, hue_order=["sensitive", "resistant"],
                facet_kws=dict(sharey=False))
-    plt.savefig(f"{save_loc}/{exp_name}/gr_by_fs.png")
+    plt.savefig(f"{save_loc}/{exp_name}/gr_by_fs.png", transparent=True)
 
 
 def main():

@@ -93,7 +93,7 @@ def get_data(data_type, source, dist_func, limit=500):
         s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
         r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
         if dist_func == "sfp":
-            dist = create_sfp_dist(s_coords, r_coords)
+            dist = create_sfp_dist(s_coords, r_coords, data_type)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
         game = df["game"].iloc[0]
@@ -117,7 +117,7 @@ def get_data_idv(data_type, source, dist_func, sample_ids):
         s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
         r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
         if dist_func == "sfp":
-            dist = create_sfp_dist(s_coords, r_coords)
+            dist = create_sfp_dist(s_coords, r_coords, data_type)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
         game = df["game"].iloc[0]

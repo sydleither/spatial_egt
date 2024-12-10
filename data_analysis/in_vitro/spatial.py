@@ -26,6 +26,7 @@ def plot_plate_sections(df, save_loc, exp_name):
         facet.set_titles(col_template="{col_name}", row_template="{row_name}")
         facet.set(facecolor="whitesmoke")
         facet.tight_layout()
+        facet.figure.patch.set_alpha(0.0)
         drugcon_str = "{:10.3f}".format(drugcon).strip().replace(".", "")
         facet.savefig(f"{save_loc}/{exp_name}/plate_{drugcon_str}uM.png", bbox_inches="tight")
 

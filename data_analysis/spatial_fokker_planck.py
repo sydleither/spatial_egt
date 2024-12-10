@@ -19,7 +19,7 @@ def idv_plots(data_type,source, *sample_ids):
 
 def agg_plot(data_type, source):
     save_loc = get_data_path(data_type, "images")
-    n = 100
+    n = 500
     fs_dists = get_data(data_type, source, "sfp", n)
     plot_agg_dist(fs_dists, save_loc, source+"_sfp",
                   f"Spatial Fokker-Planck Distributions\n{n} samples",
@@ -27,9 +27,9 @@ def agg_plot(data_type, source):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         agg_plot(sys.argv[1], sys.argv[2])
-    elif len(sys.argv) > 2:
+    elif len(sys.argv) > 3:
         idv_plots(sys.argv[1], sys.argv[2], *sys.argv[3:])
     else:
         print("Please provide the data type and source.")
