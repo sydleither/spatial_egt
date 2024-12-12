@@ -73,6 +73,7 @@ def distances_plot(data_type):
     fig, ax = plt.subplots()
     sns.barplot(data=df, x="game", y="score", hue="subsample_size", ax=ax)
     ax.set(ylabel="Earth Mover's Distance", xlabel="Game")
+    ax.get_legend().remove()
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/dists_comparison.png")

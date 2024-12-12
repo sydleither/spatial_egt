@@ -19,8 +19,8 @@ def fx(x, awm, amw, s, mu):
     return f
     
 
-def potential(x, n, mu, a12, a21, s):
-    phi = np.log(x*(1-x)/2*n) - 2*n*fx(x, a12, a21, s, mu)
+def potential(x, n, mu, awm, amw, s):
+    phi = np.log(x*(1-x)/2*n) - 2*n*fx(x, awm, amw, s, mu)
     return phi
 
 
@@ -58,11 +58,10 @@ def main(data_type, source, *sample_ids):
     if not sample_ids:
         sample_ids = sample(list(df_payoff.index.values), 4)
 
-    n = 1000
-    p = np.linspace(0.01, 0.99, n)
+    p_fp = np.linspace(0.01, 0.99, 1000)
+    p_sfp = np.linspace(0.01, 0.99, 10)
     mu = 0.01
-    sfp_supports = []
-    sfp_freqs = []
+    sfp_probs = []
     fp_probs = []
     games = []
     for sample_id in sample_ids:
@@ -70,14 +69,10 @@ def main(data_type, source, *sample_ids):
         games.append(sample_data["game"][0])
         sample_dist = get_sfp_dist(processed_data_path, df_payoff,
                                    data_type, source, sample_id, 7, False)
-        sample_dist = [round(x, 1) for x in sample_dist]
-        counts = Counter(sample_dist)
-        counts = OrderedDict(sorted(counts.items()))
-        y_sum = sum(counts.values())
-        freqs = [y/y_sum for y in counts.values()]
-        sfp_supports.append(counts.keys())
-        sfp_freqs.append(freqs)
-        q = potential(p, n, mu, sample_data["awm"][0], 
+        sample_dist = [1-x for x in sample_dist]
+        hist, _ = np.histogram(sample_dist, bins=p_sfp, density=True)
+        sfp_probs.append(hist)
+        q = potential(p_fp, 1000, mu, sample_data["awm"][0], 
                       sample_data["amw"][0], sample_data["sm"][0])
         fp_probs.append(np.exp(-q))
     
@@ -88,16 +83,17 @@ def main(data_type, source, *sample_ids):
         ax = [ax]
     for i in range(num_samples):
         fp_prob = fp_probs[i]
-        ax[i].bar(sfp_supports[i], sfp_freqs[i], 
-                  width=0.1, color=game_colors[games[i]])
-        ax[i].plot(p, fp_prob/max(fp_prob), color="black", linewidth=2)
+        sfp_prob = sfp_probs[i]
+        ax[i].stairs(sfp_prob/max(sfp_prob), p_sfp, 
+                     color=game_colors[games[i]], fill=True)
+        ax[i].plot(p_fp, fp_prob/max(fp_prob), color="black", linewidth=3)
         ax[i].set(xlim=(0,1), ylim=(0,1))
-    # fig.supxlabel("Fraction Mutant")
-    # fig.supylabel("Probability Density")
+    fig.supxlabel("Fraction Mutant/Resistant")
+    fig.supylabel("Probability Density")
     fig.tight_layout()
     fig.patch.set_alpha(0)
     file_name = source+"_fp_"+"_".join(sample_ids)
-    fig.savefig(f"{save_loc}/{file_name}.png")
+    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
 
 
 if __name__ == "__main__":
