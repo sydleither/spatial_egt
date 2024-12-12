@@ -1,5 +1,4 @@
 from collections import Counter, OrderedDict
-from random import sample
 
 import matplotlib.pyplot as plt
 import pandas as pd

@@ -11,10 +11,6 @@ def idv_plots(data_type, source, *sample_ids):
     plot_idv_dist(dists, games, save_loc, source+"_sfp_"+"_".join(sample_ids),
                   "Spatial Fokker-Planck Distributions", "Fraction Sensitive",
                   "Frequency Across Subsamples", 1)
-    plot_idv_fs_count(dists, games, save_loc,
-                      source+"_sfpraw_"+"_".join(sample_ids),
-                      "Fraction Sensitive Across Subsamples",
-                      "Subsample", "Fraction Sensitive")
 
 
 def agg_plot(data_type, source):

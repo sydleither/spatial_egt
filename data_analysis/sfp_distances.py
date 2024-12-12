@@ -46,7 +46,7 @@ def plot_dists(save_loc, dists, games, n):
         ax[i].set(xlim=(0, 1), ylim=(0, 0.2))
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/dists.png")
+    fig.savefig(f"{save_loc}/dists.png")
     plt.close()
 
 
@@ -72,10 +72,10 @@ def distances_plot(data_type):
     save_loc = get_data_path(data_type, "images")
     fig, ax = plt.subplots()
     sns.barplot(data=df, x="game", y="score", hue="subsample_size", ax=ax)
-    ax.set(ylim=(0, 0.7), ylabel="Earth Mover's Distance", xlabel="Game")
+    ax.set(ylabel="Earth Mover's Distance", xlabel="Game")
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/dists_comparison.png")
+    fig.savefig(f"{save_loc}/dists_comparison.png")
     plt.close()
 
 
@@ -102,7 +102,7 @@ def distances_plot_detailed(data_type, subsample_size):
     ax.set(ylim=(0, 0.7), ylabel="Earth Mover's Distance", xlabel="Game")
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/dists_comparison_{subsample_size}.png")
+    fig.savefig(f"{save_loc}/dists_comparison_{subsample_size}.png")
     plt.close()
 
 
