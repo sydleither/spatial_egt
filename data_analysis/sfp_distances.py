@@ -20,7 +20,7 @@ def get_sfp_dist(processed_data_path, df_payoff, data_type, source, sample_id, s
     return dist
 
 
-def get_payoff_data(processed_data_path, data_type):
+def get_payoff_data(processed_data_path):
     df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
     df_payoff["sample"] = df_payoff["sample"].astype(str)
     df_payoff["game"] = df_payoff.apply(calculate_game, axis="columns")
@@ -52,7 +52,7 @@ def plot_dists(save_loc, dists, games, n):
 
 def distances_plot(data_type):
     processed_data_path = get_data_path(data_type, "processed")
-    df_payoff = get_payoff_data(processed_data_path, data_type)
+    df_payoff = get_payoff_data(processed_data_path)
     samples = list(df_payoff[["sample", "source", "game"]].values)
 
     dists, games = get_theoretical_dists(1000)
@@ -83,7 +83,7 @@ def distances_plot(data_type):
 
 def distances_plot_detailed(data_type, subsample_size):
     processed_data_path = get_data_path(data_type, "processed")
-    df_payoff = get_payoff_data(processed_data_path, data_type)
+    df_payoff = get_payoff_data(processed_data_path)
     samples = list(df_payoff[["sample", "source", "game"]].values)
 
     dists, games = get_theoretical_dists(1000)
@@ -91,7 +91,7 @@ def distances_plot_detailed(data_type, subsample_size):
     rows = []
     for sample_id, source, game in samples[0:1000]:
         sample_dist = get_sfp_dist(processed_data_path, df_payoff, data_type, 
-                                   source, sample_id, subsample_size, False)
+                                   source, sample_id, int(subsample_size), False)
         for i in range(len(dists)):
             score = stats.wasserstein_distance(sample_dist, dists[i])
             row = [sample_id, source, game, games[i], score]
@@ -100,7 +100,9 @@ def distances_plot_detailed(data_type, subsample_size):
     df = pd.DataFrame(data=rows, columns=["sample", "source", "game", "target", "score"])
     save_loc = get_data_path(data_type, "images")
     fig, ax = plt.subplots()
-    sns.barplot(data=df, x="game", y="score", hue="target", palette=game_colors.values(), ax=ax)
+    sns.barplot(data=df, x="game", y="score", 
+                hue="target", order=list(game_colors.keys()), 
+                palette=game_colors.values(), ax=ax)
     ax.set(ylim=(0, 0.7), ylabel="Earth Mover's Distance", xlabel="Game")
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
