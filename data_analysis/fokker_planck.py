@@ -1,11 +1,9 @@
-from collections import Counter, OrderedDict
 from random import sample
 import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 
 from common import game_colors, get_data_path
 from data_processing.processed_to_features import read_processed_sample

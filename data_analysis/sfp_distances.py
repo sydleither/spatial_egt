@@ -71,7 +71,8 @@ def distances_plot(data_type):
     df = pd.DataFrame(data=rows, columns=["sample", "source", "game", "subsample_size", "score"])
     save_loc = get_data_path(data_type, "images")
     fig, ax = plt.subplots()
-    sns.barplot(data=df, x="game", y="score", hue="subsample_size", ax=ax)
+    sns.barplot(data=df, x="game", y="score", hue="subsample_size", 
+                order=list(game_colors.keys()), ax=ax)
     ax.set(ylabel="Earth Mover's Distance", xlabel="Game")
     ax.get_legend().remove()
     fig.tight_layout()
