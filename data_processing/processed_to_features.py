@@ -3,7 +3,7 @@ import sys
 
 import pandas as pd
 
-from common import get_data_path
+from common.common import get_data_path
 from data_processing.spatial_statistics import calculate_game, sample_to_features
 
 

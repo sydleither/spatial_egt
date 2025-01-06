@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from common import get_data_path
+from common.common import get_data_path
 
 
 def raw_to_processed():

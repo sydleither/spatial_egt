@@ -6,7 +6,8 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.neural_network import MLPClassifier
 
-from common import features, get_data_path
+from common.common import get_data_path
+from common.features import clean_feature_data, features
 
 
 def plot_confusion_matrix(save_loc, int_to_category, clf, y_test, y_pred, acc, k):
@@ -39,17 +40,6 @@ def test_model(save_loc, df, label_name):
     plot_confusion_matrix(save_loc, int_to_category, clf, y, y_pred, acc, "")
 
 
-def clean_data(df):
-    df = df[df["game"] != "unknown"]
-    df = df[df["proportion_s"] <= 0.95]
-    df = df[df["proportion_s"] >= 0.05]
-    skew_features = [x for x in df.columns if "skew" in x]
-    for feature in skew_features:
-        df[feature].fillna(0)
-    df = df.dropna()
-    return df
-
-
 def main(*data_types):
     data_path = get_data_path(".", ".")
 
@@ -58,7 +48,7 @@ def main(*data_types):
         features_data_path = get_data_path(data_type, "features")
         df_dt = pd.read_csv(f"{features_data_path}/all.csv")
         df = pd.concat([df, df_dt])
-    df = clean_data(df)
+    df = clean_feature_data(df)
 
     label = ["game"]
     if len(features) == 0:

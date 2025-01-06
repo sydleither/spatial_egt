@@ -11,7 +11,8 @@ from sklearn.feature_selection import (f_classif, f_regression,
                                        mutual_info_classif, 
                                        mutual_info_regression)
 
-from common import features, game_colors, get_data_path
+from common.common import game_colors, get_data_path
+from common.features import clean_feature_data, features
 from data_analysis.DDIT.DDIT import DDIT
 
 warnings.filterwarnings("ignore")
@@ -168,28 +169,11 @@ def class_balance(df, label_names):
         print(f"\tProportions: {proportions}")
 
 
-def clean_data(df):
-    org_size = len(df)
-    df = df[df["game"] != "unknown"]
-    valid_games_size = len(df)
-    print(f"{org_size - valid_games_size} samples with unknown games removed.")
-    df = df[df["proportion_s"] <= 0.95]
-    df = df[df["proportion_s"] >= 0.05]
-    nonextinct_size = len(df)
-    print(f"{valid_games_size - nonextinct_size} samples with near-extinct cell lines removed.")
-    skew_features = [x for x in df.columns if "skew" in x]
-    for feature in skew_features:
-        df[feature].fillna(0)
-    df = df.dropna()
-    print(f"{nonextinct_size - len(df)} samples with NaN features removed.")
-    return df
-
-
 def main(data_type):
     features_data_path = get_data_path(data_type, "features")
     images_data_path = get_data_path(data_type, "images")
     df = pd.read_csv(f"{features_data_path}/all.csv")
-    df = clean_data(df)
+    df = clean_feature_data(df)
 
     label = ["game"]
     if len(features) == 0:

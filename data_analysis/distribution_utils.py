@@ -3,7 +3,7 @@ from collections import Counter, OrderedDict
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import game_colors, get_data_path
+from common.common import game_colors, get_data_path
 from data_processing.processed_to_features import read_processed_sample
 from data_processing.spatial_statistics import (calculate_game,
                                                 create_nc_dists, 

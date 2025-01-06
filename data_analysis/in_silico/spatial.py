@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from common import game_colors, get_data_path
+from common.common import game_colors, get_data_path
 
 cell_colors = [game_colors["sensitive_wins"], game_colors["resistant_wins"]]
 

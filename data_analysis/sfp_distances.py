@@ -6,7 +6,7 @@ import pandas as pd
 from scipy import stats
 import seaborn as sns
 
-from common import game_colors, get_data_path
+from common.common import game_colors, get_data_path
 from data_processing.processed_to_features import read_processed_sample
 from data_processing.spatial_statistics import (calculate_game, create_sfp_dist)
 

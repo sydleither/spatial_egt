@@ -5,9 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import game_colors, get_data_path
-from data_processing.processed_to_features import read_processed_sample
-from data_processing.spatial_statistics import (calculate_game, create_sfp_dist)
+from common.common import game_colors, get_data_path
+from common.distributions import get_sfp_dist
+from data_processing.spatial_statistics import calculate_game
 
 
 def fx(x, awm, amw, s, mu):
@@ -20,15 +20,6 @@ def fx(x, awm, amw, s, mu):
 def potential(x, n, mu, awm, amw, s):
     phi = np.log(x*(1-x)/2*n) - 2*n*fx(x, awm, amw, s, mu)
     return phi
-
-
-def get_sfp_dist(processed_data_path, df_payoff, data_type, source, sample_id, subset_size, incl_empty):
-    file_name = f"spatial_{source}_{sample_id}.csv"
-    df = read_processed_sample(processed_data_path, file_name, df_payoff)
-    s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
-    r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
-    dist = create_sfp_dist(s_coords, r_coords, data_type, subset_size, 1000, incl_empty)
-    return dist
 
 
 def calculate_fp_params(row):

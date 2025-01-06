@@ -6,19 +6,9 @@ import pandas as pd
 from scipy import stats
 import seaborn as sns
 
-from common import get_data_path
-from data_processing.processed_to_features import read_processed_sample
-from data_processing.spatial_statistics import (calculate_game,
-                                                create_sfp_dist)
-
-
-def get_sfp_dist(processed_data_path, df_payoff, data_type, source, sample_id, subset_size, incl_empty):
-    file_name = f"spatial_{source}_{sample_id}.csv"
-    df = read_processed_sample(processed_data_path, file_name, df_payoff)
-    s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
-    r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
-    dist = create_sfp_dist(s_coords, r_coords, data_type, subset_size, 1000, incl_empty)
-    return dist
+from common.common import get_data_path
+from common.distributions import get_sfp_dist
+from data_processing.spatial_statistics import calculate_game
 
 
 def main(data_type):
