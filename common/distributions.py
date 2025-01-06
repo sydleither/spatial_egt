@@ -31,3 +31,14 @@ def get_theoretical_dists(n):
     dists = [sw_dist, co_dist, bi_dist, rw_dist]
     games = ["sensitive_wins", "coexistence", "bistability", "resistant_wins"]
     return dists, games
+
+
+def fit_beta(sfp_dist):
+    bounds = {"a":(0,6), "b":(0,6)}
+    res = stats.fit(stats.beta, sfp_dist, bounds=bounds)
+    params = res.params
+    a = params[0]
+    b = params[1]
+    loc = params[2]
+    scale = params[3]
+    return a, b, loc, scale

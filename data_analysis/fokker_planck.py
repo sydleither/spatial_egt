@@ -15,7 +15,7 @@ def fx(x, awm, amw, s, mu):
         return(s*x)
     f = (-x + mu*np.log(1-x)+mu*np.log(x)-x*amw/awm + np.log(1+x*awm)*(amw + (1+s+amw)*awm)/(awm**2))
     return f
-    
+
 
 def potential(x, n, mu, awm, amw, s):
     phi = np.log(x*(1-x)/2*n) - 2*n*fx(x, awm, amw, s, mu)
