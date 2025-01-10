@@ -1,7 +1,9 @@
-features = []
+#features = []
 #features = ["nc_fs_mean", "nc_fs_std", "nc_fs_skew"]
 #features = ["sfp_fs_mean", "sfp_fs_std", "sfp_fs_skew"]
 #features = ["nc_fs_mean", "nc_fs_std", "nc_fs_skew", "nc_fr_mean", "nc_fr_std", "nc_fr_skew"]
+features = ["sfp_fs_mean", "nc_fs_mean", "nc_fr_mean", "nc_mean_diff"]
+
 
 def clean_feature_data(df):
     df = df[df["game"] != "unknown"]

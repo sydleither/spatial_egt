@@ -11,10 +11,6 @@ def idv_plots(data_type, source, *sample_ids):
     plot_idv_dist(dists, games, save_loc, source+"_nc_"+"_".join(sample_ids),
                   "Neighborhood Composition Distributions", "Fraction Sensitive",
                   "Fraction of Resistant", 1)
-    plot_idv_fs_count(dists, games, save_loc,
-                      source+"_ncraw_"+"_".join(sample_ids),
-                      "Fraction Sensitive Across Subsamples",
-                      "Resistant Cell", "Fraction Sensitive")
 
 
 def agg_plot(data_type, source):

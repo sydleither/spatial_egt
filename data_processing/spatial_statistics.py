@@ -15,7 +15,7 @@ def create_sfp_dist(s_coords, r_coords, data_type, sample_length=None, num_sampl
     max_y = max(np.max(s_coords[:, 1]), np.max(r_coords[:, 1]))
 
     if sample_length is None:
-        sample_length = 7 if data_type == "in_silico" else 70
+        sample_length = 5 if data_type == "in_silico" else 70
 
     fs_counts = []
     xs = choices(range(0, max_x-sample_length), k=num_samples)
@@ -79,6 +79,11 @@ def get_dist_statistics(name, dist):
     return features
 
 
+def add_extra_nc_features(features):
+    features["nc_mean_diff"] = abs(features["nc_fs_mean"] - features["nc_fr_mean"])
+    return features
+
+
 def create_all_features(df, num_sensitive, num_resistant, data_type):
     features = dict()
     s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
@@ -88,6 +93,7 @@ def create_all_features(df, num_sensitive, num_resistant, data_type):
     fs, fr = create_nc_dists(s_coords, r_coords, data_type)
     features = features | get_dist_statistics("nc_fs", fs)
     features = features | get_dist_statistics("nc_fr", fr)
+    features = add_extra_nc_features(features)
     sfp = create_sfp_dist(s_coords, r_coords, data_type)
     features = features | get_dist_statistics("sfp_fs", sfp)
     

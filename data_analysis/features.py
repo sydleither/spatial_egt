@@ -32,7 +32,7 @@ def features_by_labels_plot(save_loc, df, label_names, colors, color_order):
     [feature_names.remove(ln) for ln in label_names]
     num_features = len(feature_names)
     num_labels = len(label_names)
-    fig, ax = plt.subplots(num_labels, num_features, figsize=(8*num_features,8*num_labels))
+    fig, ax = plt.subplots(num_labels, num_features, figsize=(7*num_features, 7*num_labels))
     for l,label_name in enumerate(label_names):
         label_dtype = df[label_name].dtypes
         for f,feature_name in enumerate(feature_names):
@@ -41,9 +41,9 @@ def features_by_labels_plot(save_loc, df, label_names, colors, color_order):
                 sns.scatterplot(data=df, x=feature_name, y=label_name, 
                                 color=colors[0], ax=axis)
             else:
-                sns.boxplot(data=df, x=feature_name, y=label_name, 
-                            hue=label_name, legend=False, notch=True, ax=axis, 
-                            hue_order=color_order, palette=colors)
+                sns.violinplot(data=df, x=feature_name, y=label_name,
+                               cut=0, legend=False, ax=axis,
+                               order=color_order, palette=colors)
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
     fig.savefig(f"{save_loc}/feature_labels{num_labels}.png", bbox_inches="tight")
@@ -181,13 +181,13 @@ def main(data_type):
     else:
         feature_df = df[features+label]
     
-    class_balance(df, label)
-    feature_correlation(images_data_path, feature_df, label)
+    # class_balance(df, label)
+    # feature_correlation(images_data_path, feature_df, label)
     features_by_labels_plot(images_data_path, feature_df, label, 
                             game_colors.values(), game_colors.keys())
-    fragmentation_matrix_plot(images_data_path, feature_df, label, "equal")
-    feature_selection(feature_df, label)
-    feature_pairplot(images_data_path, feature_df, label[0])
+    # fragmentation_matrix_plot(images_data_path, feature_df, label, "equal")
+    # feature_selection(feature_df, label)
+    # feature_pairplot(images_data_path, feature_df, label[0])
 
 
 if __name__ == "__main__":
