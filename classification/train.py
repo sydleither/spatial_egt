@@ -1,71 +1,46 @@
 import pickle
 import sys
 
-import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
 
 from common.common import get_data_path
-from common.features import clean_feature_data, features
+from common.classification import (clean_feature_data, df_to_xy,
+                                   features, plot_confusion_matrix)
 
 
-def plot_confusion_matrix(save_loc, int_to_category, clf, y_test, y_pred, acc, k):
-    conf_mat = confusion_matrix(y_test, y_pred, normalize="true")
-    disp_labels = [int_to_category[x] for x in clf.classes_]
-
-    fig, ax = plt.subplots(figsize=(5, 4))
-    disp = ConfusionMatrixDisplay(confusion_matrix=conf_mat, display_labels=disp_labels)
-    disp.plot(ax=ax)
-    for tick in ax.xaxis.get_major_ticks()[1::2]:
-        tick.set_pad(15)
-    ax.set_title(f"Accuracy: {acc}")
-    fig.tight_layout()
-    fig.savefig(f"{save_loc}/confusion_matrix{k}.png", bbox_inches="tight", transparent=True)
+def train_model(X_train, y_train):
+    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X_train, y_train)
+    return clf
 
 
-def cross_val(save_loc, df, label_name):
-    feature_names = list(df.columns)
-    feature_names.remove(label_name)
-    label_categories = df[label_name].unique()
-    category_to_int = {lc:i for i,lc in enumerate(label_categories)}
-    int_to_category = {i:lc for i,lc in enumerate(label_categories)}
-    X = list(df[feature_names].values)
-    y = [category_to_int[x] for x in df[label_name].values]
-
+def cross_val(save_loc, X, y, int_to_name):
+    n_splits = 5
+    cross_validation = StratifiedKFold(n_splits=n_splits, shuffle=True)
     avg_acc = 0
-    cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
     for k, (train_i, test_i) in enumerate(cross_validation.split(X, y)):
         X_train = [X[i] for i in train_i]
         X_test = [X[i] for i in test_i]
         y_train = [y[i] for i in train_i]
         y_test = [y[i] for i in test_i]
-        clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X_train, y_train)
+        clf = train_model(X_train, y_train)
         y_pred = clf.predict(X_test)
-        acc = round(sum([y_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test), 2)
+        acc = sum([y_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test)
         avg_acc += acc
-        plot_confusion_matrix(save_loc, int_to_category, clf, y_test, y_pred, acc, k)
-        print(f"\tAccuracy {k}: {acc}")
-    print("\tAverage Accuracy:", avg_acc/5)
+        disp_labels = [int_to_name[x] for x in clf.classes_]
+        plot_confusion_matrix(save_loc, f"confusion_{k}", disp_labels, y_test, y_pred, acc)
+    print(f"Average Accuracy: {avg_acc/n_splits}")
 
 
-def save_model(save_loc, df, label_name):
-    feature_names = list(df.columns)
-    feature_names.remove(label_name)
-    label_categories = df[label_name].unique()
-    category_to_int = {lc:i for i,lc in enumerate(label_categories)}
-    int_to_category = {i:lc for i,lc in enumerate(label_categories)}
-    X = list(df[feature_names].values)
-    y = [category_to_int[x] for x in df[label_name].values]
-
-    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X, y)
+def save_model(save_loc, X, y):
+    clf = train_model(X, y)
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 
 
 def main(*data_types):
-    data_path = get_data_path(".", ".")
+    save_loc = get_data_path(".", "model")
 
     df = pd.DataFrame()
     for data_type in data_types[0]:
@@ -79,9 +54,10 @@ def main(*data_types):
         feature_df = df
     else:
         feature_df = df[features+label]
+    X, y, int_to_name = df_to_xy(feature_df)
     
-    #cross_val(data_path, feature_df, label[0])
-    save_model(data_path, feature_df, label[0])
+    cross_val(save_loc, X, y, int_to_name)
+    #save_model(save_loc, X, y)
 
 
 if __name__ == "__main__":
