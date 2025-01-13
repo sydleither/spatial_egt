@@ -11,10 +11,10 @@ from common.classification import (clean_feature_data, df_to_xy,
 def test_model(save_loc, X, y, int_to_name):
     with open(f"{save_loc}/model.pkl", "rb") as f:
         clf = pickle.load(f)
+    disp_labels = [int_to_name[x] for x in clf.classes_]
     y_pred = clf.predict(X)
     acc = sum([y_pred[i] == y[i] for i in range(len(y))])/len(y)
-    disp_labels = [int_to_name[x] for x in clf.classes_]
-    plot_confusion_matrix(save_loc, "confusion", disp_labels, y, y_pred, acc)
+    plot_confusion_matrix(save_loc, "confusion_test", disp_labels, y, y_pred, acc)
 
 
 def main(*data_types):

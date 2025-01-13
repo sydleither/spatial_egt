@@ -1,6 +1,7 @@
 import pickle
 import sys
 
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
@@ -16,25 +17,34 @@ def train_model(X_train, y_train):
 
 
 def cross_val(save_loc, X, y, int_to_name):
-    n_splits = 5
-    cross_validation = StratifiedKFold(n_splits=n_splits, shuffle=True)
-    avg_acc = 0
+    cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
+    train_accs = []
+    test_accs = []
     for k, (train_i, test_i) in enumerate(cross_validation.split(X, y)):
         X_train = [X[i] for i in train_i]
         X_test = [X[i] for i in test_i]
         y_train = [y[i] for i in train_i]
         y_test = [y[i] for i in test_i]
         clf = train_model(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        acc = sum([y_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test)
-        avg_acc += acc
         disp_labels = [int_to_name[x] for x in clf.classes_]
-        plot_confusion_matrix(save_loc, f"confusion_{k}", disp_labels, y_test, y_pred, acc)
-    print(f"Average Accuracy: {avg_acc/n_splits}")
+        y_train_pred = clf.predict(X_train)
+        y_test_pred = clf.predict(X_test)
+        train_acc = sum([y_train_pred[i] == y_train[i] for i in range(len(y_train))])/len(y_train)
+        test_acc = sum([y_test_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test)
+        train_accs.append(train_acc)
+        test_accs.append(test_acc)
+        plot_confusion_matrix(save_loc, f"confusion_train_{k}", disp_labels, y_train, y_train_pred, train_acc)
+        plot_confusion_matrix(save_loc, f"confusion_test_{k}", disp_labels, y_test, y_test_pred, test_acc)
+    print(f"Train: {np.mean(train_accs):5.3f}, {np.std(train_accs):5.3f}")
+    print(f"Test: {np.mean(test_accs):5.3f}, {np.std(test_accs):5.3f}")
 
 
-def save_model(save_loc, X, y):
+def save_model(save_loc, X, y, int_to_name):
     clf = train_model(X, y)
+    disp_labels = [int_to_name[x] for x in clf.classes_]
+    y_pred = clf.predict(X)
+    acc = sum([y_pred[i] == y[i] for i in range(len(y))])/len(y)
+    plot_confusion_matrix(save_loc, f"confusion_train", disp_labels, y, y_pred, acc)
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 
@@ -57,7 +67,7 @@ def main(*data_types):
     X, y, int_to_name = df_to_xy(feature_df)
     
     cross_val(save_loc, X, y, int_to_name)
-    #save_model(save_loc, X, y)
+    save_model(save_loc, X, y, int_to_name)
 
 
 if __name__ == "__main__":
