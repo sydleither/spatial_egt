@@ -5,14 +5,17 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 from common.common import get_data_path
 from common.classification import (clean_feature_data, df_to_xy,
-                                   features, plot_confusion_matrix)
+                                   features, plot_confusion_matrix,
+                                   plot_prediction_distributions)
 
 
-def train_model(X_train, y_train):
-    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X_train, y_train)
+def train_model(X, y):
+    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X, y)
+    #clf = DecisionTreeClassifier(max_depth=10).fit(X, y)
     return clf
 
 
@@ -45,6 +48,7 @@ def save_model(save_loc, X, y, int_to_name):
     y_pred = clf.predict(X)
     acc = sum([y_pred[i] == y[i] for i in range(len(y))])/len(y)
     plot_confusion_matrix(save_loc, f"confusion_train", disp_labels, y, y_pred, acc)
+    plot_prediction_distributions(save_loc, X, features, y, y_pred, disp_labels, ["nc_fs_mean", "nc_fr_mean"])
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 
@@ -66,7 +70,7 @@ def main(*data_types):
         feature_df = df[features+label]
     X, y, int_to_name = df_to_xy(feature_df)
     
-    cross_val(save_loc, X, y, int_to_name)
+    #cross_val(save_loc, X, y, int_to_name)
     save_model(save_loc, X, y, int_to_name)
 
 
