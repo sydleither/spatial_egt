@@ -20,7 +20,7 @@ def plot_plate_sections(df, save_loc, exp_name):
                               row_order=sorted(df_dc["well_letter"].unique()),
                               col_order=sorted(df_dc["well_num"].unique()), 
                               height=6, aspect=1)
-        facet.map_dataframe(sns.scatterplot, x="x", y="y",hue="type", legend=False,
+        facet.map_dataframe(sns.scatterplot, x="x", y="y", hue="type", legend=False,
                             palette=cell_colors, size=1, edgecolors="none",
                             hue_order=["sensitive", "resistant"])
         facet.set_titles(col_template="{col_name}", row_template="{row_name}")

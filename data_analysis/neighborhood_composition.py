@@ -9,17 +9,17 @@ def idv_plots(data_type, source, *sample_ids):
     save_loc = get_data_path(data_type, "images")
     dists, games = get_data_idv(data_type, source, "nc", sample_ids)
     plot_idv_dist(dists, games, save_loc, source+"_nc_"+"_".join(sample_ids),
-                  "Neighborhood Composition Distributions", "Fraction Sensitive",
-                  "Fraction of Resistant", 1)
+                  "Neighborhood Composition Distributions", 
+                  "Fraction Sensitive in Neighborhood", "Fraction of Resistant Cells", 1)
 
 
 def agg_plot(data_type, source):
     save_loc = get_data_path(data_type, "images")
-    n = 500
+    n = 1000
     fs_dists = get_data(data_type, source, "nc", n)
     plot_agg_dist(fs_dists, save_loc, source+"_nc",
                   f"Neighborhood Composition Distributions\n{n} samples",
-                  "Fraction Sensitive", "Fraction of Resistant", 1)
+                  "Fraction Sensitive in Neighborhood", "Fraction of Resistant Cells", 1)
 
 
 if __name__ == "__main__":

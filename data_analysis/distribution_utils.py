@@ -2,6 +2,9 @@ from collections import Counter, OrderedDict
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+sns.set_theme()
+sns.set_style("white")
 
 from common.common import game_colors, get_data_path
 from data_processing.processed_to_features import read_processed_sample
@@ -12,25 +15,27 @@ from data_processing.spatial_statistics import (calculate_game,
 
 
 def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel, rnd):
-    fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-    for game in game_dists.keys():
+    df_dict = {"data":[], "game":[]}
+    for game in game_dists:
         game_fs_counts = game_dists[game]
         game_fs_counts = [x for y in game_fs_counts for x in y]
-        game_fs_counts = [round(x, rnd) for x in game_fs_counts]
-        a = 0 if "wins" in game else 1
-        counts = Counter(game_fs_counts)
-        y_sum = sum(counts.values())
-        freqs = [y/y_sum for y in counts.values()]
-        ax[a].bar(counts.keys(), freqs, width=10**(-rnd), 
-                  label=game, color=game_colors[game], alpha=0.66)
-    ax[0].legend()
-    ax[1].legend()
-    fig.suptitle(title)
-    fig.supxlabel(xlabel)
-    fig.supylabel(ylabel)
-    fig.tight_layout()
-    fig.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/{file_name}.png")
+        df_dict["data"] += game_fs_counts
+        df_dict["game"] += [game for _ in range(len(game_fs_counts))]
+    
+    df = pd.DataFrame(df_dict)
+    facet = sns.FacetGrid(df, col="game", hue="game", 
+                          col_order=game_colors.keys(), 
+                          col_wrap=2, palette=game_colors.values(), 
+                          height=4, aspect=1)
+    facet.map_dataframe(sns.histplot, x="data", bins=10, kde_kws={"bw_adjust":2},
+                        stat="proportion", kde=True)
+    facet.set_titles(col_template="{col_name}")
+    facet.set(xlabel=xlabel, ylabel=ylabel)
+    facet.figure.subplots_adjust(top=0.9)
+    facet.figure.suptitle(title)
+    facet.tight_layout()
+    facet.figure.patch.set_alpha(0.0)
+    facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
 
 
 def plot_idv_fs_count(dists, games, save_loc, file_name, title, xlabel, ylabel):

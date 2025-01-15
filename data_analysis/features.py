@@ -12,7 +12,7 @@ from sklearn.feature_selection import (f_classif, f_regression,
                                        mutual_info_regression)
 
 from common.common import game_colors, get_data_path
-from common.features import clean_feature_data, features
+from common.classification import clean_feature_data, features
 from data_analysis.DDIT.DDIT import DDIT
 
 warnings.filterwarnings("ignore")
@@ -181,13 +181,13 @@ def main(data_type):
     else:
         feature_df = df[features+label]
     
-    # class_balance(df, label)
-    # feature_correlation(images_data_path, feature_df, label)
+    class_balance(df, label)
+    feature_correlation(images_data_path, feature_df, label)
     features_by_labels_plot(images_data_path, feature_df, label, 
                             game_colors.values(), game_colors.keys())
-    # fragmentation_matrix_plot(images_data_path, feature_df, label, "equal")
-    # feature_selection(feature_df, label)
-    # feature_pairplot(images_data_path, feature_df, label[0])
+    fragmentation_matrix_plot(images_data_path, feature_df, label, "equal")
+    feature_selection(feature_df, label)
+    feature_pairplot(images_data_path, feature_df, label[0])
 
 
 if __name__ == "__main__":

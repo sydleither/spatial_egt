@@ -9,16 +9,16 @@ def idv_plots(data_type, source, *sample_ids):
     save_loc = get_data_path(data_type, "images")
     dists, games = get_data_idv(data_type, source, "sfp", sample_ids)
     plot_idv_dist(dists, games, save_loc, source+"_sfp_"+"_".join(sample_ids),
-                  "Spatial Fokker-Planck Distributions", "Fraction Sensitive",
+                  "Spatial Subsampling Distributions", "Fraction Sensitive",
                   "Frequency Across Subsamples", 1)
 
 
 def agg_plot(data_type, source):
     save_loc = get_data_path(data_type, "images")
-    n = 500
+    n = 1000
     fs_dists = get_data(data_type, source, "sfp", n)
     plot_agg_dist(fs_dists, save_loc, source+"_sfp",
-                  f"Spatial Fokker-Planck Distributions\n{n} samples",
+                  f"Spatial Subsampling Distributions\n{n} samples",
                   "Fraction Sensitive", "Frequency Across Subsamples", 1)
 
 
