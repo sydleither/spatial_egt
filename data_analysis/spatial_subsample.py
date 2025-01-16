@@ -19,7 +19,7 @@ def agg_plot(data_type, source):
     fs_dists = get_data(data_type, source, "sfp", n)
     plot_agg_dist(fs_dists, save_loc, source+"_sfp",
                   f"Spatial Subsampling Distributions\n{n} samples",
-                  "Fraction Sensitive", "Frequency Across Subsamples", 1)
+                  "Fraction Sensitive", "Frequency Across Subsamples")
 
 
 if __name__ == "__main__":

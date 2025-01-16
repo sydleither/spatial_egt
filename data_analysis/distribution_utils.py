@@ -1,5 +1,3 @@
-from collections import Counter, OrderedDict
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -11,10 +9,11 @@ from data_processing.processed_to_features import read_processed_sample
 from data_processing.spatial_statistics import (calculate_game,
                                                 create_nc_dists, 
                                                 create_sfp_dist, 
+                                                create_subnc_dists,
                                                 get_cell_type_counts)
 
 
-def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel, rnd):
+def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel):
     df_dict = {"data":[], "game":[]}
     for game in game_dists:
         game_fs_counts = game_dists[game]
@@ -27,8 +26,8 @@ def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel, rnd):
                           col_order=game_colors.keys(), 
                           col_wrap=2, palette=game_colors.values(), 
                           height=4, aspect=1)
-    facet.map_dataframe(sns.histplot, x="data", bins=10, kde_kws={"bw_adjust":2},
-                        stat="proportion", kde=True)
+    facet.map_dataframe(sns.histplot, x="data", bins=10, kde=True,
+                        kde_kws={"bw_adjust":2}, stat="proportion")
     facet.set_titles(col_template="{col_name}")
     facet.set(xlabel=xlabel, ylabel=ylabel)
     facet.figure.subplots_adjust(top=0.9)
@@ -55,26 +54,49 @@ def plot_idv_fs_count(dists, games, save_loc, file_name, title, xlabel, ylabel):
     plt.savefig(f"{save_loc}/{file_name}.png")
 
 
-def plot_idv_dist(dists, games, save_loc, file_name, title, xlabel, ylabel, rnd):
-    fig, ax = plt.subplots(1, len(dists), figsize=(4*len(dists), 4))
-    for a,sample_id in enumerate(dists):
+def plot_idv_dist(dists, games, save_loc, file_name, title, xlabel, ylabel):
+    df_dict = {"data":[], "sample":[], "game":[]}
+    for sample_id in dists:
         dist = dists[sample_id]
         game = games[sample_id]
-        dist = [round(x, rnd) for x in dist]
-        counts = Counter(dist)
-        counts = OrderedDict(sorted(counts.items()))
-        y_sum = sum(counts.values())
-        freqs = [y/y_sum for y in counts.values()]
-        axis = ax[a] if len(dists) > 1 else ax
-        axis.bar(counts.keys(), freqs, width=10**(-rnd),
-                  label=game, color=game_colors[game], alpha=0.66)
-        axis.set(title=f"{game}\n{sample_id}", xlim=(0,1), ylim=(0,1))
-    fig.suptitle(title)
-    fig.supxlabel(xlabel)
-    fig.supylabel(ylabel)
-    fig.tight_layout()
-    fig.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/{file_name}.png")
+        df_dict["data"] += dist
+        df_dict["sample"] += [sample_id for _ in range(len(dist))]
+        df_dict["game"] += [game for _ in range(len(dist))]
+    
+    df = pd.DataFrame(df_dict)
+    facet = sns.FacetGrid(df, col="sample", hue="game", 
+                          hue_order=game_colors.keys(), 
+                          palette=game_colors.values(), 
+                          height=4, aspect=1)
+    facet.map_dataframe(sns.histplot, x="data", bins=10, kde=True,
+                        kde_kws={"bw_adjust":2}, stat="proportion")
+    facet.set_titles(col_template="{col_name}")
+    facet.set(xlabel=xlabel, ylabel=ylabel)
+    facet.figure.subplots_adjust(top=0.9)
+    facet.figure.suptitle(title)
+    facet.tight_layout()
+    facet.figure.patch.set_alpha(0.0)
+    facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+
+    # fig, ax = plt.subplots(1, len(dists), figsize=(4*len(dists), 4))
+    # for a,sample_id in enumerate(dists):
+    #     dist = dists[sample_id]
+    #     game = games[sample_id]
+    #     dist = [round(x, rnd) for x in dist]
+    #     counts = Counter(dist)
+    #     counts = OrderedDict(sorted(counts.items()))
+    #     y_sum = sum(counts.values())
+    #     freqs = [y/y_sum for y in counts.values()]
+    #     axis = ax[a] if len(dists) > 1 else ax
+    #     axis.bar(counts.keys(), freqs, width=10**(-rnd),
+    #               label=game, color=game_colors[game], alpha=0.66)
+    #     axis.set(title=f"{game}\n{sample_id}", xlim=(0,1), ylim=(0,1))
+    # fig.suptitle(title)
+    # fig.supxlabel(xlabel)
+    # fig.supylabel(ylabel)
+    # fig.tight_layout()
+    # fig.patch.set_alpha(0.0)
+    # plt.savefig(f"{save_loc}/{file_name}.png")
 
 
 def get_data(data_type, source, dist_func, limit=500):
@@ -100,6 +122,8 @@ def get_data(data_type, source, dist_func, limit=500):
             dist = create_sfp_dist(s_coords, r_coords, data_type)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
+        elif dist_func == "subnc":
+            dist, _ = create_subnc_dists(s_coords, r_coords, data_type)
         game = df["game"].iloc[0]
         game_dists[game].append(dist)
         cnt += 1
@@ -124,6 +148,8 @@ def get_data_idv(data_type, source, dist_func, sample_ids):
             dist = create_sfp_dist(s_coords, r_coords, data_type)
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
+        elif dist_func == "subnc":
+            dist, _ = create_subnc_dists(s_coords, r_coords, data_type)
         game = df["game"].iloc[0]
         dists[sample_id] = dist
         games[sample_id] = game

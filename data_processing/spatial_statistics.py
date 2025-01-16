@@ -7,7 +7,37 @@ from scipy.stats import skew
 from scipy.spatial import KDTree
 
 
-# Spatial Fokker Planck
+# Neighborhood Composition Subsample
+def create_subnc_dists(s_coords, r_coords, data_type, radius=None, sample_length=None, num_samples=1000):
+    s_coords = np.array(s_coords)
+    r_coords = np.array(r_coords)
+    max_x = max(np.max(s_coords[:, 0]), np.max(r_coords[:, 0]))
+    max_y = max(np.max(s_coords[:, 1]), np.max(r_coords[:, 1]))
+
+    if sample_length is None:
+        sample_length = 5 if data_type == "in_silico" else 70
+
+    ncsub_agg_fs = []
+    ncsub_agg_fr = []
+    xs = choices(range(0, max_x-sample_length), k=num_samples)
+    ys = choices(range(0, max_y-sample_length), k=num_samples)
+    for i in range(num_samples):
+        lx = xs[i]
+        ux = lx+sample_length
+        ly = ys[i]
+        uy = ly+sample_length
+        subset_s = s_coords[(s_coords[:, 0] >= lx) & (s_coords[:, 0] < ux) & (s_coords[:, 1] >= ly) & (s_coords[:, 1] < uy)]
+        subset_r = r_coords[(r_coords[:, 0] >= lx) & (r_coords[:, 0] < ux) & (r_coords[:, 1] >= ly) & (r_coords[:, 1] < uy)]
+        sub_fs, sub_fr = create_nc_dists(subset_s, subset_r, data_type, radius=radius)
+        if len(sub_fs) != 0:
+            ncsub_agg_fs.append(np.mean(sub_fs))
+        if len(sub_fr) != 0:
+            ncsub_agg_fr.append(np.mean(sub_fr))
+
+    return ncsub_agg_fs, ncsub_agg_fr
+
+
+# Spatial Subsample
 def create_sfp_dist(s_coords, r_coords, data_type, sample_length=None, num_samples=1000, incl_empty=False):
     s_coords = np.array(s_coords)
     r_coords = np.array(r_coords)
@@ -50,7 +80,7 @@ def create_sfp_dist(s_coords, r_coords, data_type, sample_length=None, num_sampl
 
 # Neighborhood Composition
 def create_nc_dists(s_coords, r_coords, data_type, radius=None):
-    all_coords = s_coords + r_coords
+    all_coords = np.concatenate((s_coords, r_coords), axis=0)
     if radius is None:
         radius = 3 if data_type == "in_silico" else 30
     s_stop = len(s_coords)
@@ -79,11 +109,6 @@ def get_dist_statistics(name, dist):
     return features
 
 
-def add_extra_nc_features(features):
-    features["nc_mean_diff"] = abs(features["nc_fs_mean"] - features["nc_fr_mean"])
-    return features
-
-
 def create_all_features(df, num_sensitive, num_resistant, data_type):
     features = dict()
     s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
@@ -93,7 +118,9 @@ def create_all_features(df, num_sensitive, num_resistant, data_type):
     fs, fr = create_nc_dists(s_coords, r_coords, data_type)
     features = features | get_dist_statistics("nc_fs", fs)
     features = features | get_dist_statistics("nc_fr", fr)
-    features = add_extra_nc_features(features)
+    sub_fs, sub_fr = create_subnc_dists(s_coords, r_coords, data_type)
+    features = features | get_dist_statistics("subnc_fs", sub_fs)
+    features = features | get_dist_statistics("subnc_fr", sub_fr)
     sfp = create_sfp_dist(s_coords, r_coords, data_type)
     features = features | get_dist_statistics("sfp_fs", sfp)
     
