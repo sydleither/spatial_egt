@@ -4,6 +4,7 @@ from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy import ndimage
 import seaborn as sns
 
 from common.common import game_colors, get_data_path
@@ -49,6 +50,34 @@ def plot_single_well(df, save_loc, exp_name, well):
     plt.savefig(f"{save_loc}/{exp_name}/well_{well}.png", bbox_inches="tight")
 
 
+#https://stackoverflow.com/questions/18666014/downsample-array-in-python
+def block_mean(ar, fact):
+    assert isinstance(fact, int), type(fact)
+    sx, sy = ar.shape
+    X, Y = np.ogrid[0:sx, 0:sy]
+    regions = sy//fact * (X//fact) + Y//fact
+    res = ndimage.maximum(ar, labels=regions, index=np.arange(regions.max() + 1))
+    res.shape = (sx//fact, sy//fact)
+    return res
+
+
+def plot_single_well_downsampled(df, save_loc, exp_name, well):
+    color_map = {"sensitive":1, "resistant":2}
+    df["color"] = df["type"].map(color_map)
+    grid = np.zeros((1250, 1250))
+    for _, row in df.iterrows():
+        grid[row["y"], row["x"]] = row["color"]
+    grid = block_mean(grid, 10)
+
+    fig, ax = plt.subplots(figsize=(1000, 1000), dpi=1)
+    cmap = ListedColormap(["#F0F0F0"]+cell_colors)
+    plt.imshow(grid, cmap=cmap, interpolation="none")
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
+    fig.tight_layout()
+    plt.savefig(f"{save_loc}/{exp_name}/well_{well}_ds.png", bbox_inches="tight")
+
+
 def plate_main(source):
     processed_data_path = get_data_path("in_vitro", "processed")
     image_data_path = get_data_path("in_vitro", "images")
@@ -72,6 +101,7 @@ def well_main(source, *wells):
         file_name = f"spatial_{source}_{well}.csv"
         df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
         plot_single_well(df_sample, image_data_path, source, well)
+        plot_single_well_downsampled(df_sample, image_data_path, source, well)
 
 
 if __name__ == "__main__":
