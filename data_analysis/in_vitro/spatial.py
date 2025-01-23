@@ -51,8 +51,7 @@ def plot_single_well(df, save_loc, exp_name, well):
 
 
 #https://stackoverflow.com/questions/18666014/downsample-array-in-python
-def block_mean(ar, fact):
-    assert isinstance(fact, int), type(fact)
+def downsample(ar, fact):
     sx, sy = ar.shape
     X, Y = np.ogrid[0:sx, 0:sy]
     regions = sy//fact * (X//fact) + Y//fact
@@ -67,9 +66,10 @@ def plot_single_well_downsampled(df, save_loc, exp_name, well):
     grid = np.zeros((1250, 1250))
     for _, row in df.iterrows():
         grid[row["y"], row["x"]] = row["color"]
-    grid = block_mean(grid, 10)
+    grid = downsample(grid, 10)
 
-    fig, ax = plt.subplots(figsize=(1000, 1000), dpi=1)
+    scale = 4
+    fig, ax = plt.subplots(figsize=(scale*grid.shape[0], scale*grid.shape[1]), dpi=1)
     cmap = ListedColormap(["#F0F0F0"]+cell_colors)
     plt.imshow(grid, cmap=cmap, interpolation="none")
     ax.get_xaxis().set_ticks([])
