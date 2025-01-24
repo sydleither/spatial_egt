@@ -5,7 +5,8 @@ in_vitro_exp_names = ["braf", "nls"]
 cell_type_map = {0: "sensitive", 1:"resistant",
                  "S-3E9": "sensitive", "BRAF-mCherry":"resistant",
                  "S-NLS": "sensitive", "R-NLS": "resistant",
-                 "mCherry": "resistant"}
+                 "mCherry": "resistant",
+                 "Red":"resistant", "Green":"sensitive", "Blue":"idk"}
 game_colors = {"sensitive_wins":"#4C956C", "coexistence":"#F97306",
                "bistability":"#047495", "resistant_wins":"#EF7C8E"}
 

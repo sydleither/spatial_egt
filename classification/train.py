@@ -11,6 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 from common.common import get_data_path
 from common.classification import (clean_feature_data, df_to_xy,
                                    features, plot_confusion_matrix,
+                                   plot_performance_stats,
                                    plot_prediction_distributions)
 
 
@@ -22,41 +23,44 @@ def train_model(X, y):
 
 
 def cross_val(save_loc, X, y, int_to_name):
+    all_y_train = []
+    all_y_test = []
+    all_y_train_pred = []
+    all_y_test_pred = []
     cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
-    train_accs = []
-    test_accs = []
     for k, (train_i, test_i) in enumerate(cross_validation.split(X, y)):
         X_train = [X[i] for i in train_i]
         X_test = [X[i] for i in test_i]
         y_train = [y[i] for i in train_i]
         y_test = [y[i] for i in test_i]
         clf = train_model(X_train, y_train)
-        disp_labels = [int_to_name[x] for x in clf.classes_]
         y_train_pred = clf.predict(X_train)
         y_test_pred = clf.predict(X_test)
-        train_acc = sum([y_train_pred[i] == y_train[i] for i in range(len(y_train))])/len(y_train)
-        test_acc = sum([y_test_pred[i] == y_test[i] for i in range(len(y_test))])/len(y_test)
-        train_accs.append(train_acc)
-        test_accs.append(test_acc)
-        plot_confusion_matrix(save_loc, f"confusion_train_{k}", disp_labels, y_train, y_train_pred, train_acc)
-        plot_confusion_matrix(save_loc, f"confusion_test_{k}", disp_labels, y_test, y_test_pred, test_acc)
-    print(f"Train: {np.mean(train_accs):5.3f}, {np.std(train_accs):5.3f}")
-    print(f"Test: {np.mean(test_accs):5.3f}, {np.std(test_accs):5.3f}")
+        plot_confusion_matrix(save_loc, f"confusion_train_{k}", int_to_name, y_train, y_train_pred)
+        plot_confusion_matrix(save_loc, f"confusion_test_{k}", int_to_name, y_test, y_test_pred)
+        plot_performance_stats(save_loc, f"stats_train_{k}", int_to_name, y_train, y_train_pred)
+        plot_performance_stats(save_loc, f"stats_test_{k}", int_to_name, y_test, y_test_pred)
+        all_y_train += y_train
+        all_y_test += y_test
+        all_y_train_pred += y_train_pred.tolist()
+        all_y_test_pred += y_test_pred.tolist()
+    plot_confusion_matrix(save_loc, "confusion_train_all", int_to_name, all_y_train, all_y_train_pred)
+    plot_confusion_matrix(save_loc, "confusion_test_all", int_to_name, all_y_test, all_y_test_pred)
+    plot_performance_stats(save_loc, "stats_train_all", int_to_name, all_y_train, all_y_train_pred)
+    plot_performance_stats(save_loc, "stats_test_all", int_to_name, all_y_test, all_y_test_pred)
 
 
 def save_model(save_loc, X, y, int_to_name):
     clf = train_model(X, y)
-    disp_labels = [int_to_name[x] for x in clf.classes_]
     y_pred = clf.predict(X)
-    acc = sum([y_pred[i] == y[i] for i in range(len(y))])/len(y)
-    plot_confusion_matrix(save_loc, f"confusion_train", disp_labels, y, y_pred, acc)
-    plot_prediction_distributions(save_loc, X, features, y, y_pred, disp_labels, features)
+    plot_confusion_matrix(save_loc, f"confusion_train", int_to_name, y, y_pred)
+    plot_performance_stats(save_loc, f"stats_train", int_to_name, y, y_pred)
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 
 
-def main(*data_types):
-    save_loc = get_data_path(".", "model")
+def main(experiment_name, *data_types):
+    save_loc = get_data_path(".", f"model/{experiment_name}")
 
     df = pd.DataFrame()
     for data_type in data_types[0]:
@@ -77,7 +81,7 @@ def main(*data_types):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        main(sys.argv[1:])
+    if len(sys.argv) > 2:
+        main(sys.argv[1], sys.argv[2:])
     else:
-        print("Please provide the data types to train the model with.")
+        print("Please provide an experiment name and the data types to train the model with.")
