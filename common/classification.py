@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -64,6 +65,15 @@ def plot_prediction_distributions(save_loc, X, feature_names, y_true, y_pred, in
         facet.tight_layout()
         facet.figure.patch.set_alpha(0.0)
         facet.savefig(f"{save_loc}/{feature_name}.png", bbox_inches="tight")
+        plt.close()
+
+
+def get_binary_confusion_matrix(n, y_true, y_pred):
+    tp = sum([(y_true[i] == 1) and (y_pred[i] == 1) for i in range(n)])
+    fp = sum([(y_true[i] == 0) and (y_pred[i] == 1) for i in range(n)])
+    fn = sum([(y_true[i] == 1) and (y_pred[i] == 0) for i in range(n)])
+    tn = sum([(y_true[i] == 0) and (y_pred[i] == 0) for i in range(n)])
+    return tp, fp, fn, tn
 
 
 def plot_performance_stats(save_loc, file_name, int_to_name, y_true, y_pred):
@@ -72,17 +82,14 @@ def plot_performance_stats(save_loc, file_name, int_to_name, y_true, y_pred):
     for label,cat in int_to_name.items():
         y_true_label = [1 if y_true[i] == label else 0 for i in range(n)]
         y_pred_label = [1 if y_pred[i] == label else 0 for i in range(n)]
-        tp = sum([(y_true_label[i] == 1) and (y_pred_label[i] == 1) for i in range(n)])
-        fp = sum([(y_true_label[i] == 0) and (y_pred_label[i] == 1) for i in range(n)])
-        fn = sum([(y_true_label[i] == 1) and (y_pred_label[i] == 0) for i in range(n)])
-        tn = sum([(y_true_label[i] == 0) and (y_pred_label[i] == 0) for i in range(n)])
+        tp, fp, fn, tn = get_binary_confusion_matrix(n, y_true_label, y_pred_label)
         acc = (tp+tn)/n
         precision = tp/(tp+fp)
         recall = tp/(tp+fn)
         f1 = (2*precision*recall)/(precision+recall)
         df_rows.append({"Game":cat, "Measurement":"Accuracy", "Value":acc})
         df_rows.append({"Game":cat, "Measurement":"Precision", "Value":precision})
-        df_rows.append({"Game":cat, "Measurement":"Recall", "Value":recall})
+        df_rows.append({"Game":cat, "Measurement":"Recall/Sensitivity", "Value":recall})
         df_rows.append({"Game":cat, "Measurement":"F1 Score", "Value":f1})
     overall_acc = sum([y_true[i] == y_pred[i] for i in range(n)]) / n
     
@@ -97,3 +104,45 @@ def plot_performance_stats(save_loc, file_name, int_to_name, y_true, y_pred):
         facet.tight_layout()
         facet.figure.patch.set_alpha(0.0)
         facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+        plt.close()
+
+
+def roc_curve(save_loc, file_name, int_to_name, clf, X, y):
+    y_pred_prob = clf.predict_proba(X)
+
+    n = len(y)
+    thresholds = np.linspace(0, 1, 101)
+    step = thresholds[1]
+    stats = {"fpr":{}, "tpr":{}, "auc":{}, "acc":{}}
+    for label,cat in int_to_name.items():
+        y_label = [1 if y[i] == label else 0 for i in range(n)]
+        y_pred_prob_label = y_pred_prob[:, label]
+        fpr = []
+        tpr = []
+        auc = 0
+        acc = []
+        for thresh in thresholds:
+            y_pred = [1 if y_pred_prob_label[i] > thresh else 0 for i in range(n)]
+            tp, fp, fn, tn = get_binary_confusion_matrix(n, y_label, y_pred)
+            thresh_fpr = 1-(tn/(fp+tn))
+            thresh_tpr = tp/(fn+tp)
+            fpr.append(thresh_fpr)
+            tpr.append(thresh_tpr)
+            auc += thresh_tpr*step + (step*thresh_fpr)/2
+            acc.append((tp+tn)/n)
+        stats["fpr"][cat] = fpr
+        stats["tpr"][cat] = tpr
+        stats["auc"][cat] = 2*auc-1
+        stats["acc"][cat] = acc
+
+    fig, ax = plt.subplots(figsize=(6,5))
+    for cat in int_to_name.values():
+        ax.plot(stats["fpr"][cat], stats["tpr"][cat],
+                color=game_colors[cat], label=f"{cat}: {stats['auc'][cat]:5.3f}")
+    ax.plot(thresholds, thresholds, color="gray", linestyle="--")
+    ax.set(title="One-vs-Rest ROC Curves", xlabel="False Positive Rate", ylabel="True Positive Rate")
+    fig.legend(loc="center right")
+    fig.tight_layout()
+    fig.patch.set_alpha(0.0)
+    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+    plt.close()

@@ -12,7 +12,15 @@ from common.common import get_data_path
 from common.classification import (clean_feature_data, df_to_xy,
                                    features, plot_confusion_matrix,
                                    plot_performance_stats,
-                                   plot_prediction_distributions)
+                                   plot_prediction_distributions,
+                                   roc_curve)
+
+
+def performance_plots(save_loc, int_to_name, clf, X, y_true, y_pred, data_type, k):
+    if clf is not None and X is not None:
+        roc_curve(save_loc, f"roc_{data_type}_{k}", int_to_name, clf, X, y_true)
+    plot_confusion_matrix(save_loc, f"confusion_{data_type}_{k}", int_to_name, y_true, y_pred)
+    plot_performance_stats(save_loc, f"stats_{data_type}_{k}", int_to_name, y_true, y_pred)
 
 
 def train_model(X, y):
@@ -36,25 +44,20 @@ def cross_val(save_loc, X, y, int_to_name):
         clf = train_model(X_train, y_train)
         y_train_pred = clf.predict(X_train)
         y_test_pred = clf.predict(X_test)
-        plot_confusion_matrix(save_loc, f"confusion_train_{k}", int_to_name, y_train, y_train_pred)
-        plot_confusion_matrix(save_loc, f"confusion_test_{k}", int_to_name, y_test, y_test_pred)
-        plot_performance_stats(save_loc, f"stats_train_{k}", int_to_name, y_train, y_train_pred)
-        plot_performance_stats(save_loc, f"stats_test_{k}", int_to_name, y_test, y_test_pred)
+        performance_plots(save_loc, int_to_name, clf, X_train, y_train, y_train_pred, "train", k)
+        performance_plots(save_loc, int_to_name, clf, X_test, y_test, y_test_pred, "test", k)
         all_y_train += y_train
         all_y_test += y_test
         all_y_train_pred += y_train_pred.tolist()
         all_y_test_pred += y_test_pred.tolist()
-    plot_confusion_matrix(save_loc, "confusion_train_all", int_to_name, all_y_train, all_y_train_pred)
-    plot_confusion_matrix(save_loc, "confusion_test_all", int_to_name, all_y_test, all_y_test_pred)
-    plot_performance_stats(save_loc, "stats_train_all", int_to_name, all_y_train, all_y_train_pred)
-    plot_performance_stats(save_loc, "stats_test_all", int_to_name, all_y_test, all_y_test_pred)
+    performance_plots(save_loc, int_to_name, None, None, all_y_train, all_y_train_pred, "train", k)
+    performance_plots(save_loc, int_to_name, None, None, all_y_test, all_y_test_pred, "test", k)
 
 
 def save_model(save_loc, X, y, int_to_name):
     clf = train_model(X, y)
     y_pred = clf.predict(X)
-    plot_confusion_matrix(save_loc, f"confusion_train", int_to_name, y, y_pred)
-    plot_performance_stats(save_loc, f"stats_train", int_to_name, y, y_pred)
+    performance_plots(save_loc, int_to_name, clf, X, y, y_pred, "train", "all")
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 
