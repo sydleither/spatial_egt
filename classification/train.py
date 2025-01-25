@@ -1,10 +1,13 @@
 import pickle
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import LearningCurveDisplay, StratifiedKFold
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
@@ -16,6 +19,18 @@ from common.classification import (clean_feature_data, df_to_xy,
                                    roc_curve)
 
 
+def learning_curve(save_loc, X, y):
+    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50))
+    clf = make_pipeline(StandardScaler(), clf)
+    cv = StratifiedKFold(n_splits=5, shuffle=True)
+    fig, ax = plt.subplots(figsize=(5, 4))
+    LearningCurveDisplay.from_estimator(clf, X=X, y=y, cv=cv, ax=ax)
+    fig.tight_layout()
+    fig.patch.set_alpha(0.0)
+    fig.savefig(f"{save_loc}/learning_curve.png", bbox_inches="tight")
+    plt.close()
+
+
 def performance_plots(save_loc, int_to_name, clf, X, y_true, y_pred, data_type, k):
     if clf is not None and X is not None:
         roc_curve(save_loc, f"roc_{data_type}_{k}", int_to_name, clf, X, y_true)
@@ -24,10 +39,11 @@ def performance_plots(save_loc, int_to_name, clf, X, y_true, y_pred, data_type, 
 
 
 def train_model(X, y):
-    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50)).fit(X, y)
+    clf = MLPClassifier(hidden_layer_sizes=(500,250,100,50))
+    clf = make_pipeline(StandardScaler(), clf)
     #clf = DecisionTreeClassifier(max_depth=10).fit(X, y)
     #clf = RandomForestClassifier().fit(X, y)
-    return clf
+    return clf.fit(X, y)
 
 
 def cross_val(save_loc, X, y, int_to_name):
@@ -80,6 +96,7 @@ def main(experiment_name, *data_types):
     X, y, int_to_name = df_to_xy(feature_df)
     
     cross_val(save_loc, X, y, int_to_name)
+    #learning_curve(save_loc, X, y)
     #save_model(save_loc, X, y, int_to_name)
 
 

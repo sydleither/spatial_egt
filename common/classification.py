@@ -146,3 +146,15 @@ def roc_curve(save_loc, file_name, int_to_name, clf, X, y):
     fig.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
     plt.close()
+
+    fig, ax = plt.subplots(1, len(int_to_name), figsize=(5*len(int_to_name),5))
+    for i,cat in enumerate(int_to_name.values()):
+        ax[i].bar(thresholds, stats["acc"][cat], width=step, color=game_colors[cat])
+        ax[i].set(title=cat)
+    fig.suptitle("Best Threshold Based on Accuracy")
+    fig.supxlabel("Threshold")
+    fig.supylabel("Accuracy")
+    fig.tight_layout()
+    fig.patch.set_alpha(0.0)
+    fig.savefig(f"{save_loc}/acc_{file_name}.png", bbox_inches="tight")
+    plt.close()
