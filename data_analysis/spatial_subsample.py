@@ -1,6 +1,6 @@
 import sys
 
-from common.common import get_data_path
+from common import get_data_path
 from data_analysis.distribution_utils import (get_data, get_data_idv, plot_agg_dist, 
                                               plot_idv_fs_count, plot_idv_dist)
 

@@ -11,8 +11,8 @@ from sklearn.feature_selection import (f_classif, f_regression,
                                        mutual_info_classif, 
                                        mutual_info_regression)
 
-from common.common import game_colors, get_data_path
-from common.classification import clean_feature_data, features
+from common import game_colors, get_data_path
+from common import clean_feature_data, features
 from data_analysis.DDIT.DDIT import DDIT
 
 warnings.filterwarnings("ignore")

@@ -7,7 +7,7 @@ import pandas as pd
 from scipy import ndimage
 import seaborn as sns
 
-from common.common import game_colors, get_data_path
+from common import game_colors, get_data_path
 
 cell_colors = [game_colors["sensitive_wins"], game_colors["resistant_wins"]]
 

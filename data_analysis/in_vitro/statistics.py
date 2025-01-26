@@ -1,6 +1,6 @@
 import pandas as pd
 
-from common.common import get_data_path
+from common import get_data_path
 from data_processing.spatial_statistics import calculate_game
 
 

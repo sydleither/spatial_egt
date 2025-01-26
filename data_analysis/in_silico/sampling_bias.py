@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common.common import game_colors, get_data_path
+from common import game_colors, get_data_path
 from data_processing.spatial_statistics import calculate_game
 
 

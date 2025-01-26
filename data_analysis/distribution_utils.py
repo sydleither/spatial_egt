@@ -4,7 +4,7 @@ import seaborn as sns
 sns.set_theme()
 sns.set_style("white")
 
-from common.common import game_colors, get_data_path
+from common import game_colors, get_data_path
 from data_processing.processed_to_features import read_processed_sample
 from data_processing.spatial_statistics import (calculate_game,
                                                 create_nc_dists, 
@@ -77,26 +77,6 @@ def plot_idv_dist(dists, games, save_loc, file_name, title, xlabel, ylabel):
     facet.tight_layout()
     facet.figure.patch.set_alpha(0.0)
     facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
-
-    # fig, ax = plt.subplots(1, len(dists), figsize=(4*len(dists), 4))
-    # for a,sample_id in enumerate(dists):
-    #     dist = dists[sample_id]
-    #     game = games[sample_id]
-    #     dist = [round(x, rnd) for x in dist]
-    #     counts = Counter(dist)
-    #     counts = OrderedDict(sorted(counts.items()))
-    #     y_sum = sum(counts.values())
-    #     freqs = [y/y_sum for y in counts.values()]
-    #     axis = ax[a] if len(dists) > 1 else ax
-    #     axis.bar(counts.keys(), freqs, width=10**(-rnd),
-    #               label=game, color=game_colors[game], alpha=0.66)
-    #     axis.set(title=f"{game}\n{sample_id}", xlim=(0,1), ylim=(0,1))
-    # fig.suptitle(title)
-    # fig.supxlabel(xlabel)
-    # fig.supylabel(ylabel)
-    # fig.tight_layout()
-    # fig.patch.set_alpha(0.0)
-    # plt.savefig(f"{save_loc}/{file_name}.png")
 
 
 def get_data(data_type, source, dist_func, limit=500):

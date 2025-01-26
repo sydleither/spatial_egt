@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common.common import (game_colors, cell_type_map, 
+from common import (game_colors, cell_type_map, 
                     in_vitro_exp_names, get_data_path)
 
 pd.set_option('mode.chained_assignment', None)
