@@ -10,7 +10,7 @@ def test_model(save_loc, X, y, int_to_name):
     with open(f"{save_loc}/model.pkl", "rb") as f:
         clf = pickle.load(f)
     y_pred = clf.predict(X)
-    plot_all(save_loc, int_to_name, clf, X, y, y_pred, "test", "all")
+    plot_all(save_loc, int_to_name, [y], [y_pred], "test")
 
 
 def main(experiment_name, *data_types):

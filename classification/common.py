@@ -37,6 +37,6 @@ def read_and_clean_features(data_types):
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(500,250,100,50))
+    estimator = MLPClassifier()#hidden_layer_sizes=(500,250,100,50))
     clf = make_pipeline(StandardScaler(), estimator)
     return clf
