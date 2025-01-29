@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import LearningCurveDisplay, StratifiedKFold
 import seaborn as sns
 
@@ -9,9 +9,9 @@ from classification.common import get_model
 from common import game_colors
 
 
-def plot_all(save_loc, int_to_name, y_trues, y_preds, data_type):
-    plot_confusion_matrix(save_loc, data_type, int_to_name, y_trues, y_preds)
-    plot_performance_stats(save_loc, f"stats_{data_type}", int_to_name, y_trues, y_preds)
+def plot_all(save_loc, int_to_name, y_trues, y_preds, data_set):
+    plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds)
+    plot_performance_stats(save_loc, data_set, int_to_name, y_trues, y_preds)
 
 
 def plt_heatmap(ax, matrix, labels, title):
@@ -28,7 +28,7 @@ def plt_heatmap(ax, matrix, labels, title):
     ax.set(title=title)
 
 
-def plot_confusion_matrix(save_loc, data_type, int_to_name, y_trues, y_preds):
+def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
     labels = [int_to_name[i] for i in range(len(int_to_name))]
     conf_mats = []
     for i in range(len(y_trues)):
@@ -41,7 +41,7 @@ def plot_confusion_matrix(save_loc, data_type, int_to_name, y_trues, y_preds):
     plt_heatmap(ax[0], avg_conf_mat, labels, "Confusion Matrix Mean")
     plt_heatmap(ax[1], std_conf_mat, labels, "Confusion Matrix Std")
     fig.tight_layout()
-    fig.savefig(f"{save_loc}/confusion_{data_type}.png", bbox_inches="tight", transparent=True)
+    fig.savefig(f"{save_loc}/confusion_{data_set}.png", bbox_inches="tight", transparent=True)
     plt.close()
 
 
@@ -71,7 +71,7 @@ def get_binary_confusion_matrix(n, y_true, y_pred):
     return tp, fp, fn, tn
 
 
-def plot_performance_stats(save_loc, file_name, int_to_name, y_trues, y_preds):
+def plot_performance_stats(save_loc, data_set, int_to_name, y_trues, y_preds):
     overall_accs = []
     df_rows = []
     for k in range(len(y_trues)):
@@ -93,9 +93,9 @@ def plot_performance_stats(save_loc, file_name, int_to_name, y_trues, y_preds):
         overall_accs.append(sum([y_true[i] == y_pred[i] for i in range(n)]) / n)
     mean_acc = np.mean(overall_accs)
     std_acc = np.std(overall_accs)
+    df = pd.DataFrame(df_rows)
     
     colors = game_colors.values()
-    df = pd.DataFrame(df_rows)
     with sns.axes_style("whitegrid"):
         facet = sns.FacetGrid(df, col="Measurement", height=6, aspect=1)
         facet.map_dataframe(sns.barplot, x="Game", y="Value", hue="Game",
@@ -105,61 +105,77 @@ def plot_performance_stats(save_loc, file_name, int_to_name, y_trues, y_preds):
         facet.figure.suptitle(f"One vs All Statistics\nOverall Accuracy: {mean_acc:5.3f}±{std_acc:5.3f}")
         facet.tight_layout()
         facet.figure.patch.set_alpha(0.0)
-        facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+        facet.savefig(f"{save_loc}/stats_{data_set}.png", bbox_inches="tight")
         plt.close()
 
 
-def roc_curve(save_loc, file_name, int_to_name, clf, X, y):
-    y_pred_prob = clf.predict_proba(X)
-
-    n = len(y)
+def roc_curve(save_loc, data_set, int_to_name, y_trues, y_probs):
+    roc_stats = []
+    df_acc_rows = []
     thresholds = np.linspace(0, 1, 101)
-    step = thresholds[1]
-    stats = {"fpr":{}, "tpr":{}, "auc":{}, "acc":{}}
+    for k in range(len(y_trues)):
+        y_true = y_trues[k]
+        y_prob = y_probs[k]
+        n = len(y_true)
+        stats = {"fpr":{}, "tpr":{}}
+        for label,cat in int_to_name.items():
+            y_label = [1 if y_true[i] == label else 0 for i in range(n)]
+            y_pred_prob_label = y_prob[:, label]
+            fpr = []
+            tpr = []
+            for thresh in thresholds:
+                y_pred = [1 if y_pred_prob_label[i] > thresh else 0 for i in range(n)]
+                tp, fp, fn, tn = get_binary_confusion_matrix(n, y_label, y_pred)
+                thresh_fpr = 1-(tn/(fp+tn))
+                thresh_tpr = tp/(fn+tp)
+                fpr.append(thresh_fpr)
+                tpr.append(thresh_tpr)
+                acc = (tp+tn)/n
+                df_acc_rows.append({"Game":cat, "k":k, "Threshold":thresh, "Accuracy":acc})
+            stats["fpr"][cat] = fpr
+            stats["tpr"][cat] = tpr
+        roc_stats.append(stats)
+
+    fig, ax = plt.subplots(1, 4, figsize=(18, 5))
     for label,cat in int_to_name.items():
-        y_label = [1 if y[i] == label else 0 for i in range(n)]
-        y_pred_prob_label = y_pred_prob[:, label]
-        fpr = []
-        tpr = []
-        auc = 0
-        acc = []
-        for thresh in thresholds:
-            y_pred = [1 if y_pred_prob_label[i] > thresh else 0 for i in range(n)]
-            tp, fp, fn, tn = get_binary_confusion_matrix(n, y_label, y_pred)
-            thresh_fpr = 1-(tn/(fp+tn))
-            thresh_tpr = tp/(fn+tp)
-            fpr.append(thresh_fpr)
-            tpr.append(thresh_tpr)
-            auc += thresh_tpr*step + (step*thresh_fpr)/2
-            acc.append((tp+tn)/n)
-        stats["fpr"][cat] = fpr
-        stats["tpr"][cat] = tpr
-        stats["auc"][cat] = 2*auc-1
-        stats["acc"][cat] = acc
-
-    fig, ax = plt.subplots(figsize=(6,5))
-    for cat in int_to_name.values():
-        ax.plot(stats["fpr"][cat], stats["tpr"][cat],
-                color=game_colors[cat], label=f"{cat}: {stats['auc'][cat]:5.3f}")
-    ax.plot(thresholds, thresholds, color="gray", linestyle="--")
-    ax.set(title="One-vs-Rest ROC Curves", xlabel="False Positive Rate", ylabel="True Positive Rate")
-    fig.legend(loc="center right")
+        fprs = []
+        tprs = []
+        aucs = []
+        for stats in roc_stats:
+            fpr = stats["fpr"][cat]
+            tpr = stats["tpr"][cat]
+            ax[label].plot(fpr, tpr, color=game_colors[cat], alpha=0.25)
+            fprs.append(fpr)
+            tprs.append(tpr)
+            aucs.append(abs(np.trapz(y=tpr, x=fpr)))
+        avg_fpr = np.mean(np.array(fprs), axis=0)
+        avg_tpr = np.mean(np.array(tprs), axis=0)
+        avg_auc = np.mean(aucs)
+        std_auc = np.std(aucs)
+        ax[label].plot(avg_fpr, avg_tpr, color=game_colors[cat])
+        ax[label].plot(thresholds, thresholds, color="gray", linestyle="--")
+        ax[label].set(title=f"{cat}\nAUC: {avg_auc:5.3f}±{std_auc:5.3f}")
+    fig.suptitle("One-vs-All ROC Curves")
+    fig.supxlabel("False Positive Rate")
+    fig.supylabel("True Positive Rate")
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/roc_{data_set}.png", bbox_inches="tight")
     plt.close()
 
-    fig, ax = plt.subplots(1, len(int_to_name), figsize=(5*len(int_to_name),5))
-    for i,cat in enumerate(int_to_name.values()):
-        ax[i].bar(thresholds, stats["acc"][cat], width=step, color=game_colors[cat])
-        ax[i].set(title=cat)
-    fig.suptitle("Best Threshold Based on Accuracy")
-    fig.supxlabel("Threshold")
-    fig.supylabel("Accuracy")
-    fig.tight_layout()
-    fig.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/acc_{file_name}.png", bbox_inches="tight")
-    plt.close()
+    df_acc = pd.DataFrame(df_acc_rows)
+    colors = game_colors.values()
+    with sns.axes_style("whitegrid"):
+        facet = sns.FacetGrid(df_acc, col="Game", hue="Game",
+                              palette=colors, height=6, aspect=1)
+        facet.map_dataframe(sns.lineplot, x="Threshold", y="Accuracy", errorbar="sd")
+        facet.set_titles(col_template="{col_name}")
+        facet.figure.subplots_adjust(top=0.9)
+        facet.figure.suptitle("Best Threshold Based on Accuracy")
+        facet.tight_layout()
+        facet.figure.patch.set_alpha(0.0)
+        facet.savefig(f"{save_loc}/rocacc_{data_set}.png", bbox_inches="tight")
+        plt.close()
 
 
 def learning_curve(save_loc, X, y):

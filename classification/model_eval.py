@@ -3,7 +3,7 @@ import sys
 from sklearn.model_selection import StratifiedKFold
 
 from classification.common import get_model, read_and_clean_features
-from classification.performance_plots import plot_all
+from classification.performance_plots import plot_all, roc_curve
 from common import get_data_path
 
 
@@ -29,10 +29,27 @@ def cross_val(save_loc, X, y, int_to_name):
     plot_all(save_loc, int_to_name, all_y_test, all_y_test_pred, "test")
 
 
+def roc(save_loc, X, y, int_to_name):
+    all_y_test = []
+    all_y_test_proba = []
+    cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
+    for (train_i, test_i) in cross_validation.split(X, y):
+        X_train = [X[i] for i in train_i]
+        X_test = [X[i] for i in test_i]
+        y_train = [y[i] for i in train_i]
+        y_test = [y[i] for i in test_i]
+        clf = get_model().fit(X_train, y_train)
+        y_test_pred = clf.predict_proba(X_test)
+        all_y_test.append(y_test)
+        all_y_test_proba.append(y_test_pred)
+    roc_curve(save_loc, "test", int_to_name, all_y_test, all_y_test_proba)
+
+
 def main(experiment_name, *data_types):
     save_loc = get_data_path(".", f"model/{experiment_name}")
     X, y, int_to_name = read_and_clean_features(data_types[0])
     cross_val(save_loc, X, y, int_to_name)
+    roc(save_loc, X, y, int_to_name)
 
 
 if __name__ == "__main__":
