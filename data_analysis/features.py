@@ -4,8 +4,10 @@ import sys
 import warnings
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as grid_spec
 import numpy as np
 import pandas as pd
+from scipy import stats
 import seaborn as sns
 from sklearn.feature_selection import (f_classif, f_regression, 
                                        mutual_info_classif, 
@@ -18,13 +20,57 @@ from data_analysis.DDIT.DDIT import DDIT
 warnings.filterwarnings("ignore")
 
 
-'''
-Data Exploration / Visualization
-'''
 def feature_pairplot(save_loc, df, label_hue):
     sns.pairplot(df, hue=label_hue)
     plt.savefig(f"{save_loc}/feature_pairplot_{label_hue}.png", bbox_inches="tight")
     plt.close()
+
+
+def features_ridgeplots(save_loc, df, label_names, colors, label_orders):
+    '''
+    Based on https://matplotlib.org/matplotblog/posts/create-ridgeplots-in-matplotlib/
+    '''
+    feature_names = list(df.columns)
+    [feature_names.remove(ln) for ln in label_names]
+    num_features = len(feature_names)
+    for label_name in label_names:
+        label_dtype = df[label_name].dtypes
+        if label_dtype == float:
+            continue
+        class_labels = label_orders[label_name]
+        num_classes = len(class_labels)
+        gs = (grid_spec.GridSpec(num_classes, num_features))
+        fig = plt.figure(figsize=(20, 8))
+        axes = []
+        for f,feature_name in enumerate(feature_names):
+            x = np.linspace(df[feature_name].min(), df[feature_name].max(), 100)
+            for c,class_name in enumerate(class_labels):
+                feature_class_data = df.loc[df[label_name] == class_name][feature_name]
+                kde = stats.gaussian_kde(feature_class_data)
+                axes.append(fig.add_subplot(gs[c:c+1, f:f+1]))
+                axes[-1].plot(x, kde(x), color="white")
+                axes[-1].fill_between(x, kde(x), alpha=1, color=colors[class_name])
+                #axes[-1].set(ylim=(0,3))
+                rect = axes[-1].patch
+                rect.set_alpha(0)
+                axes[-1].set_yticklabels([])
+                if c == num_classes-1:
+                    axes[-1].set_xlabel(feature_name, fontweight="bold")
+                else:
+                    axes[-1].set(xticklabels=[], xticks=[])
+                if f == 0:
+                    axes[-1].text(-0.02, 0, class_name, fontweight="bold", ha="right")
+                else:
+                    axes[-1].set(yticklabels=[])
+                axes[-1].set(yticks=[])
+                spines = ["top", "right", "left", "bottom"]
+                for s in spines:
+                    axes[-1].spines[s].set_visible(False)
+        gs.update(hspace=-0.7)
+        fig.tight_layout()
+        fig.figure.patch.set_alpha(0.0)
+        fig.savefig(f"{save_loc}/feature_ridgeplot_{label_name}.png", bbox_inches="tight")
+        plt.close()
 
 
 def features_by_labels_plot(save_loc, df, label_names, colors, color_order):
@@ -181,6 +227,8 @@ def main(data_type):
     else:
         feature_df = df[features+label]
     
+    features_ridgeplots(images_data_path, feature_df, label, game_colors,
+                        label_orders={"game":game_colors.keys()})
     class_balance(df, label)
     feature_correlation(images_data_path, feature_df, label)
     features_by_labels_plot(images_data_path, feature_df, label, 
