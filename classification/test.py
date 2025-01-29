@@ -1,7 +1,7 @@
 import pickle
 import sys
 
-from classification.common import get_model, read_and_clean_features
+from classification.common import df_to_xy, read_and_clean_features
 from classification.performance_plots import plot_all
 from common import get_data_path
 
@@ -15,7 +15,8 @@ def test_model(save_loc, X, y, int_to_name):
 
 def main(experiment_name, *data_types):
     save_loc = get_data_path(".", f"model/{experiment_name}")
-    X, y, int_to_name = read_and_clean_features(data_types[0])
+    feature_df = read_and_clean_features(data_types[0])
+    X, y, int_to_name = df_to_xy(feature_df, "game")
     test_model(save_loc, X, y, int_to_name)
 
 

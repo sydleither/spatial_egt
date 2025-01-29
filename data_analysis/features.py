@@ -13,8 +13,8 @@ from sklearn.feature_selection import (f_classif, f_regression,
                                        mutual_info_classif, 
                                        mutual_info_regression)
 
+from classification.common import read_and_clean_features
 from common import game_colors, get_data_path
-from common import clean_feature_data, features
 from data_analysis.DDIT.DDIT import DDIT
 
 warnings.filterwarnings("ignore")
@@ -40,7 +40,7 @@ def features_ridgeplots(save_loc, df, label_names, colors, label_orders):
         class_labels = label_orders[label_name]
         num_classes = len(class_labels)
         gs = (grid_spec.GridSpec(num_classes, num_features))
-        fig = plt.figure(figsize=(20, 8))
+        fig = plt.figure(figsize=(6*num_features, 8))
         axes = []
         for f,feature_name in enumerate(feature_names):
             x = np.linspace(df[feature_name].min(), df[feature_name].max(), 100)
@@ -216,20 +216,13 @@ def class_balance(df, label_names):
 
 
 def main(data_type):
-    features_data_path = get_data_path(data_type, "features")
-    images_data_path = get_data_path(data_type, "images")
-    df = pd.read_csv(f"{features_data_path}/all.csv")
-    df = clean_feature_data(df)
-
     label = ["game"]
-    if len(features) == 0:
-        feature_df = df
-    else:
-        feature_df = df[features+label]
+    feature_df = read_and_clean_features([data_type], label)
+    images_data_path = get_data_path(data_type, "images")
     
     features_ridgeplots(images_data_path, feature_df, label, game_colors,
                         label_orders={"game":game_colors.keys()})
-    class_balance(df, label)
+    class_balance(feature_df, label)
     feature_correlation(images_data_path, feature_df, label)
     features_by_labels_plot(images_data_path, feature_df, label, 
                             game_colors.values(), game_colors.keys())
