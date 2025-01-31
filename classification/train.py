@@ -16,7 +16,7 @@ def save_model(save_loc, X, y, int_to_name):
 
 def main(experiment_name, *data_types):
     save_loc = get_data_path(".", f"model/{experiment_name}")
-    feature_df = read_and_clean_features(data_types[0])
+    feature_df = read_and_clean_features(data_types[0], ["game"])
     X, y, int_to_name = df_to_xy(feature_df, "game")
     save_model(save_loc, X, y, int_to_name)
 

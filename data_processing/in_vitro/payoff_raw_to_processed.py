@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from common import (cell_type_map, get_data_path, in_vitro_exp_names)
+from common import (calculate_game, cell_type_map,
+                    get_data_path, in_vitro_exp_names)
 
 
 def calculate_payoff(df):
@@ -12,6 +13,7 @@ def calculate_payoff(df):
     df["b"] = -1.0
     df["c"] = -1.0
     df["d"] = -1.0
+    df["game"] = "unknown"
     # DrugConcentration is used as condition id
     # Each drug concentration has multiple wells 
     # with differing starting sensitive fractions
@@ -37,6 +39,7 @@ def calculate_payoff(df):
         df.loc[df["DrugConcentration"] == drugcon, "b"] = b
         df.loc[df["DrugConcentration"] == drugcon, "c"] = c
         df.loc[df["DrugConcentration"] == drugcon, "d"] = d
+        df.loc[df["DrugConcentration"] == drugcon, "game"] = calculate_game(a, b, c, d)
     return df
 
 
@@ -56,7 +59,7 @@ def raw_to_processed():
         df_gr["source"] = df_gr["source"].str.split("_").str[0]
         df_gr = df_gr.dropna()
         df_gr = calculate_payoff(df_gr)
-        df_gr = df_gr[["source", "sample", "DrugConcentration", "a", "b", "c", "d"]]
+        df_gr = df_gr[["source", "sample", "DrugConcentration", "a", "b", "c", "d", "game"]]
         df_gr = df_gr.drop_duplicates().reset_index(drop=True)
         # Concat all experiments into one payoff.csv
         df = pd.concat([df, df_gr])

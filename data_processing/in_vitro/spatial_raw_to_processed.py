@@ -1,6 +1,6 @@
 import pandas as pd
 
-from common import (cell_type_map, get_data_path, in_vitro_exp_names)
+from common import cell_type_map, get_data_path, in_vitro_exp_names
 
 
 def raw_to_processed():

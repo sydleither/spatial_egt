@@ -134,24 +134,6 @@ def get_cell_type_counts(df):
     return s, r
 
 
-def calculate_game(payoff):
-    a = payoff["a"]
-    b = payoff["b"]
-    c = payoff["c"]
-    d = payoff["d"]
-    if a > c and b > d:
-        game = "sensitive_wins"
-    elif c > a and b > d:
-        game = "coexistence"
-    elif a > c and d > b:
-        game = "bistability"
-    elif c > a and d > b:
-        game = "resistant_wins"
-    else:
-        game = "unknown"
-    return game
-
-
 def sample_to_features(df, data_type):
     num_sensitive, num_resistant = get_cell_type_counts(df)
     features = create_all_features(df, num_sensitive, num_resistant, data_type)

@@ -1,14 +1,9 @@
-import pandas as pd
-
-from common import get_data_path
-from data_processing.spatial_statistics import calculate_game
+from common import get_data_path, read_payoff_df
 
 
 def main():
     processed_data_path = get_data_path("in_silico", "processed")
-    df = pd.read_csv(f"{processed_data_path}/payoff.csv")
-    df["sample"] = df["sample"].astype(str)
-    df["game"] = df.apply(calculate_game, axis="columns")
+    df = read_payoff_df(processed_data_path)
     df = df[df["game"] != "unknown"]
     for game in df["game"].unique():
         print(game)

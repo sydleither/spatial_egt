@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-sns.set_theme()
-sns.set_style("white")
 
-from common import game_colors, get_data_path
-from data_processing.processed_to_features import read_processed_sample
-from data_processing.spatial_statistics import (calculate_game,
-                                                create_nc_dists, 
+from common import game_colors, get_data_path, read_payoff_df
+from data_processing.spatial_statistics import (create_nc_dists, 
                                                 create_sfp_dist, 
                                                 create_subnc_dists,
                                                 get_cell_type_counts)
+
+
+sns.set_theme()
+sns.set_style("white")
 
 
 def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel):
@@ -84,14 +84,11 @@ def get_data(data_type, source, dist_func, limit=500):
     game_dists = {"sensitive_wins":[], "coexistence":[],
                      "bistability":[], "resistant_wins":[]}
     processed_data_path = get_data_path(data_type, "processed")
-    df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
-    df_payoff["sample"] = df_payoff["sample"].astype(str)
-    df_payoff["game"] = df_payoff.apply(calculate_game, axis="columns")
+    df_payoff = read_payoff_df(processed_data_path)
     df_payoff = df_payoff[df_payoff["game"] != "unknown"]
     for sample_id in df_payoff["sample"].unique():
         file_name = f"spatial_{source}_{sample_id}.csv"
-        df = read_processed_sample(processed_data_path,
-                                   file_name, df_payoff)
+        df = pd.read_csv(f"{processed_data_path}/{file_name}")
         s, r = get_cell_type_counts(df)
         prop_s = s/(s+r)
         if prop_s < 0.05 or prop_s > 0.95:
@@ -104,7 +101,7 @@ def get_data(data_type, source, dist_func, limit=500):
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
         elif dist_func == "subnc":
             dist, _ = create_subnc_dists(s_coords, r_coords, data_type)
-        game = df["game"].iloc[0]
+        game = df_payoff.at[(sample_id, source), "game"]
         game_dists[game].append(dist)
         cnt += 1
         if cnt > limit:
@@ -116,12 +113,11 @@ def get_data_idv(data_type, source, dist_func, sample_ids):
     dists = dict()
     games = dict()
     processed_data_path = get_data_path(data_type, "processed")
-    df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
-    df_payoff["sample"] = df_payoff["sample"].astype(str)
+    df_payoff = read_payoff_df(processed_data_path)
+    df_payoff = df_payoff[df_payoff["game"] != "unknown"]
     for sample_id in sample_ids:
         file_name = f"spatial_{source}_{sample_id}.csv"
-        df = read_processed_sample(processed_data_path,
-                                   file_name, df_payoff)
+        df = pd.read_csv(f"{processed_data_path}/{file_name}")
         s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
         r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
         if dist_func == "sfp":
@@ -130,7 +126,7 @@ def get_data_idv(data_type, source, dist_func, sample_ids):
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
         elif dist_func == "subnc":
             dist, _ = create_subnc_dists(s_coords, r_coords, data_type)
-        game = df["game"].iloc[0]
+        game = df_payoff.at[(sample_id, source), "game"]
         dists[sample_id] = dist
         games[sample_id] = game
     return dists, games

@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from common import get_data_path
+from common import calculate_game, get_data_path
 
 
 def raw_to_processed():
@@ -24,6 +24,7 @@ def raw_to_processed():
         df_row["b"] = config["B"]
         df_row["c"] = config["C"]
         df_row["d"] = config["D"]
+        df_row["game"] = calculate_game(config["A"], config["B"], config["C"], config["D"])
         df_entries.append(df_row)
     df = pd.DataFrame(data=df_entries)
     df.to_csv(f"{processed_data_path}/payoff.csv", index=False)

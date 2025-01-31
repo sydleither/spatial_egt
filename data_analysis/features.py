@@ -6,7 +6,6 @@ import warnings
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as grid_spec
 import numpy as np
-import pandas as pd
 from scipy import stats
 import seaborn as sns
 from sklearn.feature_selection import (f_classif, f_regression, 
