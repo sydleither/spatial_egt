@@ -10,7 +10,7 @@ def idv_plots(data_type, source, *sample_ids):
     dists, games = get_data_idv(data_type, source, "nc", sample_ids)
     plot_idv_dist(dists, games, save_loc, source+"_nc_"+"_".join(sample_ids),
                   "Neighborhood Composition Distributions", 
-                  "Fraction Sensitive in Neighborhood", "Fraction of Resistant Cells", 1)
+                  "Fraction Sensitive in Neighborhood", "Fraction of Resistant Cells")
 
 
 def agg_plot(data_type, source):

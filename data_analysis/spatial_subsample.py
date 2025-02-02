@@ -10,7 +10,7 @@ def idv_plots(data_type, source, *sample_ids):
     dists, games = get_data_idv(data_type, source, "sfp", sample_ids)
     plot_idv_dist(dists, games, save_loc, source+"_sfp_"+"_".join(sample_ids),
                   "Spatial Subsampling Distributions", "Fraction Sensitive",
-                  "Frequency Across Subsamples", 1)
+                  "Frequency Across Subsamples")
 
 
 def agg_plot(data_type, source):
