@@ -12,7 +12,7 @@ from scipy.spatial import KDTree
 def create_nn_dist(domain, type1, type2):
     population_A = ms.query.query(domain, ("label", "type"), "is", type1)
     population_B = ms.query.query(domain, ("label", "type"), "is", type2)
-    nn = ms.spatial_statistics.cross_l_function(
+    nn = ms.spatial_statistics.nearest_neighbour_distribution(
         domain=domain,
         population_A=population_A,
         population_B=population_B
@@ -21,34 +21,14 @@ def create_nn_dist(domain, type1, type2):
     return nn.tolist()
 
 
-# Cross Ripley's K
-def create_rk_dist(domain, type1, type2, data_type, max_radius=None, step=None):
+# Cross Pair Correlation Function
+def create_cpcf(domain, type1, type2, data_type, max_radius=None, annulus_step=None, annulus_width=None):
     if max_radius is None:
-        max_radius = 10 if data_type == "in_silico" else 50
-    if step is None:
-        step = 1 if data_type == "in_silico" else 5
-
-    population_A = ms.query.query(domain, ("label", "type"), "is", type1)
-    population_B = ms.query.query(domain, ("label", "type"), "is", type2)
-    _, rk = ms.spatial_statistics.cross_l_function(
-        domain=domain,
-        population_A=population_A,
-        population_B=population_B,
-        max_R=max_radius,
-        step=step
-    )
-
-    return rk
-
-
-# Cross PCF
-def create_cpcf_dist(domain, type1, type2, data_type, max_radius=None, annulus_step=None, annulus_width=None):
-    if max_radius is None:
-        max_radius = 10 if data_type == "in_silico" else 50
+        max_radius = 5 if data_type == "in_silico" else 50
     if annulus_step is None:
-        annulus_step = 1 if data_type == "in_silico" else 5
+        annulus_step = 1 if data_type == "in_silico" else 10
     if annulus_width is None:
-        annulus_width = 1 if data_type == "in_silico" else 5
+        annulus_width = 3 if data_type == "in_silico" else 30
 
     population_A = ms.query.query(domain, ("label", "type"), "is", type1)
     population_B = ms.query.query(domain, ("label", "type"), "is", type2)
@@ -58,8 +38,7 @@ def create_cpcf_dist(domain, type1, type2, data_type, max_radius=None, annulus_s
         population_B=population_B,
         max_R=max_radius,
         annulus_step=annulus_step,
-        annulus_width=annulus_width,
-        visualise_output=False
+        annulus_width=annulus_width
     )
 
     return pcf
@@ -157,6 +136,22 @@ def get_muspan_statistics(domain):
     )
     features["entropy"] = entropy
 
+    ses3, _, _ = ms.region_based.quadrat_correlation_matrix(
+        domain,
+        label_name="type",
+        region_method="quadrats",
+        region_kwargs=dict(side_length=3)
+    )
+    features["ses3"] = ses3[0][1]
+
+    ses5, _, _ = ms.region_based.quadrat_correlation_matrix(
+        domain,
+        label_name="type",
+        region_method="quadrats",
+        region_kwargs=dict(side_length=5)
+    )
+    features["ses5"] = ses5[0][1]
+
     return features
 
 
@@ -190,7 +185,12 @@ def create_all_features(df, num_sensitive, num_resistant, data_type):
 
     domain = create_muspan_domain(df)
     features = features | get_muspan_statistics(domain)
-    
+    pcf = create_cpcf(domain, "sensitive", "resistant", data_type)
+    features = features | get_dist_statistics("pcf", pcf)
+    features["pcf_0"] = pcf[0]
+    nn = create_nn_dist(domain, "sensitive", "resistant", data_type)
+    features = features | get_dist_statistics("nn", nn)
+
     return features
 
 

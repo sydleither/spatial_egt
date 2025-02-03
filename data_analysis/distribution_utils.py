@@ -1,13 +1,11 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
 from common import game_colors, get_data_path, read_payoff_df
-from data_processing.spatial_statistics import (create_cpcf_dist,
+from data_processing.spatial_statistics import (create_cpcf,
                                                 create_muspan_domain,
                                                 create_nc_dists,
                                                 create_nn_dist,
-                                                create_rk_dist,
                                                 create_sfp_dist,
                                                 get_cell_type_counts)
 
@@ -137,10 +135,7 @@ def get_data(data_type, source, dist_func, limit=500):
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
         elif dist_func == "pcf":
             domain = create_muspan_domain(df)
-            dist = create_cpcf_dist(domain, "sensitive", "resistant", data_type)
-        elif dist_func == "rk":
-            domain = create_muspan_domain(df)
-            dist = create_rk_dist(domain, "sensitive", "resistant", data_type)
+            dist = create_cpcf(domain, "sensitive", "resistant", data_type)
         elif dist_func == "nn":
             domain = create_muspan_domain(df)
             dist = create_nn_dist(domain, "sensitive", "resistant")
@@ -169,10 +164,7 @@ def get_data_idv(data_type, source, dist_func, sample_ids):
             dist, _ = create_nc_dists(s_coords, r_coords, data_type)
         elif dist_func == "pcf":
             domain = create_muspan_domain(df)
-            dist = create_cpcf_dist(domain, "sensitive", "resistant", data_type)
-        elif dist_func == "rk":
-            domain = create_muspan_domain(df)
-            dist = create_rk_dist(domain, "sensitive", "resistant", data_type)
+            dist = create_cpcf(domain, "sensitive", "resistant", data_type)
         elif dist_func == "nn":
             domain = create_muspan_domain(df)
             dist = create_nn_dist(domain, "sensitive", "resistant")
