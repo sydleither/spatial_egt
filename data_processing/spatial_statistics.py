@@ -8,6 +8,39 @@ from scipy.stats import skew
 from scipy.spatial import KDTree
 
 
+# Nearest Neighbor
+def create_nn_dist(domain, type1, type2):
+    population_A = ms.query.query(domain, ("label", "type"), "is", type1)
+    population_B = ms.query.query(domain, ("label", "type"), "is", type2)
+    nn = ms.spatial_statistics.cross_l_function(
+        domain=domain,
+        population_A=population_A,
+        population_B=population_B
+    )
+
+    return nn.tolist()
+
+
+# Cross Ripley's K
+def create_rk_dist(domain, type1, type2, data_type, max_radius=None, step=None):
+    if max_radius is None:
+        max_radius = 10 if data_type == "in_silico" else 50
+    if step is None:
+        step = 1 if data_type == "in_silico" else 5
+
+    population_A = ms.query.query(domain, ("label", "type"), "is", type1)
+    population_B = ms.query.query(domain, ("label", "type"), "is", type2)
+    _, rk = ms.spatial_statistics.cross_l_function(
+        domain=domain,
+        population_A=population_A,
+        population_B=population_B,
+        max_R=max_radius,
+        step=step
+    )
+
+    return rk
+
+
 # Cross PCF
 def create_cpcf_dist(domain, type1, type2, data_type, max_radius=None, annulus_step=None, annulus_width=None):
     if max_radius is None:
@@ -99,6 +132,34 @@ def create_nc_dists(s_coords, r_coords, data_type, radius=None):
     return fs, fr
 
 
+def get_muspan_statistics(domain):
+    features = dict()
+    s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
+    r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
+
+    anni, _, _ = ms.spatial_statistics.average_nearest_neighbour_index(
+        domain=domain,
+        population_A=s_cells,
+        population_B=r_cells
+    )
+    features["anni"] = anni
+
+    densities, _, labels = ms.summary_statistics.label_density(
+        domain=domain,
+        label_name="type"
+    )
+    features[f"{labels[0]}_density"] = densities[0]
+    features[f"{labels[1]}_density"] = densities[1]
+
+    entropy = ms.summary_statistics.label_entropy(
+        domain=domain,
+        label_name="type"
+    )
+    features["entropy"] = entropy
+
+    return features
+
+
 def get_dist_statistics(name, dist):
     features = dict()
     features[f"{name}_mean"] = np.mean(dist)
@@ -127,11 +188,8 @@ def create_all_features(df, num_sensitive, num_resistant, data_type):
     sfp = create_sfp_dist(s_coords, r_coords, data_type)
     features = features | get_dist_statistics("sfp_fs", sfp)
 
-    # domain = create_muspan_domain(df)
-    # ss_pcf = create_cpcf_dist(domain, "sensitive", "sensitive", data_type)
-    # sr_pcf = create_cpcf_dist(domain, "sensitive", "resistant", data_type)
-    # rs_pcf = create_cpcf_dist(domain, "resistant", "sensitive", data_type)
-    # rr_pcf = create_cpcf_dist(domain, "resistant", "resistant", data_type)
+    domain = create_muspan_domain(df)
+    features = features | get_muspan_statistics(domain)
     
     return features
 

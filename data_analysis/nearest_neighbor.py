@@ -2,24 +2,23 @@ import sys
 
 from common import get_data_path
 from data_analysis.distribution_utils import (get_data, get_data_idv,
-                                              plot_agg_line, plot_idv_line)
+                                              plot_agg_dist, plot_idv_dist)
 
 
 def idv_plots(data_type, source, *sample_ids):
     save_loc = get_data_path(data_type, "images")
-    dists, games = get_data_idv(data_type, source, "pcf", sample_ids)
-    plot_idv_line(dists, games, save_loc,
-                  source+"_pcf_"+"_".join(sample_ids),
-                  "SR Pair Correlations", "r", "g(r)")
+    dists, games = get_data_idv(data_type, source, "nn", sample_ids)
+    plot_idv_dist(dists, games, save_loc, source+"_nn_"+"_".join(sample_ids),
+                  "Nearest Neighbor Distributions", "Distance", "Proportion")
 
 
 def agg_plot(data_type, source):
     save_loc = get_data_path(data_type, "images")
     n = 500
-    fs_dists = get_data(data_type, source, "pcf", n)
-    plot_agg_line(fs_dists, save_loc, source+"_pcf",
-                  f"SR Pair Correlations\n{n} samples",
-                  "r", "g(r)")
+    fs_dists = get_data(data_type, source, "nn", n)
+    plot_agg_dist(fs_dists, save_loc, source+"_nn",
+                  f"Nearest Neighbor Distributions\n{n} samples",
+                  "Distance", "Proportion")
 
 
 if __name__ == "__main__":

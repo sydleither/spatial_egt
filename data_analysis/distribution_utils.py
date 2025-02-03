@@ -5,13 +5,65 @@ import seaborn as sns
 from common import game_colors, get_data_path, read_payoff_df
 from data_processing.spatial_statistics import (create_cpcf_dist,
                                                 create_muspan_domain,
-                                                create_nc_dists, 
+                                                create_nc_dists,
+                                                create_nn_dist,
+                                                create_rk_dist,
                                                 create_sfp_dist,
                                                 get_cell_type_counts)
 
 
 sns.set_theme()
 sns.set_style("white")
+
+
+def plot_agg_line(game_dists, save_loc, file_name, title, xlabel, ylabel):
+    df_dict = {"x":[], "y":[], "game":[], "sample":[]}
+    for game in game_dists:
+        dists = game_dists[game]
+        for i,dist in enumerate(dists):
+            df_dict["y"] += list(dist)
+            df_dict["game"] += [game for _ in range(len(dist))]
+            df_dict["sample"] += [i for _ in range(len(dist))]
+            df_dict["x"] += [j for j in range(len(dist))]
+    
+    df = pd.DataFrame(df_dict)
+    facet = sns.FacetGrid(df, col="game", hue="game", 
+                          col_order=game_colors.keys(), 
+                          col_wrap=2, palette=game_colors.values(), 
+                          height=4, aspect=1)
+    facet.map_dataframe(sns.lineplot, x="x", y="y")
+    facet.set_titles(col_template="{col_name}")
+    facet.set(xlabel=xlabel, ylabel=ylabel)
+    facet.figure.subplots_adjust(top=0.9)
+    facet.figure.suptitle(title)
+    facet.tight_layout()
+    facet.figure.patch.set_alpha(0.0)
+    facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+
+
+def plot_idv_line(dists, games, save_loc, file_name, title, xlabel, ylabel):
+    df_dict = {"x":[], "y":[], "sample":[], "game":[]}
+    for sample_id in dists:
+        dist = dists[sample_id]
+        game = games[sample_id]
+        df_dict["y"] += list(dist)
+        df_dict["x"] += [j for j in range(len(dist))]
+        df_dict["sample"] += [sample_id for _ in range(len(dist))]
+        df_dict["game"] += [game for _ in range(len(dist))]
+    
+    df = pd.DataFrame(df_dict)
+    facet = sns.FacetGrid(df, col="sample", hue="game", 
+                          hue_order=game_colors.keys(), 
+                          palette=game_colors.values(), 
+                          height=4, aspect=1)
+    facet.map_dataframe(sns.lineplot, x="x", y="y")
+    facet.set_titles(col_template="{col_name}")
+    facet.set(xlabel=xlabel, ylabel=ylabel)
+    facet.figure.subplots_adjust(top=0.9)
+    facet.figure.suptitle(title)
+    facet.tight_layout()
+    facet.figure.patch.set_alpha(0.0)
+    facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
 
 
 def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel):
@@ -36,23 +88,6 @@ def plot_agg_dist(game_dists, save_loc, file_name, title, xlabel, ylabel):
     facet.tight_layout()
     facet.figure.patch.set_alpha(0.0)
     facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
-
-
-def plot_idv_fs_count(dists, games, save_loc, file_name, title, xlabel, ylabel):
-    fig, ax = plt.subplots(1, len(dists), figsize=(4*len(dists), 4))
-    for a,sample_id in enumerate(dists):
-        dist = dists[sample_id]
-        game = games[sample_id]
-        axis = ax[a] if len(dists) > 1 else ax
-        axis.bar(range(len(dist)), dist, 
-                  color=game_colors[game])
-        axis.set(title=game, ylim=(0,1))
-    fig.suptitle(title)
-    fig.supxlabel(xlabel)
-    fig.supylabel(ylabel)
-    fig.tight_layout()
-    fig.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/{file_name}.png")
 
 
 def plot_idv_dist(dists, games, save_loc, file_name, title, xlabel, ylabel):
@@ -103,6 +138,12 @@ def get_data(data_type, source, dist_func, limit=500):
         elif dist_func == "pcf":
             domain = create_muspan_domain(df)
             dist = create_cpcf_dist(domain, "sensitive", "resistant", data_type)
+        elif dist_func == "rk":
+            domain = create_muspan_domain(df)
+            dist = create_rk_dist(domain, "sensitive", "resistant", data_type)
+        elif dist_func == "nn":
+            domain = create_muspan_domain(df)
+            dist = create_nn_dist(domain, "sensitive", "resistant")
         game = df_payoff.at[(sample_id, source), "game"]
         game_dists[game].append(dist)
         cnt += 1
@@ -129,6 +170,12 @@ def get_data_idv(data_type, source, dist_func, sample_ids):
         elif dist_func == "pcf":
             domain = create_muspan_domain(df)
             dist = create_cpcf_dist(domain, "sensitive", "resistant", data_type)
+        elif dist_func == "rk":
+            domain = create_muspan_domain(df)
+            dist = create_rk_dist(domain, "sensitive", "resistant", data_type)
+        elif dist_func == "nn":
+            domain = create_muspan_domain(df)
+            dist = create_nn_dist(domain, "sensitive", "resistant")
         game = df_payoff.at[(sample_id, source), "game"]
         dists[sample_id] = dist
         games[sample_id] = game
