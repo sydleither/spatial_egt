@@ -188,7 +188,7 @@ def create_all_features(df, num_sensitive, num_resistant, data_type):
     pcf = create_cpcf(domain, "sensitive", "resistant", data_type)
     features = features | get_dist_statistics("pcf", pcf)
     features["pcf_0"] = pcf[0]
-    nn = create_nn_dist(domain, "sensitive", "resistant", data_type)
+    nn = create_nn_dist(domain, "sensitive", "resistant")
     features = features | get_dist_statistics("nn", nn)
 
     return features

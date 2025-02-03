@@ -3,11 +3,8 @@ import pandas as pd
 import os
 
 
-dimension = "2D"
-in_vitro_exp_names = ["braf", "nls"]
 cell_type_map = {0: "sensitive", 1:"resistant",
-                 "S-3E9": "sensitive", "BRAF-mCherry":"resistant",
-                 "S-NLS": "sensitive", "R-NLS": "resistant", "mCherry": "resistant",
+                 "S-E9-gfp": "sensitive", "KRAS-mcherry":"resistant",
                  "Red":"sensitive", "Green":"resistant", "Blue":"unknown"}
 game_colors = {"sensitive_wins":"#4C956C", "coexistence":"#F97306",
                "bistability":"#047495", "resistant_wins":"#EF7C8E"}
@@ -23,7 +20,7 @@ def get_data_path(data_type, data_stage):
 def read_payoff_df(processed_data_path):
     df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
     df_payoff["sample"] = df_payoff["sample"].astype(str)
-    df_payoff = df_payoff.set_index(["sample", "source"], drop=False)
+    df_payoff = df_payoff.set_index(["source", "sample"], drop=False)
     return df_payoff
 
 

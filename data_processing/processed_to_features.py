@@ -17,9 +17,9 @@ def main(data_type):
             continue
         df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
         features = sample_to_features(df_sample, data_type)
-        sample = file_name.split("_")[2][:-4]
-        source = file_name.split("_")[1]
-        features["game"] = df_payoff.at[(sample, source), "game"]
+        source = file_name.split(" ")[0]
+        sample = file_name.split(" ")[1][:-4]
+        features["game"] = df_payoff.at[(source, sample), "game"]
         df_entries.append(features)
     df = pd.DataFrame(df_entries)
     df.to_csv(f"{features_data_path}/all.csv", index=False)

@@ -1,70 +1,52 @@
-import numpy as np
+import os
+
 import pandas as pd
 
-from common import (calculate_game, cell_type_map,
-                    get_data_path, in_vitro_exp_names)
+from common import get_data_path
 
 
-def calculate_payoff(df):
-    if len(df["source"].unique()) > 1:
-        print("Only calculate the payoff of one plate at a time.")
-        exit()
-    df["a"] = -1.0
-    df["b"] = -1.0
-    df["c"] = -1.0
-    df["d"] = -1.0
-    df["game"] = "unknown"
-    # DrugConcentration is used as condition id
-    # Each drug concentration has multiple wells 
-    # with differing starting sensitive fractions
-    for drugcon in df["DrugConcentration"].unique():
-        df_d = df[df["DrugConcentration"] == drugcon]
-        a = 0
-        b = 0
-        c = 0
-        d = 0
-        # Game Assay (Farrokhian et al., 2021)
-        for cell_type in ["sensitive", "resistant"]:
-            df_dc = df_d[df_d["CellType"] == cell_type]
-            growth_rate = df_dc["GrowthRate"].values
-            fraction_s = df_dc["Fraction_Sensitive"].values
-            slope, intercept = np.polyfit(fraction_s, growth_rate, 1)
-            if cell_type == "sensitive":
-                a = slope+intercept
-                b = intercept
-            if cell_type == "resistant":
-                c = slope+intercept
-                d = intercept
-        df.loc[df["DrugConcentration"] == drugcon, "a"] = a
-        df.loc[df["DrugConcentration"] == drugcon, "b"] = b
-        df.loc[df["DrugConcentration"] == drugcon, "c"] = c
-        df.loc[df["DrugConcentration"] == drugcon, "d"] = d
-        df.loc[df["DrugConcentration"] == drugcon, "game"] = calculate_game(a, b, c, d)
-    return df
-
-
-def raw_to_processed():
+def main():
     raw_data_path = get_data_path("in_vitro", "raw")
     processed_data_path = get_data_path("in_vitro", "processed")
-    df = pd.DataFrame()
 
-    for experiment_name in in_vitro_exp_names:
-        # Process growth rate file to calculate payoff matrix
-        growth_name = f"growth_rate_df_{experiment_name}_plate1.csv"
-        df_gr = pd.read_csv(f"{raw_data_path}/{growth_name}")
-        df_gr = df_gr[["PlateId", "WellId", "CellType", "Fraction_Sensitive",
-                       "DrugConcentration", "GrowthRate", "Intercept"]]
-        df_gr = df_gr.rename(columns={"PlateId":"source", "WellId":"sample"})
-        df_gr["CellType"] = df_gr["CellType"].map(cell_type_map)
-        df_gr["source"] = df_gr["source"].str.split("_").str[0]
-        df_gr = df_gr.dropna()
-        df_gr = calculate_payoff(df_gr)
-        df_gr = df_gr[["source", "sample", "DrugConcentration", "a", "b", "c", "d", "game"]]
-        df_gr = df_gr.drop_duplicates().reset_index(drop=True)
-        # Concat all experiments into one payoff.csv
-        df = pd.concat([df, df_gr])
-    df.to_csv(f"{processed_data_path}/payoff.csv", index=False)
+    time_to_keep = 24
+    payoff_df = pd.DataFrame()
+    for experiment_name in os.listdir(raw_data_path):
+        # Read in counts file
+        exp_path = f"{raw_data_path}/{experiment_name}"
+        counts_df = pd.read_csv(f"{exp_path}/{experiment_name}_counts_df_processed.csv")
+
+        # Rank times to match imaging data, then filter to only hold one time point
+        counts_df["time_id"] = counts_df["Time"].rank(method="dense", ascending=True)
+        counts_df["time_id"] = counts_df["time_id"].astype(int)
+        counts_df = counts_df[counts_df["Time"] == time_to_keep]
+
+        # Calculate game (tbd)
+        counts_df["a"] = 0
+        counts_df["b"] = 0
+        counts_df["c"] = 0
+        counts_df["d"] = 0
+        counts_df["game"] = "unknown"
+
+        # Filter to only contain wells with no drug
+        counts_df = counts_df[counts_df["DrugConcentration"] == 0]
+
+        # Only keep relevant columns
+        counts_df = counts_df[["WellId", "PlateId", "time_id",
+                               "a", "b", "c", "d", "game"]]
+        counts_df = counts_df.drop_duplicates()
+        counts_df["source"] = experiment_name
+        counts_df["sample"] = counts_df["PlateId"].astype(str)+"_"+counts_df["WellId"]
+
+        # Rename and reorder columns
+        counts_df = counts_df.rename({"WellId":"well", "PlateId":"plate"}, axis=1)
+        counts_df = counts_df[["source", "sample", "plate", "well", "time_id",
+                               "a", "b", "c", "d", "game"]]
+
+        payoff_df = pd.concat([payoff_df, counts_df])
+
+    payoff_df.to_csv(f"{processed_data_path}/payoff.csv", index=False)
 
 
 if __name__ == "__main__":
-    raw_to_processed()
+    main()

@@ -25,7 +25,7 @@ def raw_to_processed():
             df = df[df["model"] == "nodrug"]
             df["type"] = df["type"].map(cell_type_map)
             df = df[["type", "x", "y"]]
-            df.to_csv(f"{processed_data_path}/spatial_HAL_{experiment_dir}.csv", index=False)
+            df.to_csv(f"{processed_data_path}/HAL {experiment_dir}.csv", index=False)
 
 
 if __name__ == "__main__":
