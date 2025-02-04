@@ -2,10 +2,11 @@ import os
 
 import pandas as pd
 
-from common import cell_type_map, dimension, get_data_path
+from common import cell_type_map, get_data_path
 
 
-def raw_to_processed():
+dimension = "2D"
+def main():
     raw_data_path = get_data_path("in_silico", "raw")
     processed_data_path = get_data_path("in_silico", "processed")
     for experiment_dir in os.listdir(raw_data_path):
@@ -29,4 +30,4 @@ def raw_to_processed():
 
 
 if __name__ == "__main__":
-    raw_to_processed()
+    main()

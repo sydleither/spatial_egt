@@ -12,6 +12,7 @@ def main(data_type):
     features_data_path = get_data_path(data_type, "features")
     df_entries = []
     df_payoff = read_payoff_df(processed_data_path)
+    i = 1
     for file_name in os.listdir(processed_data_path):
         if file_name == "payoff.csv":
             continue
@@ -21,6 +22,10 @@ def main(data_type):
         sample = file_name.split(" ")[1][:-4]
         features["game"] = df_payoff.at[(source, sample), "game"]
         df_entries.append(features)
+        if i % 500 == 0:
+            dfi = pd.DataFrame(df_entries)
+            dfi.to_csv(f"{features_data_path}/{i}.csv", index=False)
+        i += 1
     df = pd.DataFrame(df_entries)
     df.to_csv(f"{features_data_path}/all.csv", index=False)
 
