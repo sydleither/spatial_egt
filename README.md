@@ -15,7 +15,7 @@ Java version: 21.0.2
 
 `mkdir lib`
 
-Install the jar files for [jackson-core-2.16.1](https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core/2.16.1), [jackson-databind-2.16.1](https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind), and [jackson-annotations-2.16.1](https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations/2.16.1)
+Install the jar files for [jackson-core-2.16.1](https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core/2.16.1), [jackson-databind-2.16.1](https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind/2.16.1), and [jackson-annotations-2.16.1](https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations/2.16.1)
 
 Place the three jar files in lib/
 
@@ -35,8 +35,8 @@ Place the three jar files in lib/
 - Output will be in output/test/test/0. The output, 2Dcoords.csv, records the coordinates of each cell at the end of the run.
 
 `bash output/test/run.sh`
-- Run model as a job on a HPCC
-- This will require manual modification of `run_config.sb`
+- Run model as a job on MSU's HPCC.
+- This will require manual modification of `run_config.sb` to remove my email and my lab's node.
 
 `bash output/test/visualize.sh`
 - Visualize model locally
@@ -47,7 +47,9 @@ Place the three jar files in lib/
 ### Generate *in silico* Data
 `cd ABM`
 
-`python3 generate_configs.py ../data/in_silico raw`
+`python3 generate_configs.py ../data/in_silico/raw HAL2D`
+- Create directories, configs, and run scripts for the "raw" *in silico* data.
+- If you want to generate the data locally, replace `sbatch run_config.sb` with `java -cp build/:lib/* SpatialEGT.SpatialEGT` in the generate_scripts function in generate_configs.py.
 
-`bash ../data/in_silico/raw/run`{i}`.sh`
+`bash ../data/in_silico/raw/HAL2D/run`{i}`.sh`
 - MSU HPCC can only accept 1000 jobs at a time so the submission scripts are batched.

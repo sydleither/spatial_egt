@@ -76,7 +76,7 @@ public class SpatialEGT3D {
         FileIO modelOut = null;
         if (writeModel) {
             modelOut = new FileIO(saveLoc+"coords.csv", "w");
-            modelOut.Write("model,time,type,x,y\n");
+            modelOut.Write("model,time,type,x,y,z\n");
         }
         
         // run models

@@ -88,7 +88,7 @@ def main(data_dir, experiment_name):
                             spaces=["2D"], name="test", writeModelFrequency=100)
         run_output += s
         visual_output += v
-    elif experiment_name == "raw2D":
+    elif experiment_name == "HAL2D":
         N = 2500
         samples = lhs_sample(N, 
                              ["A", "B", "C", "D", "fr", "cells"],
@@ -105,7 +105,7 @@ def main(data_dir, experiment_name):
                                 spaces=["2D"], name=str(i), writeModelFrequency=250)
             run_output += s
             visual_output += v
-    elif experiment_name == "raw3D":
+    elif experiment_name == "HAL3D":
         N = 1200
         samples = lhs_sample(N,
                              ["A", "B", "C", "D", "fr", "cells"],
