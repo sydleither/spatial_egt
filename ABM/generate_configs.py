@@ -88,13 +88,13 @@ def main(data_dir, experiment_name):
                             spaces=["2D"], name="test", writeModelFrequency=100)
         run_output += s
         visual_output += v
-    elif experiment_name == "raw":
+    elif experiment_name == "raw2D":
         N = 2500
         samples = lhs_sample(N, 
                              ["A", "B", "C", "D", "fr", "cells"],
-                             [0, 0, 0, 0, 0.1, 625], 
-                             [0.1, 0.1, 0.1, 0.1, 0.9, 15625], 
-                             [False, False, False, False, False, True], 
+                             [0, 0, 0, 0, 0.1, 625],
+                             [0.1, 0.1, 0.1, 0.1, 0.9, 15625],
+                             [False, False, False, False, False, True],
                              seed=42)
         for i in range(N):
             sample = samples[i]
@@ -103,6 +103,23 @@ def main(data_dir, experiment_name):
                                 initialTumor=0, turnover=0.009, init_cells=sample["cells"],
                                 prop_res=sample["fr"], radius=2, replicates=1,
                                 spaces=["2D"], name=str(i), writeModelFrequency=250)
+            run_output += s
+            visual_output += v
+    elif experiment_name == "raw3D":
+        N = 1200
+        samples = lhs_sample(N,
+                             ["A", "B", "C", "D", "fr", "cells"],
+                             [0, 0, 0, 0, 0.1, 625],
+                             [0.1, 0.1, 0.1, 0.1, 0.9, 15625],
+                             [False, False, False, False, False, True],
+                             seed=42)
+        for i in range(N):
+            sample = samples[i]
+            s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=250,
+                                a=sample["A"], b=sample["B"], c=sample["C"], d=sample["D"],
+                                initialTumor=0, turnover=0.009, init_cells=sample["cells"],
+                                prop_res=sample["fr"], radius=2, replicates=1,
+                                spaces=["3D"], name=str(i), writeModelFrequency=250)
             run_output += s
             visual_output += v
     else:
