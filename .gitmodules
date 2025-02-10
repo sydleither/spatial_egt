@@ -2,5 +2,5 @@
 	path = ABM/HAL
 	url = https://github.com/MathOnco/HAL
 [submodule "DDIT"]
-	path = data_analysis/DDIT
+	path = classification/DDIT
 	url = https://github.com/VincentRagusa/DDIT

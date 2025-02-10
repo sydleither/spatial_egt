@@ -14,7 +14,7 @@ from sklearn.feature_selection import (f_classif, f_regression,
 
 from classification.common import read_and_clean_features
 from common import game_colors, get_data_path
-from data_analysis.DDIT.DDIT import DDIT
+from classification.DDIT.DDIT import DDIT
 
 warnings.filterwarnings("ignore")
 
