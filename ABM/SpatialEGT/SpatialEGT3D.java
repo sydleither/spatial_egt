@@ -12,61 +12,23 @@ import HAL.Rand;
 import HAL.Util;
 
 public class SpatialEGT3D {
-    public static Map<Integer, Integer[]> GetPairCorrelation(Model3D model, int maxDistance) {
-        List<Cell3D> cells = new ArrayList<Cell3D>();
-        for (Cell3D cell : model) {
-            cells.add(cell);
+    public static List<List<Integer>> GetModelCoords(Model3D model) {
+        List<Integer> cellTypes = new ArrayList<Integer>();
+        List<Integer> xCoords = new ArrayList<Integer>();
+        List<Integer> yCoords = new ArrayList<Integer>();
+        List<Integer> zCoords = new ArrayList<Integer>();
+        for (Cell3D cell: model) {
+            cellTypes.add(cell.type);
+            xCoords.add(cell.Xsq());
+            yCoords.add(cell.Ysq());
+            zCoords.add(cell.Zsq());
         }
-
-        Map<Integer, Integer[]> annulusRow = new HashMap<>();
-        for (int i = 1; i < 3*maxDistance; i++) {
-            Integer annulusStartingList[] = {0, 0, 0, 0};
-            annulusRow.put(i, annulusStartingList);
-        }
-
-        for (int a = 0; a < cells.size(); a++) {
-            for (int b = a+1; b < cells.size(); b++) {
-                Cell3D cellA = cells.get(a);
-                Cell3D cellB = cells.get(b);
-                int cellAtype = cellA.type;
-                int cellBtype = cellB.type;
-                int xDistance = Math.abs(cellA.Xsq() - cellB.Xsq());
-                int yDistance = Math.abs(cellA.Ysq() - cellB.Ysq());
-                int zDistance = Math.abs(cellA.Zsq() - cellB.Zsq());
-                int annulus = xDistance + yDistance + zDistance;
-                
-                int pairType;
-                if (cellAtype == 0 && cellBtype == 0)
-                    pairType = 0;
-                else if (cellAtype == 1 && cellBtype == 1)
-                    pairType = 1;
-                else if (cellAtype == 1 && cellBtype == 0)
-                    pairType = 2;
-                else if (cellAtype == 0 && cellBtype == 1)
-                    pairType = 3;
-                else
-                    pairType = -9;
-
-                annulusRow.get(annulus)[pairType] = annulusRow.get(annulus)[pairType]+1;
-            }
-        }
-
-        return annulusRow;
-    }
-
-    public static int[] GetPopulationSize(Model3D model) {
-        int numResistant = 0;
-        int numSensitive = 0;
-        for (Cell3D cell : model) {
-            if (cell.type == 0) {
-                numSensitive += 1;
-            }
-            else {
-                numResistant += 1;
-            }
-        }
-        int[] popSize = new int[]{numSensitive, numResistant};
-        return popSize;
+        List<List<Integer>> returnList = new ArrayList<List<Integer>>();
+        returnList.add(cellTypes);
+        returnList.add(xCoords);
+        returnList.add(yCoords);
+        returnList.add(zCoords);
+        return returnList;
     }
 
     public SpatialEGT3D(String saveLoc, Map<String, Object> params, long seed) {
@@ -74,9 +36,7 @@ public class SpatialEGT3D {
         int runNull = (int) params.get("null");
         int runContinuous = (int) params.get("continuous");
         int runAdaptive = (int) params.get("adaptive");
-        int writePopFrequency = (int) params.get("writePopFrequency");
-        int writePcFrequency = (int) params.get("writePcFrequency");
-        int writeFsFrequency = (int) params.get("writeFsFrequency");
+        int writeModelFrequency = (int) params.get("writeModelFrequency");
         int numTicks = (int) params.get("numTicks");
         int x = (int) params.get("x");
         int y = (int) params.get("y");
@@ -87,6 +47,7 @@ public class SpatialEGT3D {
         double proportionResistant = (double) params.get("proportionResistant");
         double adaptiveTreatmentThreshold = (double) params.get("adaptiveTreatmentThreshold");
         int initialTumor = (int) params.get("initialTumor");
+        int toyGap = (int) params.get("toyGap");
         double[][] payoff = new double[2][2];
         payoff[0][0] = (double) params.get("A");
         payoff[0][1] = (double) params.get("B");
@@ -94,10 +55,6 @@ public class SpatialEGT3D {
         payoff[1][1] = (double) params.get("D");
         int totalCells = x*y;
         int z = (int) Math.cbrt(totalCells);
-
-        // calculations for pair correlation
-        int maxDistance = z;
-        int maxEuclideanDistance = (int) Math.round(Math.sqrt(3*Math.pow(maxDistance, 2)));
 
         // initialize with specified models
         HashMap<String,Model3D> models = new HashMap<String,Model3D>();
@@ -115,17 +72,11 @@ public class SpatialEGT3D {
         }
 
         // check what to run and initialize output
-        boolean writePop = writePopFrequency != 0;
-        boolean writePc = writePcFrequency != 0;
-        FileIO popsOut = null;
-        if (writePop) {
-            popsOut = new FileIO(saveLoc+"populations.csv", "w");
-            popsOut.Write("model,time,sensitive,resistant\n");
-        }
-        FileIO pcOut = null;
-        if (writePc) {
-            pcOut = new FileIO(saveLoc+"pairCorrelations.csv", "w");
-            pcOut.Write("model,time,pair,measure,distance,count\n");
+        boolean writeModel = writeModelFrequency != 0;
+        FileIO modelOut = null;
+        if (writeModel) {
+            modelOut = new FileIO(saveLoc+"coords.csv", "w");
+            modelOut.Write("model,time,type,x,y\n");
         }
         
         // run models
@@ -135,20 +86,15 @@ public class SpatialEGT3D {
             model.InitTumorRandom(numCells, proportionResistant);
 
             for (int tick = 0; tick <= numTicks; tick++) {
-                if (writePop) {
-                    if (tick % writePopFrequency == 0) {
-                        int[] pop = GetPopulationSize(model);
-                        popsOut.Write(modelName+","+tick+","+pop[0]+","+pop[1]+"\n");
-                    }
-                }
-                if (writePc) {
-                    if (tick % writePcFrequency == 0) {
-                        Map<Integer, Integer[]> annulusRows = GetPairCorrelation(model, maxDistance);
-                        String pairTypes[] = {"SS", "RR", "RS", "SR"};
-                        for (int dist = 1; dist < 3*maxDistance; dist++) {
-                            for (int i = 0; i < 4; i++) {
-                                pcOut.Write(modelName+","+tick+","+pairTypes[i]+",annulus,"+dist+","+annulusRows.get(dist)[i]+"\n");
-                            }
+                if (writeModel) {
+                    if ((tick % writeModelFrequency == 0) && (tick > 0)) {
+                        List<List<Integer>> coordLists = GetModelCoords(model);
+                        List<Integer> cellTypes = coordLists.get(0);
+                        List<Integer> xCoords = coordLists.get(1);
+                        List<Integer> yCoords = coordLists.get(2);
+                        List<Integer> zCoords = coordLists.get(3);
+                        for (int i = 0; i < cellTypes.size(); i++) {
+                            modelOut.Write(modelName+","+tick+","+cellTypes.get(i)+","+xCoords.get(i)+","+yCoords.get(i)+","+zCoords.get(i)+"\n");
                         }
                     }
                 }
@@ -157,11 +103,8 @@ public class SpatialEGT3D {
         }
 
         // close output files
-        if (writePop) {
-            popsOut.Close();
-        }
-        if (writePc) {
-            pcOut.Close();
+        if (writeModel) {
+            modelOut.Close();
         }
     }
 }

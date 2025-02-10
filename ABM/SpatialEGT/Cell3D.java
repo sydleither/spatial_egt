@@ -5,18 +5,11 @@ import HAL.Util;
 
 public class Cell3D extends AgentSQ3Dunstackable<Model3D> {
     int type;
-    int color;
     double deathRate;
 
     public void Init(int type) {
         this.type = type;
         this.deathRate = G.deathRate;
-        if (type == 0) {
-            this.color = Util.RGB256(76, 149, 108);
-        }
-        else {
-            this.color = Util.RGB256(239, 124, 142);
-        }
     }
 
     public double GetDivRate() {
