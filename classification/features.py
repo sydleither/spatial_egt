@@ -100,7 +100,7 @@ def feature_correlation(save_loc, df, label_names):
     [feature_names.remove(ln) for ln in label_names]
     num_features = len(feature_names)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 12))
     correlation_matrix = df[feature_names].corr()
     ax.imshow(correlation_matrix, cmap="PiYG")
     ax.set_xticks(np.arange(num_features), labels=feature_names)
@@ -186,21 +186,23 @@ def feature_selection(df, label_names):
         if label_dtype == float:
             y = np.array(df[label_name].values)
             mutual_info = mutual_info_regression(X, y)
-            f_statistic, p_values = f_regression(X, y)
+            f_statistic, _ = f_regression(X, y)
         else:
             label_categories = df[label_name].unique()
             category_to_int = {lc:i for i,lc in enumerate(label_categories)}
             y = [category_to_int[x] for x in df[label_name].values]
             mutual_info = mutual_info_classif(X, y)
-            f_statistic, p_values = f_classif(X, y)
+            f_statistic, _ = f_classif(X, y)
 
         print(f"\tMutual Information {label_name}")
-        for i in range(len(feature_names)):
-            print(f"\t\t{feature_names[i]} info:{mutual_info[i]}")
+        mi, mi_names = zip(*sorted(zip(mutual_info, feature_names), reverse=True))
+        for i in range(len(mi_names)):
+            print(f"\t\t{mi_names[i]} info:{mi[i]}")
 
         print(f"\tANOVA F-Statistics {label_name}")
-        for i in range(len(feature_names)):
-            print(f"\t\t{feature_names[i]} F:{round(f_statistic[i])} p-value:{p_values[i]}")
+        af, af_names = zip(*sorted(zip(f_statistic, feature_names), reverse=True))
+        for i in range(len(af_names)):
+            print(f"\t\t{af_names[i]} F:{round(af[i])}")
 
 
 def class_balance(df, label_names):
@@ -214,24 +216,24 @@ def class_balance(df, label_names):
         print(f"\tProportions: {proportions}")
 
 
-def main(data_type):
+def main(experiment_name, data_type):
     label = ["game"]
     feature_df = read_and_clean_features([data_type], label)
-    images_data_path = get_data_path(data_type, "images")
+    save_loc = get_data_path(".", f"model/{experiment_name}/features")
     
-    features_ridgeplots(images_data_path, feature_df, label, game_colors,
+    features_ridgeplots(save_loc, feature_df, label, game_colors,
                         label_orders={"game":game_colors.keys()})
     class_balance(feature_df, label)
-    feature_correlation(images_data_path, feature_df, label)
-    features_by_labels_plot(images_data_path, feature_df, label, 
+    feature_correlation(save_loc, feature_df, label)
+    features_by_labels_plot(save_loc, feature_df, label, 
                             game_colors.values(), game_colors.keys())
-    fragmentation_matrix_plot(images_data_path, feature_df, label, "equal")
+    fragmentation_matrix_plot(save_loc, feature_df, label, "equal")
     feature_selection(feature_df, label)
-    feature_pairplot(images_data_path, feature_df, label[0])
+    feature_pairplot(save_loc, feature_df, label[0])
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
     else:
-        print("Please provide the data type to analyze.")
+        print("Please provide an experiment name and the data type.")

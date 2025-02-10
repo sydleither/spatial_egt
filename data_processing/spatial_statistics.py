@@ -22,14 +22,7 @@ def create_nn_dist(domain, type1, type2):
 
 
 # Cross Pair Correlation Function
-def create_cpcf(domain, type1, type2, data_type, max_radius=None, annulus_step=None, annulus_width=None):
-    if max_radius is None:
-        max_radius = 5 if data_type == "in_silico" else 50
-    if annulus_step is None:
-        annulus_step = 1 if data_type == "in_silico" else 10
-    if annulus_width is None:
-        annulus_width = 3 if data_type == "in_silico" else 30
-
+def create_cpcf(domain, type1, type2, max_radius, annulus_step, annulus_width):
     population_A = ms.query.query(domain, ("label", "type"), "is", type1)
     population_B = ms.query.query(domain, ("label", "type"), "is", type2)
     _, pcf = ms.spatial_statistics.cross_pair_correlation_function(
@@ -45,53 +38,30 @@ def create_cpcf(domain, type1, type2, data_type, max_radius=None, annulus_step=N
 
 
 # Spatial Subsample
-def create_sfp_dist(s_coords, r_coords, data_type, sample_length=None, num_samples=1000, incl_empty=False):
+def create_sfp_dist(s_coords, r_coords, sample_length, num_samples=1000):
+    dims = range(len(s_coords[0]))
     s_coords = np.array(s_coords)
     r_coords = np.array(r_coords)
-    max_x = max(np.max(s_coords[:, 0]), np.max(r_coords[:, 0]))
-    max_y = max(np.max(s_coords[:, 1]), np.max(r_coords[:, 1]))
-
-    if sample_length is None:
-        sample_length = 5 if data_type == "in_silico" else 70
-
+    max_dims = [max(np.max(s_coords[:, i]), np.max(r_coords[:, i])) for i in dims]
+    dim_vals = [choices(range(0, max_dims[i]-sample_length), k=num_samples) for i in dims]
     fs_counts = []
-    xs = choices(range(0, max_x-sample_length), k=num_samples)
-    ys = choices(range(0, max_y-sample_length), k=num_samples)
-    if incl_empty:
-        num_cells = sample_length**2
-        for i in range(num_samples):
-            lx = xs[i]
-            ux = lx+sample_length
-            ly = ys[i]
-            uy = ly+sample_length
-            subset_s = np.sum((s_coords[:, 0] >= lx) & (s_coords[:, 0] < ux) & 
-                              (s_coords[:, 1] >= ly) & (s_coords[:, 1] < uy))
-            fs_counts.append(subset_s/num_cells)
-    else:
-        for i in range(num_samples):
-            lx = xs[i]
-            ux = lx+sample_length
-            ly = ys[i]
-            uy = ly+sample_length
-            subset_s = np.sum((s_coords[:, 0] >= lx) & (s_coords[:, 0] < ux) & 
-                              (s_coords[:, 1] >= ly) & (s_coords[:, 1] < uy))
-            subset_r = np.sum((r_coords[:, 0] >= lx) & (r_coords[:, 0] < ux) & 
-                              (r_coords[:, 1] >= ly) & (r_coords[:, 1] < uy))
-            subset_total = subset_s + subset_r
-            if subset_total == 0:
-                continue
-            fs_counts.append(subset_s/subset_total)
-
+    for s in range(num_samples):
+        ld = [dim_vals[i][s] for i in dims]
+        ud = [ld[i]+sample_length for i in dims]
+        subset_s = [(s_coords[:, i] >= ld[i]) & (s_coords[:, i] <= ud[i]) for i in dims]
+        subset_s = np.sum(np.all(subset_s, axis=0))
+        subset_r = [(r_coords[:, i] >= ld[i]) & (r_coords[:, i] <= ud[i]) for i in dims]
+        subset_r = np.sum(np.all(subset_r, axis=0))
+        subset_total = subset_s + subset_r
+        if subset_total == 0:
+            continue
+        fs_counts.append(subset_s/subset_total)
     return fs_counts
 
 
 # Neighborhood Composition
-def create_nc_dists(s_coords, r_coords, data_type, radius=None):
+def create_nc_dists(s_coords, r_coords, radius):
     all_coords = np.concatenate((s_coords, r_coords), axis=0)
-
-    if radius is None:
-        radius = 3 if data_type == "in_silico" else 30
-
     s_stop = len(s_coords)
     tree = KDTree(all_coords)
     fs = []
@@ -107,7 +77,6 @@ def create_nc_dists(s_coords, r_coords, data_type, radius=None):
             s_neighbors = len([x for x in neighbor_indices if x <= s_stop])
             if all_neighbors != 0 and s_neighbors != 0:
                 fs.append(s_neighbors/all_neighbors)
-
     return fs, fr
 
 
@@ -163,45 +132,65 @@ def get_dist_statistics(name, dist):
     return features
 
 
-def create_muspan_domain(df):
+def create_muspan_domain(df, dimensions):
     domain = ms.domain("sample")
-    points = np.asarray([df["x"], df["y"]])
+    points = np.asarray([df[x] for x in dimensions])
     domain.add_points(points.T, "cells")
     domain.add_labels("type", df["type"])
     return domain
 
 
-def create_all_features(df, num_sensitive, num_resistant, data_type):
-    features = dict()
-    s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
-    r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
+def create_custom_features(df, data_type, dimensions):
+    if data_type.startswith("in_silico"):
+        sample_length = 5
+        neighborhood_radius = 3
+    else:
+        sample_length = 50
+        neighborhood_radius = 30
 
+    features = dict()
+    s_coords = list(df.loc[df["type"] == "sensitive"][dimensions].values)
+    r_coords = list(df.loc[df["type"] == "resistant"][dimensions].values)
+    
+    num_sensitive = len(s_coords)
+    num_resistant = len(r_coords)
     features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
-    fs, fr = create_nc_dists(s_coords, r_coords, data_type)
+
+    fs, fr = create_nc_dists(s_coords, r_coords, neighborhood_radius)
     features = features | get_dist_statistics("nc_fs", fs)
     features = features | get_dist_statistics("nc_fr", fr)
-    sfp = create_sfp_dist(s_coords, r_coords, data_type)
-    features = features | get_dist_statistics("sfp_fs", sfp)
 
-    domain = create_muspan_domain(df)
-    features = features | get_muspan_statistics(domain)
-    pcf = create_cpcf(domain, "sensitive", "resistant", data_type)
-    features = features | get_dist_statistics("pcf", pcf)
-    features["pcf_0"] = pcf[0]
-    nn = create_nn_dist(domain, "sensitive", "resistant")
-    features = features | get_dist_statistics("nn", nn)
+    sfp = create_sfp_dist(s_coords, r_coords, sample_length=sample_length)
+    features = features | get_dist_statistics("sfp_fs", sfp)
 
     return features
 
 
-def get_cell_type_counts(df):
-    counts = df.groupby("type").count().reset_index()
-    s = counts[counts["type"] == "sensitive"]["x"].iloc[0]
-    r = counts[counts["type"] == "resistant"]["x"].iloc[0]
-    return s, r
+def create_muspan_features(df, data_type, dimensions):
+    if len(dimensions) == 3:
+        print("MuSpan does not support 3D data.")
+        exit()
 
+    if data_type.startswith("in_silico"):
+        max_radius = 5
+        annulus_step = 1
+        annulus_width = 3
+    else:
+        max_radius = 50
+        annulus_step = 10
+        annulus_width = 30
 
-def sample_to_features(df, data_type):
-    num_sensitive, num_resistant = get_cell_type_counts(df)
-    features = create_all_features(df, num_sensitive, num_resistant, data_type)
+    features = dict()
+
+    domain = create_muspan_domain(df, dimensions)
+    features = features | get_muspan_statistics(domain)
+
+    pcf = create_cpcf(domain, "sensitive", "resistant",
+                      max_radius, annulus_step, annulus_width)
+    features = features | get_dist_statistics("pcf", pcf)
+    features["pcf_0"] = pcf[0]
+
+    nn = create_nn_dist(domain, "sensitive", "resistant")
+    features = features | get_dist_statistics("nn", nn)
+
     return features

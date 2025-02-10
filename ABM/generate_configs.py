@@ -79,52 +79,24 @@ def lhs_sample(num_samples, param_names, lower_bounds, upper_bounds, ints, seed=
     return sampled_params
 
 
-def main(data_dir, experiment_name):
+def main(data_dir, experiment_name, dimension, num_samples, seed):
     run_output = []
     visual_output = []
-    if experiment_name == "test":
-        s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=100,
-                            a=0.03, b=0.03, c=0.02, d=0.02, radius=2, replicates=1,
-                            spaces=["2D"], name="test", writeModelFrequency=100)
+    samples = lhs_sample(num_samples, 
+                        ["A", "B", "C", "D", "fr", "cells"],
+                        [0, 0, 0, 0, 0.1, 625],
+                        [0.1, 0.1, 0.1, 0.1, 0.9, 15625],
+                        [False, False, False, False, False, True],
+                        seed=seed)
+    for i in range(num_samples):
+        sample = samples[i]
+        s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=250,
+                            a=sample["A"], b=sample["B"], c=sample["C"], d=sample["D"],
+                            initialTumor=0, turnover=0.009, init_cells=sample["cells"],
+                            prop_res=sample["fr"], radius=2, replicates=1,
+                            spaces=[dimension], name=str(i), writeModelFrequency=250)
         run_output += s
         visual_output += v
-    elif experiment_name == "HAL2D":
-        N = 2500
-        samples = lhs_sample(N, 
-                             ["A", "B", "C", "D", "fr", "cells"],
-                             [0, 0, 0, 0, 0.1, 625],
-                             [0.1, 0.1, 0.1, 0.1, 0.9, 15625],
-                             [False, False, False, False, False, True],
-                             seed=42)
-        for i in range(N):
-            sample = samples[i]
-            s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=250,
-                                a=sample["A"], b=sample["B"], c=sample["C"], d=sample["D"],
-                                initialTumor=0, turnover=0.009, init_cells=sample["cells"],
-                                prop_res=sample["fr"], radius=2, replicates=1,
-                                spaces=["2D"], name=str(i), writeModelFrequency=250)
-            run_output += s
-            visual_output += v
-    elif experiment_name == "HAL3D":
-        N = 1200
-        samples = lhs_sample(N,
-                             ["A", "B", "C", "D", "fr", "cells"],
-                             [0, 0, 0, 0, 0.1, 625],
-                             [0.1, 0.1, 0.1, 0.1, 0.9, 15625],
-                             [False, False, False, False, False, True],
-                             seed=42)
-        for i in range(N):
-            sample = samples[i]
-            s, v = sample_games(data_dir=data_dir, exp_dir=experiment_name, runtime=250,
-                                a=sample["A"], b=sample["B"], c=sample["C"], d=sample["D"],
-                                initialTumor=0, turnover=0.009, init_cells=sample["cells"],
-                                prop_res=sample["fr"], radius=2, replicates=1,
-                                spaces=["3D"], name=str(i), writeModelFrequency=250)
-            run_output += s
-            visual_output += v
-    else:
-        print("Invalid experiment name.")
-        exit()
     if len(run_output) > 999:
         run_output = [run_output[i:i + 999] for i in range(0, len(run_output), 999)]
         visual_output = [visual_output[i:i + 999] for i in range(0, len(visual_output), 999)]
@@ -137,7 +109,7 @@ def main(data_dir, experiment_name):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Please provide data directory and experiment name to save model output to.")
+    if len(sys.argv) != 6:
+        print("Please provide data directory, experiment name, dimension (2D or 3D), number of samples, and the seed.")
     else:
-        main(sys.argv[1], sys.argv[2])
+        main(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), int(sys.argv[5]))
