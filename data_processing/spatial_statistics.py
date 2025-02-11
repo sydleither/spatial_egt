@@ -140,27 +140,38 @@ def create_muspan_domain(df, dimensions):
     return domain
 
 
-def create_custom_features(df, data_type, dimensions):
+def get_dist_params(data_type):
+    params = {"nc":{}, "sfp":{}, "cpfc":{}}
     if data_type.startswith("in_silico"):
-        sample_length = 5
-        neighborhood_radius = 3
+        params["nc"]["radius"] = 3
+        params["sfp"]["sample_length"] = 5
+        params["cpfc"]["max_radius"] = 5
+        params["cpfc"]["annulus_step"] = 1
+        params["cpfc"]["annulus_width"] = 3
     else:
-        sample_length = 50
-        neighborhood_radius = 30
+        params["nc"]["radius"] = 30
+        params["sfp"]["sample_length"] = 50
+        params["pcf"]["max_radius"] = 50
+        params["pcf"]["annulus_step"] = 10
+        params["pcf"]["annulus_width"] = 30
+    return params
 
+
+def create_custom_features(df, data_type, dimensions):
     features = dict()
     s_coords = list(df.loc[df["type"] == "sensitive"][dimensions].values)
     r_coords = list(df.loc[df["type"] == "resistant"][dimensions].values)
+    params = get_dist_params(data_type)
     
     num_sensitive = len(s_coords)
     num_resistant = len(r_coords)
     features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
 
-    fs, fr = create_nc_dists(s_coords, r_coords, neighborhood_radius)
+    fs, fr = create_nc_dists(s_coords, r_coords, params["nc"]["radius"])
     features = features | get_dist_statistics("nc_fs", fs)
     features = features | get_dist_statistics("nc_fr", fr)
 
-    sfp = create_sfp_dist(s_coords, r_coords, sample_length=sample_length)
+    sfp = create_sfp_dist(s_coords, r_coords, params["sfp"]["sample_length"])
     features = features | get_dist_statistics("sfp_fs", sfp)
 
     return features
@@ -171,22 +182,16 @@ def create_muspan_features(df, data_type, dimensions):
         print("MuSpan does not support 3D data.")
         exit()
 
-    if data_type.startswith("in_silico"):
-        max_radius = 5
-        annulus_step = 1
-        annulus_width = 3
-    else:
-        max_radius = 50
-        annulus_step = 10
-        annulus_width = 30
-
     features = dict()
+    params = get_dist_params(data_type)
 
     domain = create_muspan_domain(df, dimensions)
     features = features | get_muspan_statistics(domain)
 
     pcf = create_cpcf(domain, "sensitive", "resistant",
-                      max_radius, annulus_step, annulus_width)
+                      params["pcf"]["max_radius"],
+                      params["pcf"]["annulus_step"],
+                      params["pcf"]["annulus_width"])
     features = features | get_dist_statistics("pcf", pcf)
     features["pcf_0"] = pcf[0]
 

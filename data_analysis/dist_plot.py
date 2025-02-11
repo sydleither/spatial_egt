@@ -8,7 +8,8 @@ from data_processing.spatial_statistics import (create_cpcf,
                                                 create_muspan_domain,
                                                 create_nc_dists,
                                                 create_nn_dist,
-                                                create_sfp_dist)
+                                                create_sfp_dist,
+                                                get_dist_params)
 
 
 sns.set_theme()
@@ -76,18 +77,22 @@ def get_data(data_type, dist_func, source="", sample_ids=None, limit=500):
     if sample_ids:
         df_payoff = df_payoff[df_payoff["sample"].isin(sample_ids)]
     cnt = 0
+    params = get_dist_params(data_type)[dist_func]
     for (source, sample_id) in df_payoff[["source", "sample"]].values:
         file_name = f"{source} {sample_id}.csv"
         df = pd.read_csv(f"{processed_data_path}/{file_name}")
         s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
         r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
         if dist_func == "sfp":
-            dist = create_sfp_dist(s_coords, r_coords, data_type)
+            dist = create_sfp_dist(s_coords, r_coords, params["sample_length"])
         elif dist_func == "nc":
-            dist, _ = create_nc_dists(s_coords, r_coords, data_type)
+            dist, _ = create_nc_dists(s_coords, r_coords, params["radius"])
         elif dist_func == "pcf":
             domain = create_muspan_domain(df)
-            dist = create_cpcf(domain, "sensitive", "resistant", data_type)
+            dist = create_cpcf(domain, "sensitive", "resistant",
+                               params["max_radius"],
+                               params["annulus_step"],
+                               params["annulus_width"])
         elif dist_func == "nn":
             domain = create_muspan_domain(df)
             dist = create_nn_dist(domain, "sensitive", "resistant")

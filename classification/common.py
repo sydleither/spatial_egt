@@ -40,6 +40,7 @@ def read_and_clean_features(data_types, labels):
     for data_type in data_types:
         features_data_path = get_data_path(data_type, "features")
         df_dt = pd.read_csv(f"{features_data_path}/all.csv")
+        df_dt = df_dt.drop(["source", "sample"], axis=1)
         df = pd.concat([df, df_dt])
     df = clean_feature_data(df)
 
