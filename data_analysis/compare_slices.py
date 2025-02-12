@@ -4,8 +4,9 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
-from common import get_data_path
+from common import game_colors, get_data_path
 
 
 def feature_plot(save_loc, feature, df_slices, source_map=None, num_plots=5):
@@ -16,7 +17,7 @@ def feature_plot(save_loc, feature, df_slices, source_map=None, num_plots=5):
     for i,source in enumerate(sources):
         df_source = df_slices[df_slices["source"] == source]
         feature_vals = df_source[feature]
-        ax[i].hist(feature_vals, color="#8e82fe")
+        ax[i].hist(feature_vals, color="#8e82fe", weights=np.ones_like(feature_vals)/len(feature_vals))
         actual = ""
         if source_map is not None:
             source_val = source_map[source]
@@ -26,23 +27,23 @@ def feature_plot(save_loc, feature, df_slices, source_map=None, num_plots=5):
         slice_stats = f"Slice Mean:{feature_vals.mean():5.3f}\nSlice Std:{feature_vals.std():5.3f}"
         ax[i].set_title(f"{actual}{slice_stats}")
     fig.supxlabel(feature)
-    fig.supylabel("count")
+    fig.supylabel("proportion")
     fig.patch.set_alpha(0)
     fig.tight_layout()
     fig.savefig(f"{save_loc}/source_by_{feature}.png", bbox_inches="tight")
 
 
-def diff_from_actual(save_loc, feature, df_slices, df_3d):
-    df_3d = df_3d[["uid", feature]]
+def diff_from_actual(save_loc, feature, df_slices, df_3d, group="game"):
+    df_3d = df_3d[["uid", "game", feature]]
     df_3d = df_3d.rename({"uid":"source", feature:"3d"}, axis=1)
-    df_slices = df_slices[["source", feature]]
-    df = df_slices.merge(df_3d, on="source")
+    df_slices = df_slices[["source", "game", feature]]
+    df = df_slices.merge(df_3d, on=["source", "game"])
     df["diff"] = np.abs(df["3d"] - df[feature])
     
     fig, ax = plt.subplots()
-    ax.hist(df["diff"], color="#137e6d")
-    fig.supxlabel(f"Difference in {feature} between 2D slices and actual 3D")
-    fig.supylabel("Count")
+    sns.kdeplot(df, x="diff", hue=group, palette=game_colors, fill=True, ax=ax)
+    ax.set_xlabel("Difference between 2D slices and actual 3D")
+    ax.set_xlim((0, df["diff"].max()))
     fig.patch.set_alpha(0)
     fig.tight_layout()
     fig.savefig(f"{save_loc}/diff_in_{feature}.png", bbox_inches="tight")
