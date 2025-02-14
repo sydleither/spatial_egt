@@ -141,6 +141,7 @@ def create_muspan_domain(df, dimensions):
 
 
 def get_dist_params(data_type):
+    #TODO these should be different for 3D data
     params = {"nc":{}, "sfp":{}, "cpfc":{}}
     if data_type.startswith("in_silico"):
         params["nc"]["radius"] = 3

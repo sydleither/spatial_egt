@@ -27,9 +27,9 @@ def plot_lines(dists, games, save_loc, file_name, title, xlabel, ylabel, col="ga
         df_dict["game"] += [game for _ in range(len(dist))]
     
     df = pd.DataFrame(df_dict)
-    facet = sns.FacetGrid(df, col=col, hue="game", 
-                          hue_order=game_colors.keys(), 
-                          palette=game_colors.values(), 
+    facet = sns.FacetGrid(df, col=col, hue="game",
+                          hue_order=game_colors.keys(),
+                          palette=game_colors.values(),
                           height=4, aspect=1)
     facet.map_dataframe(sns.lineplot, x="x", y="y")
     facet.set_titles(col_template="{col_name}")
@@ -51,9 +51,9 @@ def plot_dists(dists, games, save_loc, file_name, title, xlabel, ylabel, col="ga
         df_dict["game"] += [game for _ in range(len(dist))]
     
     df = pd.DataFrame(df_dict)
-    facet = sns.FacetGrid(df, col=col, hue="game", 
-                          hue_order=game_colors.keys(), 
-                          palette=game_colors.values(), 
+    facet = sns.FacetGrid(df, col=col, hue="game",
+                          hue_order=game_colors.keys(),
+                          palette=game_colors.values(),
                           height=4, aspect=1)
     facet.map_dataframe(sns.histplot, x="data", bins=10, kde=True,
                         kde_kws={"bw_adjust":2}, stat="proportion")

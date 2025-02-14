@@ -48,8 +48,7 @@ def features_ridgeplots(save_loc, df, label_names, colors, label_orders):
                 kde = stats.gaussian_kde(feature_class_data)
                 axes.append(fig.add_subplot(gs[c:c+1, f:f+1]))
                 axes[-1].plot(x, kde(x), color="white")
-                axes[-1].fill_between(x, kde(x), alpha=1, color=colors[class_name])
-                #axes[-1].set(ylim=(0,3))
+                axes[-1].fill_between(x, kde(x), alpha=0.75, color=colors[class_name])
                 rect = axes[-1].patch
                 rect.set_alpha(0)
                 axes[-1].set_yticklabels([])

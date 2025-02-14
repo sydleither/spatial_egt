@@ -29,7 +29,12 @@ def main(feature_set, data_type):
             continue
         df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
         dimensions = list(df_sample.drop("type", axis=1).columns)
-        features = sample_to_features(df_sample, data_type, dimensions)
+        try:
+            features = sample_to_features(df_sample, data_type, dimensions)
+        except Exception as e:
+            print(f"Error: {file_name}")
+            print(e)
+            continue
         source = file_name.split(" ")[0]
         sample = file_name.split(" ")[1][:-4]
         features["source"] = source

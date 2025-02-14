@@ -11,23 +11,27 @@ from common import game_colors, get_data_path
 
 def feature_plot(save_loc, feature, df_slices, source_map=None, num_plots=5):
     sources = random.sample(list(df_slices["source"].unique()), num_plots)
+    bins = np.arange(0, 1.01, 0.01)
     fig, ax = plt.subplots(1, num_plots, figsize=(4*num_plots, 4))
     if num_plots == 1:
         ax = [ax]
     for i,source in enumerate(sources):
         df_source = df_slices[df_slices["source"] == source]
         feature_vals = df_source[feature]
-        ax[i].hist(feature_vals, color="#8e82fe", weights=np.ones_like(feature_vals)/len(feature_vals))
         actual = ""
+        slice_stats = f"Slice Mean:{feature_vals.mean():5.3f}\nSlice Std:{feature_vals.std():5.3f}"
         if source_map is not None:
             source_val = source_map[source]
-            ax[i].axvline(source_val, color="#c04e01")
+            feature_vals = np.abs(source_val-feature_vals)
             actual = f"3D: {source_val:5.3f}\n"
-        ax[i].set_xlim(feature_vals.min()-0.1, feature_vals.max()+0.1)
-        slice_stats = f"Slice Mean:{feature_vals.mean():5.3f}\nSlice Std:{feature_vals.std():5.3f}"
+        ax[i].hist(feature_vals, bins=bins, color="#8e82fe")
+        ax[i].set_xlim(0, feature_vals.max()+0.01)
         ax[i].set_title(f"{actual}{slice_stats}")
-    fig.supxlabel(feature)
-    fig.supylabel("proportion")
+    if source_map is not None:
+        fig.supxlabel("Difference Between Slice Value and 3D Value")
+    else:
+        fig.supxlabel(feature)
+    fig.supylabel("Density")
     fig.patch.set_alpha(0)
     fig.tight_layout()
     fig.savefig(f"{save_loc}/source_by_{feature}.png", bbox_inches="tight")
@@ -39,14 +43,26 @@ def diff_from_actual(save_loc, feature, df_slices, df_3d, group="game"):
     df_slices = df_slices[["source", "game", feature]]
     df = df_slices.merge(df_3d, on=["source", "game"])
     df["diff"] = np.abs(df["3d"] - df[feature])
+    df = df[df["game"] != "unknown"]
     
-    fig, ax = plt.subplots()
-    sns.kdeplot(df, x="diff", hue=group, palette=game_colors, fill=True, ax=ax)
-    ax.set_xlabel("Difference between 2D slices and actual 3D")
-    ax.set_xlim((0, df["diff"].max()))
-    fig.patch.set_alpha(0)
-    fig.tight_layout()
-    fig.savefig(f"{save_loc}/diff_in_{feature}.png", bbox_inches="tight")
+    bins = np.arange(0, 1.01, 0.01)
+    if group == "game":
+        g = sns.FacetGrid(df, col=group, hue=group,
+                          hue_order=game_colors.keys(),
+                          palette=game_colors.values())
+        g.map_dataframe(sns.histplot, x="diff", bins=bins, stat="density", kde=True)
+        g.set(xlim=(0, df["diff"].max()))
+        g.tight_layout()
+        g.figure.patch.set_alpha(0.0)
+        g.savefig(f"{save_loc}/diff_in_{feature}_{group}.png", bbox_inches="tight")
+    else:
+        fig, ax = plt.subplots()
+        sns.kdeplot(df, x="diff", hue=group, palette=game_colors, fill=True, ax=ax)
+        ax.set_xlabel("Difference between 2D slices and actual 3D")
+        ax.set_xlim((0, df["diff"].max()))
+        fig.patch.set_alpha(0)
+        fig.tight_layout()
+        fig.savefig(f"{save_loc}/diff_in_{feature}.png", bbox_inches="tight")
 
 
 def main(feature, slice_dir, source_dir=None):
