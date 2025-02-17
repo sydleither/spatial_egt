@@ -8,9 +8,6 @@ import matplotlib.gridspec as grid_spec
 import numpy as np
 from scipy import stats
 import seaborn as sns
-from sklearn.feature_selection import (f_classif, f_regression, 
-                                       mutual_info_classif, 
-                                       mutual_info_regression)
 
 from classification.common import read_and_clean_features
 from common import game_colors, get_data_path
@@ -174,36 +171,6 @@ def fragmentation_matrix_plot(save_loc, df, label_names, binning_method):
     plt.close()
 
 
-def feature_selection(df, label_names):
-    feature_names = list(df.columns)
-    [feature_names.remove(ln) for ln in label_names]
-
-    for label_name in label_names:
-        label_dtype = df[label_name].dtypes
-        X = df[feature_names]
-        
-        if label_dtype == float:
-            y = np.array(df[label_name].values)
-            mutual_info = mutual_info_regression(X, y)
-            f_statistic, _ = f_regression(X, y)
-        else:
-            label_categories = df[label_name].unique()
-            category_to_int = {lc:i for i,lc in enumerate(label_categories)}
-            y = [category_to_int[x] for x in df[label_name].values]
-            mutual_info = mutual_info_classif(X, y)
-            f_statistic, _ = f_classif(X, y)
-
-        print(f"\tMutual Information {label_name}")
-        mi, mi_names = zip(*sorted(zip(mutual_info, feature_names), reverse=True))
-        for i in range(len(mi_names)):
-            print(f"\t\t{mi_names[i]} info:{mi[i]}")
-
-        print(f"\tANOVA F-Statistics {label_name}")
-        af, af_names = zip(*sorted(zip(f_statistic, feature_names), reverse=True))
-        for i in range(len(af_names)):
-            print(f"\t\t{af_names[i]} F:{round(af[i])}")
-
-
 def class_balance(df, label_names):
     for label_name in label_names:
         print(label_name)
@@ -227,7 +194,6 @@ def main(experiment_name, data_type):
     features_by_labels_plot(save_loc, feature_df, label, 
                             game_colors.values(), game_colors.keys())
     fragmentation_matrix_plot(save_loc, feature_df, label, "equal")
-    feature_selection(feature_df, label)
     feature_pairplot(save_loc, feature_df, label[0])
 
 

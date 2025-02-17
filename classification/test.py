@@ -19,7 +19,7 @@ def main(experiment_name, *data_types):
         parent_dir = data_types[0][0]
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
     feature_df = read_and_clean_features(data_types[0], ["game"])
-    X, y, int_to_name = df_to_xy(feature_df, "game")
+    X, y, int_to_name, _ = df_to_xy(feature_df, "game")
     test_model(save_loc, X, y, int_to_name)
 
 

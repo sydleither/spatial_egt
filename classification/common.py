@@ -21,7 +21,7 @@ def df_to_xy(df, label_name):
     int_to_category = {i:lc for i,lc in enumerate(label_categories)}
     X = list(df[feature_names].values)
     y = [category_to_int[x] for x in df[label_name].values]
-    return X, y, int_to_category
+    return X, y, int_to_category, feature_names
 
 
 def clean_feature_data(df):

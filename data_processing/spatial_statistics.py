@@ -169,7 +169,7 @@ def create_muspan_domain(df, dimensions):
 
 
 def get_dist_params(data_type, dimension="2D"):
-    params = {"nc":{}, "sfp":{}, "cpfc":{}}
+    params = {"nc":{}, "sfp":{}, "pcf":{}}
     if data_type.startswith("in_silico") and dimension == "2D":
         params["nc"]["radius"] = 3
         params["sfp"]["sample_length"] = 5
