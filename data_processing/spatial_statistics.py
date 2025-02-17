@@ -173,15 +173,15 @@ def get_dist_params(data_type, dimension="2D"):
     if data_type.startswith("in_silico") and dimension == "2D":
         params["nc"]["radius"] = 3
         params["sfp"]["sample_length"] = 5
-        params["cpfc"]["max_radius"] = 5
-        params["cpfc"]["annulus_step"] = 1
-        params["cpfc"]["annulus_width"] = 3
+        params["pcf"]["max_radius"] = 5
+        params["pcf"]["annulus_step"] = 1
+        params["pcf"]["annulus_width"] = 3
     elif data_type.startswith("in_silico") and dimension == "3D":
         params["nc"]["radius"] = 2
         params["sfp"]["sample_length"] = 3
-        params["cpfc"]["max_radius"] = 3
-        params["cpfc"]["annulus_step"] = 1
-        params["cpfc"]["annulus_width"] = 1
+        params["pcf"]["max_radius"] = 3
+        params["pcf"]["annulus_step"] = 1
+        params["pcf"]["annulus_width"] = 1
     else:
         params["nc"]["radius"] = 30
         params["sfp"]["sample_length"] = 50
