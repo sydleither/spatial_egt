@@ -8,32 +8,36 @@ from scipy.stats import skew
 from scipy.spatial import KDTree
 
 
+# Minimum Distance Boundaries
+def min_distance_dist(domain, type1_pop, type2_pop):
+    mdb = ms.query.get_minimum_distances_boundaries(
+        domain=domain,
+        population_A=type1_pop,
+        population_B=type2_pop
+    )
+    return mdb[0]
+
+
 # Nearest Neighbor
-def create_nn_dist(domain, type1, type2):
-    population_A = ms.query.query(domain, ("label", "type"), "is", type1)
-    population_B = ms.query.query(domain, ("label", "type"), "is", type2)
+def create_nn_dist(domain, type1_pop, type2_pop):
     nn = ms.spatial_statistics.nearest_neighbour_distribution(
         domain=domain,
-        population_A=population_A,
-        population_B=population_B
+        population_A=type1_pop,
+        population_B=type2_pop
     )
-
-    return nn.tolist()
+    return nn
 
 
 # Cross Pair Correlation Function
-def create_cpcf(domain, type1, type2, max_radius, annulus_step, annulus_width):
-    population_A = ms.query.query(domain, ("label", "type"), "is", type1)
-    population_B = ms.query.query(domain, ("label", "type"), "is", type2)
+def create_cpcf(domain, type1_pop, type2_pop, max_radius, annulus_step, annulus_width):
     _, pcf = ms.spatial_statistics.cross_pair_correlation_function(
         domain=domain,
-        population_A=population_A,
-        population_B=population_B,
+        population_A=type1_pop,
+        population_B=type2_pop,
         max_R=max_radius,
         annulus_step=annulus_step,
         annulus_width=annulus_width
     )
-
     return pcf
 
 
@@ -80,15 +84,13 @@ def create_nc_dists(s_coords, r_coords, radius):
     return fs, fr
 
 
-def get_muspan_statistics(domain):
+def get_muspan_statistics(domain, type1_pop, type2_pop):
     features = dict()
-    s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
-    r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
 
     anni, _, _ = ms.spatial_statistics.average_nearest_neighbour_index(
         domain=domain,
-        population_A=s_cells,
-        population_B=r_cells
+        population_A=type1_pop,
+        population_B=type2_pop
     )
     features["anni"] = anni
 
@@ -121,6 +123,32 @@ def get_muspan_statistics(domain):
     )
     features["ses5"] = ses5[0][1]
 
+    ms.region_based.generate_hexgrid(domain, side_length=2,
+                                     regions_collection_name="grids",
+                                     remove_empty_regions=False)
+    morans_i = ms.spatial_statistics.morans_i(domain,
+                                              population=("Collection", "grids"),
+                                              label_name="region counts: sensitive")
+    features["morans_i"] = morans_i[0]
+
+    wass = ms.distribution.sliced_wasserstein_distance(domain,
+                                                       population_A=type1_pop,
+                                                       population_B=type2_pop)
+    features["wass"] = wass
+
+    kdm_s = ms.distribution.kernel_density_estimation(
+        domain,
+        population=type1_pop,
+        mesh_step=5
+    )
+    kdm_r = ms.distribution.kernel_density_estimation(
+        domain,
+        population=type2_pop,
+        mesh_step=5
+    )
+    kl_div = ms.distribution.kl_divergence(kdm_s, kdm_r)
+    features["kdm_kl"] = kl_div
+
     return features
 
 
@@ -140,15 +168,20 @@ def create_muspan_domain(df, dimensions):
     return domain
 
 
-def get_dist_params(data_type):
-    #TODO these should be different for 3D data
+def get_dist_params(data_type, dimension="2D"):
     params = {"nc":{}, "sfp":{}, "cpfc":{}}
-    if data_type.startswith("in_silico"):
+    if data_type.startswith("in_silico") and dimension == "2D":
         params["nc"]["radius"] = 3
         params["sfp"]["sample_length"] = 5
         params["cpfc"]["max_radius"] = 5
         params["cpfc"]["annulus_step"] = 1
         params["cpfc"]["annulus_width"] = 3
+    elif data_type.startswith("in_silico") and dimension == "3D":
+        params["nc"]["radius"] = 2
+        params["sfp"]["sample_length"] = 3
+        params["cpfc"]["max_radius"] = 3
+        params["cpfc"]["annulus_step"] = 1
+        params["cpfc"]["annulus_width"] = 1
     else:
         params["nc"]["radius"] = 30
         params["sfp"]["sample_length"] = 50
@@ -178,25 +211,43 @@ def create_custom_features(df, data_type, dimensions):
     return features
 
 
-def create_muspan_features(df, data_type, dimensions):
+def create_muspan_stat_features(df, data_type, dimensions):
     if len(dimensions) == 3:
         print("MuSpan does not support 3D data.")
         exit()
 
     features = dict()
-    params = get_dist_params(data_type)
-
     domain = create_muspan_domain(df, dimensions)
-    features = features | get_muspan_statistics(domain)
+    s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
+    r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
 
-    pcf = create_cpcf(domain, "sensitive", "resistant",
+    features = features | get_muspan_statistics(domain, s_cells, r_cells)
+
+    return features
+
+
+def create_muspan_dist_features(df, data_type, dimensions):
+    if len(dimensions) == 3:
+        print("MuSpan does not support 3D data.")
+        exit()
+
+    features = dict()
+    params = get_dist_params(data_type, len(dimensions))
+    domain = create_muspan_domain(df, dimensions)
+    s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
+    r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
+
+    pcf = create_cpcf(domain, s_cells, r_cells,
                       params["pcf"]["max_radius"],
                       params["pcf"]["annulus_step"],
                       params["pcf"]["annulus_width"])
     features = features | get_dist_statistics("pcf", pcf)
     features["pcf_0"] = pcf[0]
 
-    nn = create_nn_dist(domain, "sensitive", "resistant")
+    nn = create_nn_dist(domain, s_cells, r_cells)
     features = features | get_dist_statistics("nn", nn)
+
+    mdb = min_distance_dist(domain, s_cells, r_cells)
+    features = features | get_dist_statistics("mdb", mdb)
 
     return features

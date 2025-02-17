@@ -5,15 +5,18 @@ import pandas as pd
 
 from common import get_data_path
 from data_processing.spatial_statistics import (create_custom_features,
-                                                create_muspan_features)
+                                                create_muspan_dist_features,
+                                                create_muspan_stat_features)
 
 
 def main(feature_set, data_type):
     # Set which feature set to calculate
     if feature_set == "custom":
         sample_to_features = create_custom_features
-    elif feature_set == "muspan":
-        sample_to_features = create_muspan_features
+    elif feature_set == "muspan1":
+        sample_to_features = create_muspan_dist_features
+    elif feature_set == "muspan2":
+        sample_to_features = create_muspan_stat_features
     else:
         print(f"Invalid feature set provided: {feature_set}")
         return
