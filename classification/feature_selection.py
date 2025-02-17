@@ -9,6 +9,7 @@ from sklearn.feature_selection import (f_classif,
                                        mutual_info_classif,
                                        RFECV)
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 
 from classification.common import df_to_xy, get_model, read_and_clean_features
@@ -49,25 +50,38 @@ def univariate(save_loc, X, y, feature_names):
     plot_feature_selection(save_loc, "univariate", data, False)
 
 
-def recursive(save_loc, X, y, feature_names):
+def recursive(save_loc, X, y, feature_names, verbose=False):
+    cv = StratifiedKFold(5)
     svm = SVC(kernel="linear")
-    svm_ranks = RFECV(svm, cv=5).fit(X, y).ranking_
+    svm_ranks = RFECV(svm, cv=cv).fit(X, y)
     rf = RandomForestClassifier()
-    rf_ranks = RFECV(rf, cv=5).fit(X, y).ranking_
+    rf_ranks = RFECV(rf, cv=cv).fit(X, y)
     lr = LogisticRegression()
-    lr_ranks = RFECV(lr, cv=5).fit(X, y).ranking_
+    lr_ranks = RFECV(lr, cv=cv).fit(X, y)
     
+    models = {"SVM":svm_ranks,
+              "Random Forest":rf_ranks,
+              "Logistic Regression":lr_ranks}
     data = []
-    for i,name in enumerate(feature_names):
-        data.append({"Feature": name,
-                     "Measurement": "SVM",
-                     "Value":svm_ranks[i]})
-        data.append({"Feature": name,
-                     "Measurement": "Random Forest",
-                     "Value":rf_ranks[i]})
-        data.append({"Feature": name,
-                     "Measurement": "Logistic Regression",
-                     "Value":lr_ranks[i]})
+    for name,model in models.items():
+        for i,feature_name in enumerate(feature_names):
+            data.append({"Feature": feature_name,
+                        "Measurement": name,
+                        "Value":model.ranking_[i]})
+            if verbose:
+                cv_results = pd.DataFrame(model.cv_results_)
+                fig, ax = plt.subplots()
+                ax.set_xlabel("Number of Features")
+                ax.set_ylabel("Mean Test Accuracy")
+                ax.errorbar(
+                    x=cv_results["n_features"],
+                    y=cv_results["mean_test_score"],
+                    yerr=cv_results["std_test_score"],
+                )
+                fig.tight_layout()
+                fig.figure.patch.set_alpha(0.0)
+                fig.savefig(f"{save_loc}/fs_recursive_{name}.png", bbox_inches="tight")
+                plt.close()
     plot_feature_selection(save_loc, "recursive", data, True)
 
 
@@ -81,7 +95,7 @@ def main(experiment_name, *data_types):
     X, y, _, feature_names = df_to_xy(feature_df, label[0])
 
     univariate(save_loc, X, y, feature_names)
-    recursive(save_loc, X, y, feature_names)
+    recursive(save_loc, X, y, feature_names, True)
 
 
 if __name__ == "__main__":
