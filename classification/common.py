@@ -7,10 +7,7 @@ from common import game_colors, get_data_path
 
 
 features = []
-#features = ["nc_fs_mean", "nc_fs_std", "nc_fs_skew"]
-#features = ["sfp_fs_mean", "sfp_fs_std", "sfp_fs_skew"]
-#features = ["nc_fs_mean", "nc_fs_std", "nc_fs_skew", "nc_fr_mean", "nc_fr_std", "nc_fr_skew"]
-#features = ["subnc_fs_mean", "subnc_fs_std", "subnc_fs_skew", "subnc_fr_mean", "subnc_fr_std", "subnc_fr_skew"]
+#features = ["nn_mean", "nc_fs_std", "nc_fs_skew", "nc_fr_std", "nc_fr_skew"]
 
 
 def df_to_xy(df, label_name):

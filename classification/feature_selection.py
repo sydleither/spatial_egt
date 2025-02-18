@@ -116,6 +116,27 @@ def rf_importance(save_loc, X, y, feature_names, n_repeats=10):
     plot_feature_selection(save_loc, "rf", data, False)
 
 
+def remove_correlated(df, feature_names, label_names):
+    feature_names = sorted(list(df.columns))
+    [feature_names.remove(ln) for ln in label_names]
+    num_features = len(feature_names)
+
+    corr_matrix = df[feature_names].corr()
+    features_to_keep = []
+    for i in range(num_features):
+        feature_i = feature_names[i]
+        unique = True
+        for j in range(i+1, num_features):
+            feature_j = feature_names[j]
+            corr = corr_matrix[feature_i][feature_j]
+            if abs(corr) > 0.9:
+                unique = False
+                break
+        if unique:
+            features_to_keep.append(feature_i)
+    print("Non-Correlated:", features_to_keep)
+
+
 def main(experiment_name, *data_types):
     label = ["game"]
     parent_dir = "."
@@ -127,8 +148,9 @@ def main(experiment_name, *data_types):
 
     univariate(save_loc, X, y, feature_names)
     recursive(save_loc, X, y, feature_names, True)
-    sfs(X, y, feature_names)
     rf_importance(save_loc, X, y, feature_names)
+    remove_correlated(feature_df, feature_names, label)
+    sfs(X, y, feature_names)
 
 
 if __name__ == "__main__":
