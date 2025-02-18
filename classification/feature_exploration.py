@@ -121,6 +121,9 @@ def fragmentation_matrix_plot(save_loc, df, label_names, binning_method):
     num_features = len(feature_names)
     feature_name_map = {name:str(i) for i,name in enumerate(feature_names)}
 
+    if num_features > 10:
+        return
+
     #bin and register features
     for feature_name in feature_names:
         feature_name_index = feature_name_map[feature_name]

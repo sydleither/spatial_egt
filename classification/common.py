@@ -16,18 +16,16 @@ features = []
 def df_to_xy(df, label_name):
     feature_names = list(df.columns)
     feature_names.remove(label_name)
-    label_categories = list(game_colors.keys())
-    category_to_int = {lc:i for i,lc in enumerate(label_categories)}
-    int_to_category = {i:lc for i,lc in enumerate(label_categories)}
+    label_classes = list(game_colors.keys())
+    class_to_int = {lc:i for i,lc in enumerate(label_classes)}
+    int_to_class = {i:lc for i,lc in enumerate(label_classes)}
     X = list(df[feature_names].values)
-    y = [category_to_int[x] for x in df[label_name].values]
-    return X, y, int_to_category, feature_names
+    y = [class_to_int[x] for x in df[label_name].values]
+    return X, y, int_to_class, feature_names
 
 
 def clean_feature_data(df):
     df = df[df["game"] != "unknown"]
-    df = df[df["proportion_s"] <= 0.95]
-    df = df[df["proportion_s"] >= 0.05]
     skew_features = [x for x in df.columns if "skew" in x]
     for feature in skew_features:
         df[feature].fillna(0)
