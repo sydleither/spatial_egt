@@ -5,6 +5,7 @@ import pandas as pd
 
 from common import get_data_path
 from data_processing.spatial_statistics import (create_custom_features,
+                                                create_landscape_ecology_featrues,
                                                 create_muspan_dist_features,
                                                 create_muspan_stat_features)
 
@@ -17,6 +18,8 @@ def main(feature_set, data_type):
         sample_to_features = create_muspan_dist_features
     elif feature_set == "muspan2":
         sample_to_features = create_muspan_stat_features
+    elif feature_set == "landeco":
+        sample_to_features = create_landscape_ecology_featrues
     else:
         print(f"Invalid feature set provided: {feature_set}")
         return
@@ -53,4 +56,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
     else:
-        print("Please provide the feature set type (custom, muspan) and data type.")
+        print("Please provide the feature set type and data type.")

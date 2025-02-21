@@ -71,7 +71,7 @@ def recursive(save_loc, X, y, feature_names, verbose=False):
         for i,feature_name in enumerate(feature_names):
             data.append({"Feature": feature_name,
                         "Measurement": name,
-                        "Rank":model.ranking_[i]})
+                        "Value":model.ranking_[i]})
         if verbose:
             cv_results = pd.DataFrame(model.cv_results_)
             fig, ax = plt.subplots()

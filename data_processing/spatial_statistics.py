@@ -8,16 +8,6 @@ from scipy.stats import skew
 from scipy.spatial import KDTree
 
 
-# Minimum Distance Boundaries
-def min_distance_dist(domain, type1_pop, type2_pop):
-    mdb = ms.query.get_minimum_distances_boundaries(
-        domain=domain,
-        population_A=type1_pop,
-        population_B=type2_pop
-    )
-    return mdb[0]
-
-
 # Nearest Neighbor
 def create_nn_dist(domain, type1_pop, type2_pop):
     nn = ms.spatial_statistics.nearest_neighbour_distribution(
@@ -84,7 +74,7 @@ def create_nc_dists(s_coords, r_coords, radius):
     return fs, fr
 
 
-def get_muspan_statistics(domain, type1_pop, type2_pop):
+def get_muspan_statistics(domain, type1_pop, type2_pop, type1_name, type2_name):
     features = dict()
 
     anni, _, _ = ms.spatial_statistics.average_nearest_neighbour_index(
@@ -126,10 +116,14 @@ def get_muspan_statistics(domain, type1_pop, type2_pop):
     ms.region_based.generate_hexgrid(domain, side_length=2,
                                      regions_collection_name="grids",
                                      remove_empty_regions=False)
-    morans_i = ms.spatial_statistics.morans_i(domain,
+    morans_i_s = ms.spatial_statistics.morans_i(domain,
                                               population=("Collection", "grids"),
-                                              label_name="region counts: sensitive")
-    features["morans_i"] = morans_i[0]
+                                              label_name=f"region counts: {type1_name}")
+    features[f"morans_i_{type1_name}"] = morans_i_s[0]
+    morans_i_r = ms.spatial_statistics.morans_i(domain,
+                                              population=("Collection", "grids"),
+                                              label_name=f"region counts: {type2_name}")
+    features[f"morans_i_{type2_name}"] = morans_i_r[0]
 
     wass = ms.distribution.sliced_wasserstein_distance(domain,
                                                        population_A=type1_pop,
@@ -149,6 +143,30 @@ def get_muspan_statistics(domain, type1_pop, type2_pop):
     kl_div = ms.distribution.kl_divergence(kdm_s, kdm_r)
     features["kdm_kl"] = kl_div
 
+    return features
+
+
+def get_landscape_ecology_features(domain, type_pop, type_name):
+    features = dict()
+
+    domain.convert_objects(
+        population=type_pop,
+        collection_name="shape",
+        object_type="shape",
+        conversion_method="alpha shape",
+        conversion_method_kwargs=dict(alpha=2)
+    )
+    patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
+    circ, _ = ms.geometry.circularity(domain, population=patch_pop)
+    area, _ = ms.geometry.area(domain, population=patch_pop)
+    perim, _ = ms.geometry.perimeter(domain, population=patch_pop)
+    frac_dim = 2*np.log(np.array(perim))/np.log(np.array(area))
+
+    features[f"patches_{type_name}"] = len(circ)
+    features = features | get_dist_statistics(f"area_{type_name}", area)
+    features = features | get_dist_statistics(f"perim_{type_name}", perim)
+    features = features | get_dist_statistics(f"circ_{type_name}", circ)
+    features = features | get_dist_statistics(f"fracdim_{type_name}", frac_dim)
     return features
 
 
@@ -221,7 +239,8 @@ def create_muspan_stat_features(df, data_type, dimensions):
     s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
     r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
 
-    features = features | get_muspan_statistics(domain, s_cells, r_cells)
+    features = features | get_muspan_statistics(domain, s_cells, r_cells,
+                                                "sensitive", "resistant")
 
     return features
 
@@ -247,7 +266,16 @@ def create_muspan_dist_features(df, data_type, dimensions):
     nn = create_nn_dist(domain, s_cells, r_cells)
     features = features | get_dist_statistics("nn", nn)
 
-    mdb = min_distance_dist(domain, s_cells, r_cells)
-    features = features | get_dist_statistics("mdb", mdb)
+    return features
+
+
+def create_landscape_ecology_featrues(df, data_type, dimensions):
+    features = dict()
+    domain = create_muspan_domain(df, dimensions)
+    s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
+    r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
+
+    features = features | get_landscape_ecology_features(domain, s_cells, "sensitive")
+    features = features | get_landscape_ecology_features(domain, r_cells, "resistant")
 
     return features
