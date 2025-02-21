@@ -1,6 +1,7 @@
 import sys
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV
@@ -12,16 +13,25 @@ from classification.common import df_to_xy, read_and_clean_features
 from common import get_data_path
 
 
+#based on https://www.datagraphi.com/blog/post/2019/12/17/how-to-find-the-optimum-number-of-hidden-layers-and-nodes-in-a-neural-network-model
+def find_layer_nodes_linear(n_layers, first_layer_nodes, last_layer_nodes):
+    layers = []
+    nodes_increment = (last_layer_nodes - first_layer_nodes) / (n_layers-1)
+    nodes = first_layer_nodes
+    for i in range(1, n_layers+1):
+        layers.append(int(nodes))
+        nodes = nodes + nodes_increment
+    return layers
+
+
 def finetune_layers(save_loc, X, y):
     cv = 5
     hidden_layer_sizes = []
     for i in range(1, 6):
         layers = [100]*i
         hidden_layer_sizes.append(tuple(layers))
-    hidden_layer_sizes.append((500,250,125,62))
-    hidden_layer_sizes.append((500,400,300,200,100))
-    hidden_layer_sizes.append((500,500,500))
-    hidden_layer_sizes.append((200,100,50))
+        layers_linear = find_layer_nodes_linear(i+1, 100*i, 50)
+        hidden_layer_sizes.append(tuple(layers_linear))
     params = {"clf__hidden_layer_sizes":hidden_layer_sizes}
 
     pipeline = Pipeline([("scale", StandardScaler()), ("clf", MLPClassifier(max_iter=500))])
