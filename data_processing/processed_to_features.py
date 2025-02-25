@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 import pandas as pd
 
@@ -30,7 +31,9 @@ def main(feature_set, data_type):
     df_entries = []
 
     # Calculate features for each sample
+    i = 0
     for file_name in os.listdir(processed_data_path):
+        time_start = time.time()
         if file_name == "payoff.csv":
             continue
         df_sample = pd.read_csv(f"{processed_data_path}/{file_name}")
@@ -46,6 +49,11 @@ def main(feature_set, data_type):
         features["source"] = source
         features["sample"] = sample
         df_entries.append(features)
+        print(f"{i}\t{(time.time()-time_start):6.3f}")
+        i += 1
+        if i % 500 == 0:
+            df = pd.DataFrame(df_entries)
+            df.to_csv(f"{features_data_path}/{feature_set}_{i}.csv", index=False)
 
     # Save calculated features
     df = pd.DataFrame(df_entries)
