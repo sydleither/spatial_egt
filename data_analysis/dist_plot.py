@@ -121,22 +121,22 @@ def agg_plot(dist, title, xlabel, ylabel, plot_func, data_type, source):
 def main():
     dist = sys.argv[1]
     if dist == "sfp":
-        title = "Spatial Subsampling Distributions"
+        title = "Spatial Subsampling Distribution"
         xlabel = "Fraction Sensitive"
         ylabel = "Frequency Across Subsamples"
         plot_func = plot_dists
     elif dist == "nc":
-        title = "Neighborhood Composition Distributions"
+        title = "Neighborhood Composition Distribution"
         xlabel = "Fraction Sensitive in Neighborhood"
         ylabel = "Fraction of Resistant Cells"
         plot_func = plot_dists
     elif dist == "pcf":
-        title = "SR Pair Correlations"
+        title = "SR Pair Correlation"
         xlabel = "r"
         ylabel = "g(r)"
         plot_func = plot_lines
     elif dist == "nn":
-        title = "Nearest Neighbor Distributions"
+        title = "Nearest Neighbor Distribution"
         xlabel = "Distance"
         ylabel = "Proportion"
         plot_func = plot_lines

@@ -1,7 +1,6 @@
 import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV
@@ -43,8 +42,8 @@ def finetune_layers(save_loc, X, y):
     df["param_clf__hidden_layer_sizes"] = df["param_clf__hidden_layer_sizes"].astype(str)
 
     fig, ax = plt.subplots()
-    sns.barplot(df, x="param_clf__hidden_layer_sizes",
-                y="value", color="hotpink", ax=ax)
+    sns.boxplot(df, x="param_clf__hidden_layer_sizes", y="value", color="pink", ax=ax)
+    ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/hyperparameter_tuning.png", bbox_inches="tight")

@@ -6,8 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from common import game_colors, get_data_path
 
 
-features = []
-#features = ["nn_mean", "nc_fs_std", "nc_fs_skew", "nc_fr_std", "nc_fr_skew"]
+#features = []
+features = ["nn_mean", "nc_fs_std", "nc_fs_skew", "nc_fr_std", "nc_fr_skew"]
 
 
 def df_to_xy(df, label_name):
@@ -48,6 +48,6 @@ def read_and_clean_features(data_types, labels):
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(500,250,100,50))
+    estimator = MLPClassifier(hidden_layer_sizes=(100,100,100,100))
     clf = make_pipeline(StandardScaler(), estimator)
     return clf

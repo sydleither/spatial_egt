@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix
+from sklearn import metrics
 from sklearn.model_selection import LearningCurveDisplay, StratifiedKFold
 import seaborn as sns
 
@@ -14,17 +14,19 @@ def plot_all(save_loc, int_to_name, y_trues, y_preds, data_set):
     plot_performance_stats(save_loc, data_set, int_to_name, y_trues, y_preds)
 
 
-def plt_heatmap(ax, matrix, labels, title):
+def plt_heatmap(ax, matrix, labels, title, textcolors=("black", "white")):
     '''
     Based on https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html
     '''
     num_labels = len(labels)
-    ax.imshow(matrix, cmap="Greens")
+    im = ax.imshow(matrix, cmap="Greens")
     ax.set_xticks(range(num_labels), labels=labels, rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(num_labels), labels=labels)
+    threshold = im.norm(matrix.max())/2
     for i in range(num_labels):
         for j in range(num_labels):
-            ax.text(j, i, f"{matrix[i, j]:5.3f}", ha="center", va="center", color="deeppink")
+            color = textcolors[int(im.norm(matrix[i, j]) > threshold)]
+            ax.text(j, i, f"{matrix[i, j]:5.3f}", ha="center", va="center", color=color)
     ax.set(title=title)
 
 
@@ -32,7 +34,7 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
     labels = [int_to_name[i] for i in range(len(int_to_name))]
     conf_mats = []
     for i in range(len(y_trues)):
-        conf_mat = confusion_matrix(y_trues[i], y_preds[i], normalize="true")
+        conf_mat = metrics.confusion_matrix(y_trues[i], y_preds[i], normalize="true")
         conf_mats.append(conf_mat)
     avg_conf_mat = np.mean(conf_mats, axis=0)
     std_conf_mat = np.std(conf_mats, axis=0)
