@@ -154,7 +154,7 @@ def get_landscape_ecology_features(domain, type_pop, type_name):
         collection_name="shape",
         object_type="shape",
         conversion_method="alpha shape",
-        conversion_method_kwargs=dict(alpha=2)
+        conversion_method_kwargs=dict(alpha=3)
     )
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     circ, _ = ms.geometry.circularity(domain, population=patch_pop)
