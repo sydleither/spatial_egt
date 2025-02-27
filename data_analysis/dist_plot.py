@@ -1,6 +1,7 @@
 import sys
 
 import pandas as pd
+import numpy as np
 import seaborn as sns
 
 from common import game_colors, get_data_path, read_payoff_df
@@ -8,6 +9,7 @@ from data_processing.spatial_statistics import (create_cpcf,
                                                 create_muspan_domain,
                                                 create_nc_dists,
                                                 create_nn_dist,
+                                                create_pcf,
                                                 create_sfp_dist,
                                                 get_dist_params)
 
@@ -50,12 +52,13 @@ def plot_dists(dists, games, save_loc, file_name, title, xlabel, ylabel, col="ga
         df_dict["sample"] += [sample_id for _ in range(len(dist))]
         df_dict["game"] += [game for _ in range(len(dist))]
     
+    bins = np.arange(0, 1.01, 0.01)
     df = pd.DataFrame(df_dict)
     facet = sns.FacetGrid(df, col=col, hue="game",
                           hue_order=game_colors.keys(),
                           palette=game_colors.values(),
                           height=4, aspect=1)
-    facet.map_dataframe(sns.histplot, x="data", bins=10, kde=True,
+    facet.map_dataframe(sns.histplot, x="data", bins=bins, kde=True,
                         kde_kws={"bw_adjust":2}, stat="proportion")
     facet.set_titles(col_template="{col_name}")
     facet.set(xlabel=xlabel, ylabel=ylabel)
@@ -77,17 +80,21 @@ def get_data(data_type, dist_func, source="", sample_ids=None, limit=500):
     if sample_ids:
         df_payoff = df_payoff[df_payoff["sample"].isin(sample_ids)]
     cnt = 0
-    params = get_dist_params(data_type)[dist_func]
     for (source, sample_id) in df_payoff[["source", "sample"]].values:
         file_name = f"{source} {sample_id}.csv"
         df = pd.read_csv(f"{processed_data_path}/{file_name}")
-        s_coords = list(df.loc[df["type"] == "sensitive"][["x", "y"]].values)
-        r_coords = list(df.loc[df["type"] == "resistant"][["x", "y"]].values)
+        dimensions = list(df.drop("type", axis=1).columns)
+        params = get_dist_params(data_type, dimensions)[dist_func]
+        s_coords_df = df.loc[df["type"] == "sensitive"][dimensions]
+        s_coords = list(s_coords_df.values)
+        r_coords = list(df.loc[df["type"] == "resistant"][dimensions].values)
         if dist_func == "sfp":
             dist = create_sfp_dist(s_coords, r_coords, params["sample_length"])
         elif dist_func == "nc":
             dist, _ = create_nc_dists(s_coords, r_coords, params["radius"])
         elif dist_func == "pcf":
+            dist = create_pcf(s_coords_df, params["max_r"], params["dr"], dimensions)
+        elif dist_func == "cpcf":
             domain = create_muspan_domain(df)
             dist = create_cpcf(domain, "sensitive", "resistant",
                                params["max_radius"],
@@ -131,6 +138,11 @@ def main():
         ylabel = "Fraction of Resistant Cells"
         plot_func = plot_dists
     elif dist == "pcf":
+        title = "S Pair Correlation"
+        xlabel = "r"
+        ylabel = "g(r)"
+        plot_func = plot_lines
+    elif dist == "cpcf":
         title = "SR Pair Correlation"
         xlabel = "r"
         ylabel = "g(r)"

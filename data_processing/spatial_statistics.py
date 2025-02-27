@@ -6,6 +6,7 @@ import muspan as ms
 import numpy as np
 from scipy.stats import skew
 from scipy.spatial import KDTree
+from trackpy.static import pair_correlation_2d, pair_correlation_3d
 
 
 # Nearest Neighbor
@@ -29,6 +30,21 @@ def create_cpcf(domain, type1_pop, type2_pop, max_radius, annulus_step, annulus_
         annulus_width=annulus_width
     )
     return pcf
+
+
+# Pair Correlation Function
+def create_pcf(df, max_r, dr, dimensions):
+    dimension = len(dimensions)
+    if "z" in df.columns and dimension == 2:
+        if "x" in df.columns:
+            df = df.rename({"z":"y"}, axis=1)
+        else:
+            df = df.rename({"z":"x"}, axis=1)
+    if dimension == 2:
+        _, gr = pair_correlation_2d(df, max_r, dr=dr, fraction=0.5)
+    else:
+        _, gr = pair_correlation_3d(df, max_r, dr=dr, fraction=0.5)
+    return gr
 
 
 # Spatial Subsample
@@ -186,34 +202,43 @@ def create_muspan_domain(df, dimensions):
     return domain
 
 
-def get_dist_params(data_type, dimension="2D"):
-    params = {"nc":{}, "sfp":{}, "pcf":{}}
-    if data_type.startswith("in_silico") and dimension == "2D":
+def get_dist_params(data_type, dimensions):
+    dimension = len(dimensions)
+    params = {"nc":{}, "sfp":{}, "pcf":{}, "cpcf":{}}
+    if data_type.startswith("in_silico") and dimension == 2:
         params["nc"]["radius"] = 3
         params["sfp"]["sample_length"] = 5
-        params["pcf"]["max_radius"] = 5
-        params["pcf"]["annulus_step"] = 1
-        params["pcf"]["annulus_width"] = 3
-    elif data_type.startswith("in_silico") and dimension == "3D":
+        params["pcf"]["dr"] = 1
+        params["pcf"]["max_r"] = 5
+        params["cpcf"]["max_radius"] = 5
+        params["cpcf"]["annulus_step"] = 1
+        params["cpcf"]["annulus_width"] = 3
+    elif data_type.startswith("in_silico") and dimension == 3:
         params["nc"]["radius"] = 2
         params["sfp"]["sample_length"] = 3
-        params["pcf"]["max_radius"] = 3
-        params["pcf"]["annulus_step"] = 1
-        params["pcf"]["annulus_width"] = 1
+        params["pcf"]["dr"] = 1
+        params["pcf"]["max_r"] = 5
+        params["cpcf"]["max_radius"] = 3
+        params["cpcf"]["annulus_step"] = 1
+        params["cpcf"]["annulus_width"] = 1
     else:
         params["nc"]["radius"] = 30
         params["sfp"]["sample_length"] = 50
-        params["pcf"]["max_radius"] = 50
-        params["pcf"]["annulus_step"] = 10
-        params["pcf"]["annulus_width"] = 30
+        params["pcf"]["dr"] = 10
+        params["pcf"]["max_r"] = 50
+        params["cpcf"]["max_radius"] = 50
+        params["cpcf"]["annulus_step"] = 10
+        params["cpcf"]["annulus_width"] = 30
     return params
 
 
 def create_custom_features(df, data_type, dimensions):
     features = dict()
-    s_coords = list(df.loc[df["type"] == "sensitive"][dimensions].values)
-    r_coords = list(df.loc[df["type"] == "resistant"][dimensions].values)
-    params = get_dist_params(data_type)
+    s_coords_df = df.loc[df["type"] == "sensitive"][dimensions]
+    r_coords_df = df.loc[df["type"] == "resistant"][dimensions]
+    s_coords = list(s_coords_df.values)
+    r_coords = list(r_coords_df.values)
+    params = get_dist_params(data_type, dimensions)
     
     num_sensitive = len(s_coords)
     num_resistant = len(r_coords)
@@ -223,8 +248,13 @@ def create_custom_features(df, data_type, dimensions):
     features = features | get_dist_statistics("nc_fs", fs)
     features = features | get_dist_statistics("nc_fr", fr)
 
-    sfp = create_sfp_dist(s_coords, r_coords, params["sfp"]["sample_length"])
-    features = features | get_dist_statistics("sfp_fs", sfp)
+    pcf_s = create_pcf(s_coords_df, params["pcf"]["max_r"], params["pcf"]["dr"], dimensions)
+    pcf_r = create_pcf(r_coords_df, params["pcf"]["max_r"], params["pcf"]["dr"], dimensions)
+    features = features | get_dist_statistics("pcf_s", pcf_s)
+    features = features | get_dist_statistics("pcf_r", pcf_r)
+
+    # sfp = create_sfp_dist(s_coords, r_coords, params["sfp"]["sample_length"])
+    # features = features | get_dist_statistics("sfp_fs", sfp)
 
     return features
 
@@ -251,17 +281,17 @@ def create_muspan_dist_features(df, data_type, dimensions):
         exit()
 
     features = dict()
-    params = get_dist_params(data_type, len(dimensions))
+    params = get_dist_params(data_type, dimensions)
     domain = create_muspan_domain(df, dimensions)
     s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
     r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
 
     pcf = create_cpcf(domain, s_cells, r_cells,
-                      params["pcf"]["max_radius"],
-                      params["pcf"]["annulus_step"],
-                      params["pcf"]["annulus_width"])
-    features = features | get_dist_statistics("pcf", pcf)
-    features["pcf_0"] = pcf[0]
+                      params["cpcf"]["max_radius"],
+                      params["cpcf"]["annulus_step"],
+                      params["cpcf"]["annulus_width"])
+    features = features | get_dist_statistics("cpcf", pcf)
+    features["cpcf_0"] = pcf[0]
 
     nn = create_nn_dist(domain, s_cells, r_cells)
     features = features | get_dist_statistics("nn", nn)
