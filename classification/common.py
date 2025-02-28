@@ -6,8 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from common import game_colors, get_data_path
 
 
-#features = []
-features = ["nn_mean", "nc_fs_std", "nc_fs_skew", "nc_fr_std", "nc_fr_skew"]
+feature_sets = {"prop_s":["Proportion Sensitive"],
+                "nc":["NC (Sensitive) Mean", "NC (Resistant) Mean"]}
 
 
 def df_to_xy(df, label_name):
@@ -22,7 +22,7 @@ def df_to_xy(df, label_name):
 
 
 def clean_feature_data(df):
-    df = df[df["game"] != "unknown"]
+    df = df[df["game"] != "Unknown"]
     skew_features = [x for x in df.columns if "skew" in x]
     for feature in skew_features:
         df[feature].fillna(0)
@@ -30,7 +30,7 @@ def clean_feature_data(df):
     return df
 
 
-def read_and_clean_features(data_types, labels):
+def read_and_clean_features(data_types, labels, feature_set_name=None):
     df = pd.DataFrame()
     for data_type in data_types:
         features_data_path = get_data_path(data_type, "features")
@@ -39,9 +39,10 @@ def read_and_clean_features(data_types, labels):
         df = pd.concat([df, df_dt])
     df = clean_feature_data(df)
 
-    if len(features) == 0:
+    if feature_set_name is None:
         feature_df = df
     else:
+        features = feature_sets[feature_set_name]
         feature_df = df[features+labels]
 
     return feature_df

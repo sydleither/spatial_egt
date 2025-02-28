@@ -11,6 +11,16 @@ from trackpy.static import pair_correlation_2d, pair_correlation_3d
 from data_processing.ripleyk import calculate_ripley
 
 
+# Local Moran's i
+def create_moransi(domain, type_name):
+    ms.region_based.generate_hexgrid(domain, side_length=2,
+                                     regions_collection_name="grids",
+                                     remove_empty_regions=False)
+    _, _, lmi, _, _ = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
+                                                     label_name=f"region counts: {type_name}")
+    return lmi
+
+
 # Nearest Neighbor
 def create_nn_dist(domain, type1_pop, type2_pop):
     nn = ms.spatial_statistics.nearest_neighbour_distribution(
@@ -113,66 +123,49 @@ def get_muspan_statistics(domain, type1_pop, type2_pop, type1_name, type2_name):
         population_A=type1_pop,
         population_B=type2_pop
     )
-    features["anni"] = anni
-
-    densities, _, labels = ms.summary_statistics.label_density(
-        domain=domain,
-        label_name="type"
-    )
-    features[f"{labels[0]}_density"] = densities[0]
-    features[f"{labels[1]}_density"] = densities[1]
+    features["ANNI"] = anni
 
     entropy = ms.summary_statistics.label_entropy(
         domain=domain,
         label_name="type"
     )
-    features["entropy"] = entropy
+    features["Entropy"] = entropy
 
-    ses3, _, _ = ms.region_based.quadrat_correlation_matrix(
-        domain,
-        label_name="type",
-        region_method="quadrats",
-        region_kwargs=dict(side_length=3)
-    )
-    features["ses3"] = ses3[0][1]
-
-    ses5, _, _ = ms.region_based.quadrat_correlation_matrix(
+    ses, _, _ = ms.region_based.quadrat_correlation_matrix(
         domain,
         label_name="type",
         region_method="quadrats",
         region_kwargs=dict(side_length=5)
     )
-    features["ses5"] = ses5[0][1]
+    features["SES"] = ses[0][1]
 
     ms.region_based.generate_hexgrid(domain, side_length=2,
                                      regions_collection_name="grids",
                                      remove_empty_regions=False)
-    morans_i_s = ms.spatial_statistics.morans_i(domain,
-                                              population=("Collection", "grids"),
-                                              label_name=f"region counts: {type1_name}")
-    features[f"morans_i_{type1_name}"] = morans_i_s[0]
-    morans_i_r = ms.spatial_statistics.morans_i(domain,
-                                              population=("Collection", "grids"),
-                                              label_name=f"region counts: {type2_name}")
-    features[f"morans_i_{type2_name}"] = morans_i_r[0]
+    mis = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
+                                         label_name=f"region counts: {type1_name}")
+    features[f"Morans i ({type1_name.capitalize()})"] = mis[0]
+    mir = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
+                                         label_name=f"region counts: {type2_name}")
+    features[f"Morans i ({type2_name.capitalize()})"] = mir[0]
 
     wass = ms.distribution.sliced_wasserstein_distance(domain,
                                                        population_A=type1_pop,
                                                        population_B=type2_pop)
-    features["wass"] = wass
+    features["Wasserstein Distance"] = wass
 
-    kdm_s = ms.distribution.kernel_density_estimation(
+    kde_s = ms.distribution.kernel_density_estimation(
         domain,
         population=type1_pop,
         mesh_step=5
     )
-    kdm_r = ms.distribution.kernel_density_estimation(
+    kde_r = ms.distribution.kernel_density_estimation(
         domain,
         population=type2_pop,
         mesh_step=5
     )
-    kl_div = ms.distribution.kl_divergence(kdm_s, kdm_r)
-    features["kdm_kl"] = kl_div
+    kl_div = ms.distribution.kl_divergence(kde_s, kde_r)
+    features["KDE KL-Divergence"] = kl_div
 
     return features
 
@@ -193,19 +186,20 @@ def get_landscape_ecology_features(domain, type_pop, type_name):
     perim, _ = ms.geometry.perimeter(domain, population=patch_pop)
     frac_dim = 2*np.log(np.array(perim))/np.log(np.array(area))
 
-    features[f"patches_{type_name}"] = len(circ)
-    features = features | get_dist_statistics(f"area_{type_name}", area)
-    features = features | get_dist_statistics(f"perim_{type_name}", perim)
-    features = features | get_dist_statistics(f"circ_{type_name}", circ)
-    features = features | get_dist_statistics(f"fracdim_{type_name}", frac_dim)
+    type_name = type_name.capitalize()
+    features[f"Patches ({type_name})"] = len(circ)
+    features = features | get_dist_statistics(f"Patch Area ({type_name})", area)
+    features = features | get_dist_statistics(f"Patch Perimeter ({type_name})", perim)
+    features = features | get_dist_statistics(f"Patch Circularity ({type_name})", circ)
+    features = features | get_dist_statistics(f"Patch Fractal Dimension ({type_name})", frac_dim)
     return features
 
 
 def get_dist_statistics(name, dist):
     features = dict()
-    features[f"{name}_mean"] = np.mean(dist)
-    features[f"{name}_std"] = np.std(dist)
-    features[f"{name}_skew"] = skew(dist)
+    features[f"{name} Mean"] = np.mean(dist)
+    features[f"{name} SD"] = np.std(dist)
+    features[f"{name} Skew"] = skew(dist)
     return features
 
 
@@ -260,22 +254,24 @@ def create_custom_features(df, data_type, dimensions):
     
     num_sensitive = len(s_coords)
     num_resistant = len(r_coords)
-    features["proportion_s"] = num_sensitive/(num_resistant+num_sensitive)
+    features["Proportion Sensitive"] = num_sensitive/(num_resistant+num_sensitive)
 
     fs, fr = create_nc_dists(s_coords, r_coords, params["nc"]["radius"])
-    features = features | get_dist_statistics("nc_fs", fs)
-    features = features | get_dist_statistics("nc_fr", fr)
+    features = features | get_dist_statistics("NC (Resistant)", fs)
+    features = features | get_dist_statistics("NC (Sensitive)", fr)
 
     pcf_s = create_pcf(s_coords_df, params["pcf"]["max_r"], params["pcf"]["dr"], dimensions)
     pcf_r = create_pcf(r_coords_df, params["pcf"]["max_r"], params["pcf"]["dr"], dimensions)
-    features = features | get_dist_statistics("pcf_s", pcf_s)
-    features = features | get_dist_statistics("pcf_r", pcf_r)
+    features = features | get_dist_statistics("PCF (Sensitive)", pcf_s)
+    features = features | get_dist_statistics("PCF (Resistant)", pcf_r)
 
-    rk = create_ripleysk(s_coords, params["rk"]["boundary"], dimensions)
-    features = features | get_dist_statistics("rk_s", rk)
+    rk_s = create_ripleysk(s_coords, params["rk"]["boundary"], dimensions)
+    rk_r = create_ripleysk(r_coords, params["rk"]["boundary"], dimensions)
+    features = features | get_dist_statistics("Ripleys K (Sensitive)", rk_s)
+    features = features | get_dist_statistics("Ripleys K (Resistant)", rk_r)
 
     sfp = create_sfp_dist(s_coords, r_coords, params["sfp"]["sample_length"])
-    features = features | get_dist_statistics("sfp_fs", sfp)
+    features = features | get_dist_statistics("SFP", sfp)
 
     return features
 
@@ -311,11 +307,16 @@ def create_muspan_dist_features(df, data_type, dimensions):
                       params["cpcf"]["max_radius"],
                       params["cpcf"]["annulus_step"],
                       params["cpcf"]["annulus_width"])
-    features = features | get_dist_statistics("cpcf", pcf)
-    features["cpcf_0"] = pcf[0]
+    features = features | get_dist_statistics("C-PCF", pcf)
+    features["C-PCF (r=0)"] = pcf[0]
 
     nn = create_nn_dist(domain, s_cells, r_cells)
-    features = features | get_dist_statistics("nn", nn)
+    features = features | get_dist_statistics("NN", nn)
+
+    lmi_s = create_moransi(domain, "sensitive")
+    features = features | get_dist_statistics("Local Morans i (Sensitive)", lmi_s)
+    lmi_r = create_moransi(domain, "resistant")
+    features = features | get_dist_statistics("Local Morans i (Resistant)", lmi_r)
 
     return features
 

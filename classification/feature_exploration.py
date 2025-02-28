@@ -29,6 +29,7 @@ def features_ridgeplots(save_loc, df, label_names, colors, label_orders):
     feature_names = list(df.columns)
     [feature_names.remove(ln) for ln in label_names]
     num_features = len(feature_names)
+
     for label_name in label_names:
         label_dtype = df[label_name].dtypes
         if label_dtype == float:
@@ -50,11 +51,11 @@ def features_ridgeplots(save_loc, df, label_names, colors, label_orders):
                 rect.set_alpha(0)
                 axes[-1].set_yticklabels([])
                 if c == num_classes-1:
-                    axes[-1].set_xlabel(feature_name, fontweight="bold")
+                    axes[-1].set_xlabel(feature_name)
                 else:
                     axes[-1].set(xticklabels=[], xticks=[])
                 if f == 0:
-                    axes[-1].text(-0.02, 0, class_name, fontweight="bold", ha="right")
+                    axes[-1].text(-0.02, 0, class_name, ha="right")
                 else:
                     axes[-1].set(yticklabels=[])
                 axes[-1].set(yticks=[])
@@ -73,7 +74,10 @@ def features_by_labels_plot(save_loc, df, label_names, colors, color_order):
     [feature_names.remove(ln) for ln in label_names]
     num_features = len(feature_names)
     num_labels = len(label_names)
+
     fig, ax = plt.subplots(num_labels, num_features, figsize=(7*num_features, 7*num_labels))
+    if num_features == 1:
+        ax = [ax]
     for l,label_name in enumerate(label_names):
         label_dtype = df[label_name].dtypes
         for f,feature_name in enumerate(feature_names):
@@ -158,15 +162,19 @@ def fragmentation_matrix_plot(save_loc, df, label_names, binning_method):
                 valid_feature_sets.append("".join(feature_set))
 
     #visualize
+    textcolors = ("black", "white")
     num_feature_sets = len(entropies[0])
+    entropies = np.array(entropies)
     fig, ax = plt.subplots(figsize=(30,5))
-    ax.imshow(np.array(entropies), cmap="Greens")
+    im = ax.imshow(entropies, cmap="Greens")
+    threshold = im.norm(entropies.max())/2
     ax.set_xticks(np.arange(num_feature_sets), labels=valid_feature_sets)
     ax.set_yticks(np.arange(num_labels), labels=label_names)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
     for l in range(num_labels):
         for j in range(num_feature_sets):
-            ax.text(j, l, round(entropies[l][j], 2), ha="center", va="center", color="hotpink")
+            color = textcolors[int(im.norm(entropies[l, j]) > threshold)]
+            ax.text(j, l, f"{entropies[l, j]:5.3f}", ha="center", va="center", color=color)
     ax.set_title(f"Fragmentation Matrix\n{feature_name_map}")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
@@ -187,7 +195,7 @@ def class_balance(df, label_names):
 
 def main(experiment_name, data_type):
     label = ["game"]
-    feature_df = read_and_clean_features([data_type], label)
+    feature_df = read_and_clean_features([data_type], label, experiment_name)
     save_loc = get_data_path(data_type, f"model/{experiment_name}/features")
     
     features_ridgeplots(save_loc, feature_df, label, game_colors,
@@ -204,4 +212,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
     else:
-        print("Please provide an experiment name and the data type.")
+        print("Please provide a feature set and the data type.")

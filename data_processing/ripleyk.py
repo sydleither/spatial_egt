@@ -3,7 +3,6 @@ From https://github.com/SamPIngram/RipleyK
 '''
 from scipy import spatial
 import numpy as np
-import math
 
 
 def make_tree(d1=None, d2=None, d3=None):

@@ -6,8 +6,8 @@ import os
 cell_type_map = {0: "sensitive", 1:"resistant",
                  "S-E9-gfp": "sensitive", "KRAS-mcherry":"resistant",
                  "Red":"sensitive", "Green":"resistant", "Blue":"unknown"}
-game_colors = {"sensitive_wins":"#4C956C", "coexistence":"#F97306",
-               "bistability":"#047495", "resistant_wins":"#EF7C8E"}
+game_colors = {"Sensitive Wins":"#4C956C", "Coexistence":"#F97306",
+               "Bistability":"#047495", "Resistant Wins":"#EF7C8E"}
 
 
 def get_data_path(data_type, data_stage):
@@ -26,13 +26,13 @@ def read_payoff_df(processed_data_path):
 
 def calculate_game(a, b, c, d):
     if a > c and b > d:
-        game = "sensitive_wins"
+        game = "Sensitive Wins"
     elif c > a and b > d:
-        game = "coexistence"
+        game = "Coexistence"
     elif a > c and d > b:
-        game = "bistability"
+        game = "Bistability"
     elif c > a and d > b:
-        game = "resistant_wins"
+        game = "Resistant Wins"
     else:
-        game = "unknown"
+        game = "Unknown"
     return game
