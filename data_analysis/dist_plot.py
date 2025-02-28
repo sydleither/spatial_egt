@@ -10,6 +10,7 @@ from data_processing.spatial_statistics import (create_cpcf,
                                                 create_nc_dists,
                                                 create_nn_dist,
                                                 create_pcf,
+                                                create_ripleysk,
                                                 create_sfp_dist,
                                                 get_dist_params)
 
@@ -94,6 +95,8 @@ def get_data(data_type, dist_func, source="", sample_ids=None, limit=500):
             dist, _ = create_nc_dists(s_coords, r_coords, params["radius"])
         elif dist_func == "pcf":
             dist = create_pcf(s_coords_df, params["max_r"], params["dr"], dimensions)
+        elif dist_func == "rk":
+            dist = create_ripleysk(s_coords, params["boundary"], dimensions)
         elif dist_func == "cpcf":
             domain = create_muspan_domain(df)
             dist = create_cpcf(domain, "sensitive", "resistant",

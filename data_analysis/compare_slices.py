@@ -52,17 +52,20 @@ def dist_stats(save_loc, feature, df_slices, data_type_slice, data_type_3d):
         source_dists, games = get_data(data_type_3d, feature, source=source_3d, sample_ids=[sample_id_3d])
         if len(source_dists) == 0:
             continue
-        source_dist, _ = np.histogram(source_dists[sample_id_3d], bins=bins)
+        source_dist = source_dists[sample_id_3d]
+        if feature == "nc":
+            source_dist, _ = np.histogram(source_dists[sample_id_3d], bins=bins)
         game = games[sample_id_3d]
         for sample_id,dist in dists.items():
-            dist, _ = np.histogram(dist, bins=bins)
+            if feature == "nc":
+                dist, _ = np.histogram(dist, bins=bins)
             p = ks_2samp(source_dist, dist)[1]
             df_dict.append({"source":source, "slice":sample_id, "p":p, "game":game})
     
     df = pd.DataFrame(df_dict)
     fig, ax = plt.subplots()
-    sns.barplot(data=df, x="source", y="p", hue="game",
-                palette=game_colors.values(), hue_order=game_colors.keys(), ax=ax)
+    sns.barplot(data=df, x="source", y="p", ax=ax)#,
+                #hue="game", palette=game_colors.values(), hue_order=game_colors.keys())
     ax.set(yscale="log", xticklabels=[])
     fig.patch.set_alpha(0)
     fig.tight_layout()
@@ -126,6 +129,7 @@ def diff_from_actual(save_loc, feature, df_slices, df_3d, group="game"):
 
 
 def main(feature, slice_dir, source_dir=None):
+    func_features = ["pcf", "nc", "rk"]
     slice_data_path = get_data_path(slice_dir, "features")
     df_slices = pd.read_csv(f"{slice_data_path}/all.csv")
     df_slices = df_slices[(df_slices["proportion_s"] > 0.1) & (df_slices["proportion_s"] < 0.9)]
@@ -134,12 +138,12 @@ def main(feature, slice_dir, source_dir=None):
     df_3d = None
     if source_dir is not None:
         source_data_path = get_data_path(source_dir, "features")
-        if feature not in ["pcf", "nc"]:
+        if feature not in func_features:
             df_3d = pd.read_csv(f"{source_data_path}/all.csv")
             df_3d["uid"] = df_3d["source"]+"_"+df_3d["sample"].astype(str)
             source_map = df_3d[["uid", feature]].set_index("uid").to_dict()[feature]
             diff_from_actual(images_data_path, feature, df_slices, df_3d, group=None)
-    if feature in ["pcf", "nc"]:
+    if feature in func_features:
         dist_stats(images_data_path, feature, df_slices, slice_dir, source_dir)
     else:
         sample_features(images_data_path, feature, df_slices, source_map)

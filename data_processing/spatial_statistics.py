@@ -8,6 +8,8 @@ from scipy.stats import skew
 from scipy.spatial import KDTree
 from trackpy.static import pair_correlation_2d, pair_correlation_3d
 
+from data_processing.ripleyk import calculate_ripley
+
 
 # Nearest Neighbor
 def create_nn_dist(domain, type1_pop, type2_pop):
@@ -45,6 +47,19 @@ def create_pcf(df, max_r, dr, dimensions):
     else:
         _, gr = pair_correlation_3d(df, max_r, dr=dr, fraction=0.5)
     return gr
+
+
+# Ripley's K
+def create_ripleysk(coords, bounding_radius, dimensions):
+    coords = np.array(coords)
+    d1 = coords[:, 0]
+    d2 = coords[:, 1]
+    d3 = None
+    if len(dimensions) == 3:
+        d3 = coords[:, 2]
+    radii = np.arange(0, bounding_radius+1, 1).tolist()
+    k = calculate_ripley(radii, 10, d1=d1, d2=d2, d3=d3, CSR_Normalise=True)
+    return k
 
 
 # Spatial Subsample
@@ -204,7 +219,7 @@ def create_muspan_domain(df, dimensions):
 
 def get_dist_params(data_type, dimensions):
     dimension = len(dimensions)
-    params = {"nc":{}, "sfp":{}, "pcf":{}, "cpcf":{}}
+    params = {"nc":{}, "sfp":{}, "pcf":{}, "cpcf":{}, "rk":{}}
     if data_type.startswith("in_silico") and dimension == 2:
         params["nc"]["radius"] = 3
         params["sfp"]["sample_length"] = 5
@@ -213,6 +228,7 @@ def get_dist_params(data_type, dimensions):
         params["cpcf"]["max_radius"] = 5
         params["cpcf"]["annulus_step"] = 1
         params["cpcf"]["annulus_width"] = 3
+        params["rk"]["boundary"] = 10
     elif data_type.startswith("in_silico") and dimension == 3:
         params["nc"]["radius"] = 2
         params["sfp"]["sample_length"] = 3
@@ -221,6 +237,7 @@ def get_dist_params(data_type, dimensions):
         params["cpcf"]["max_radius"] = 3
         params["cpcf"]["annulus_step"] = 1
         params["cpcf"]["annulus_width"] = 1
+        params["rk"]["boundary"] = 10
     else:
         params["nc"]["radius"] = 30
         params["sfp"]["sample_length"] = 50
@@ -229,6 +246,7 @@ def get_dist_params(data_type, dimensions):
         params["cpcf"]["max_radius"] = 50
         params["cpcf"]["annulus_step"] = 10
         params["cpcf"]["annulus_width"] = 30
+        params["rk"]["boundary"] = 100
     return params
 
 
@@ -253,8 +271,11 @@ def create_custom_features(df, data_type, dimensions):
     features = features | get_dist_statistics("pcf_s", pcf_s)
     features = features | get_dist_statistics("pcf_r", pcf_r)
 
-    # sfp = create_sfp_dist(s_coords, r_coords, params["sfp"]["sample_length"])
-    # features = features | get_dist_statistics("sfp_fs", sfp)
+    rk = create_ripleysk(s_coords, params["rk"]["boundary"], dimensions)
+    features = features | get_dist_statistics("rk_s", rk)
+
+    sfp = create_sfp_dist(s_coords, r_coords, params["sfp"]["sample_length"])
+    features = features | get_dist_statistics("sfp_fs", sfp)
 
     return features
 
