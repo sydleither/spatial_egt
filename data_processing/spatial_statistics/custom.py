@@ -2,38 +2,36 @@ from random import choices
 
 import numpy as np
 from scipy.spatial import KDTree
-from trackpy.static import pair_correlation_2d, pair_correlation_3d
+# from trackpy.static import pair_correlation_2d, pair_correlation_3d
 
-from data_processing.spatial_statistics.ripleyk import calculate_ripley
-
-
-# Pair Correlation Function (3D)
-def pcf(df, max_r, dr):
-    dimensions = list(df.drop("type", axis=1).columns)
-    if "z" in dimensions and len(dimensions) == 2:
-        if "x" in df.columns:
-            df = df.rename({"z":"y"}, axis=1)
-        else:
-            df = df.rename({"z":"x"}, axis=1)
-    if len(dimensions) == 2:
-        _, gr = pair_correlation_2d(df, max_r, dr=dr, fraction=0.5)
-    else:
-        _, gr = pair_correlation_3d(df, max_r, dr=dr, fraction=0.5)
-    return gr
+# from data_processing.spatial_statistics.ripleyk import calculate_ripley
 
 
-# Ripley's K (3D)
-def ripleysk(df, cell_type, bounding_radius):
-    dimensions = list(df.drop("type", axis=1).columns)
-    coords = df[df["type"] == cell_type][dimensions]
-    d1 = coords[:, 0]
-    d2 = coords[:, 1]
-    d3 = None
-    if len(dimensions) == 3:
-        d3 = coords[:, 2]
-    radii = np.arange(0, bounding_radius+1, 1).tolist()
-    k = calculate_ripley(radii, 10, d1=d1, d2=d2, d3=d3, CSR_Normalise=True)
-    return k
+# def pcf(df, max_r, dr):
+#     dimensions = list(df.drop("type", axis=1).columns)
+#     if "z" in dimensions and len(dimensions) == 2:
+#         if "x" in df.columns:
+#             df = df.rename({"z":"y"}, axis=1)
+#         else:
+#             df = df.rename({"z":"x"}, axis=1)
+#     if len(dimensions) == 2:
+#         _, gr = pair_correlation_2d(df, max_r, dr=dr, fraction=0.5)
+#     else:
+#         _, gr = pair_correlation_3d(df, max_r, dr=dr, fraction=0.5)
+#     return gr
+
+
+# def ripleysk(df, cell_type, bounding_radius):
+#     dimensions = list(df.drop("type", axis=1).columns)
+#     coords = df[df["type"] == cell_type][dimensions]
+#     d1 = coords[:, 0]
+#     d2 = coords[:, 1]
+#     d3 = None
+#     if len(dimensions) == 3:
+#         d3 = coords[:, 2]
+#     radii = np.arange(0, bounding_radius+1, 1).tolist()
+#     k = calculate_ripley(radii, 10, d1=d1, d2=d2, d3=d3, CSR_Normalise=True)
+#     return k
 
 
 # Spatial Subsample
