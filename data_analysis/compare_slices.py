@@ -43,7 +43,7 @@ def sample_lines(save_loc, feature, df_slices, data_type_3d, num_plots=5):
 
 def dist_stats(save_loc, feature, df_slices, data_type_slice, data_type_3d):
     sources = random.sample(list(df_slices["source"].unique()), 50)
-    bins = np.arange(0, 1.01, 0.01)
+    bins = np.arange(0, 1.1, 0.1)
     df_dict = []
     for i,source in enumerate(sources):
         print(source)
@@ -61,7 +61,7 @@ def dist_stats(save_loc, feature, df_slices, data_type_slice, data_type_3d):
                 dist, _ = np.histogram(dist, bins=bins)
             p = ks_2samp(source_dist, dist)[1]
             df_dict.append({"source":source, "slice":sample_id, "p":p, "game":game})
-    
+
     df = pd.DataFrame(df_dict)
     fig, ax = plt.subplots()
     sns.barplot(data=df, x="source", y="p", ax=ax)#,

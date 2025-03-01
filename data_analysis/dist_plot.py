@@ -1,11 +1,12 @@
 import sys
 
+import muspan as ms
 import pandas as pd
-import numpy as np
 import seaborn as sns
 
 from common import game_colors, get_data_path, read_payoff_df
 from data_processing.spatial_statistics import (create_cpcf,
+                                                create_moransi,
                                                 create_muspan_domain,
                                                 create_nc_dists,
                                                 create_nn_dist,
@@ -49,11 +50,11 @@ def plot_dists(dists, games, save_loc, file_name, title, xlabel, ylabel, col="ga
     for sample_id in dists:
         dist = dists[sample_id]
         game = games[sample_id]
-        df_dict["data"] += dist
+        df_dict["data"] += list(dist)
         df_dict["sample"] += [sample_id for _ in range(len(dist))]
         df_dict["game"] += [game for _ in range(len(dist))]
     
-    bins = np.arange(0, 1.01, 0.01)
+    bins = 10
     df = pd.DataFrame(df_dict)
     facet = sns.FacetGrid(df, col=col, hue="game",
                           hue_order=game_colors.keys(),
@@ -70,6 +71,40 @@ def plot_dists(dists, games, save_loc, file_name, title, xlabel, ylabel, col="ga
     facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
 
 
+def get_dist_by_name(dist_name, data_type, df):
+    dimensions = list(df.drop("type", axis=1).columns)
+    params = get_dist_params(data_type, dimensions)
+    s_coords_df = df.loc[df["type"] == "sensitive"][dimensions]
+    s_coords = list(s_coords_df.values)
+    r_coords = list(df.loc[df["type"] == "resistant"][dimensions].values)
+    dist = None
+    if dist_name == "sfp":
+        dist = create_sfp_dist(s_coords, r_coords, params[dist_name]["sample_length"])
+    elif dist_name == "nc":
+        dist, _ = create_nc_dists(s_coords, r_coords, params[dist_name]["radius"])
+    elif dist_name == "pcf":
+        dist = create_pcf(s_coords_df, params[dist_name]["max_r"], params[dist_name]["dr"], dimensions)
+    elif dist_name == "rk":
+        dist = create_ripleysk(s_coords, params[dist_name]["boundary"], dimensions)
+    elif dist_name == "cpcf":
+        domain = create_muspan_domain(df, dimensions)
+        s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
+        r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
+        dist = create_cpcf(domain, s_cells, r_cells,
+                            params[dist_name]["max_radius"],
+                            params[dist_name]["annulus_step"],
+                            params[dist_name]["annulus_width"])
+    elif dist_name == "nn":
+        domain = create_muspan_domain(df, dimensions)
+        s_cells = ms.query.query(domain, ("label", "type"), "is", "sensitive")
+        r_cells = ms.query.query(domain, ("label", "type"), "is", "resistant")
+        dist = create_nn_dist(domain, s_cells, r_cells)
+    elif dist_name == "moransi":
+        domain = create_muspan_domain(df, dimensions)
+        dist = create_moransi(domain, "sensitive")
+    return dist
+
+
 def get_data(data_type, dist_func, source="", sample_ids=None, limit=500):
     dists = dict()
     games = dict()
@@ -84,34 +119,13 @@ def get_data(data_type, dist_func, source="", sample_ids=None, limit=500):
     for (source, sample_id) in df_payoff[["source", "sample"]].values:
         file_name = f"{source} {sample_id}.csv"
         df = pd.read_csv(f"{processed_data_path}/{file_name}")
-        dimensions = list(df.drop("type", axis=1).columns)
-        params = get_dist_params(data_type, dimensions)[dist_func]
-        s_coords_df = df.loc[df["type"] == "sensitive"][dimensions]
-        s_coords = list(s_coords_df.values)
-        r_coords = list(df.loc[df["type"] == "resistant"][dimensions].values)
-        if dist_func == "sfp":
-            dist = create_sfp_dist(s_coords, r_coords, params["sample_length"])
-        elif dist_func == "nc":
-            dist, _ = create_nc_dists(s_coords, r_coords, params["radius"])
-        elif dist_func == "pcf":
-            dist = create_pcf(s_coords_df, params["max_r"], params["dr"], dimensions)
-        elif dist_func == "rk":
-            dist = create_ripleysk(s_coords, params["boundary"], dimensions)
-        elif dist_func == "cpcf":
-            domain = create_muspan_domain(df)
-            dist = create_cpcf(domain, "sensitive", "resistant",
-                               params["max_radius"],
-                               params["annulus_step"],
-                               params["annulus_width"])
-        elif dist_func == "nn":
-            domain = create_muspan_domain(df)
-            dist = create_nn_dist(domain, "sensitive", "resistant")
+        dist = get_dist_by_name(dist_func, data_type, df)
         game = df_payoff.at[(source, sample_id), "game"]
         dists[sample_id] = dist
         games[sample_id] = game
-        if cnt > limit:
-            break
         cnt += 1
+        if cnt >= limit:
+            break
     return dists, games
 
 
@@ -154,7 +168,7 @@ def main():
         title = "Nearest Neighbor Distribution"
         xlabel = "Distance"
         ylabel = "Proportion"
-        plot_func = plot_lines
+        plot_func = plot_dists
 
     if len(sys.argv) == 3:
         agg_plot(dist, title, xlabel, ylabel, plot_func, sys.argv[2], "")
