@@ -61,6 +61,16 @@ def cross_k(df, max_radius, step, cell_type1="sensitive", cell_type2="resistant"
     return ck
 
 
+def j_function(df, cell_type, radius_step):
+    domain = create_muspan_domain(df)
+    _, j = ms.spatial_statistics.J_function(
+        domain=domain,
+        population=("type", cell_type),
+        radius_step=radius_step
+    )
+    return j
+
+
 def anni(df, cell_type1="sensitive", cell_type2="resistant"):
     domain = create_muspan_domain(df)
     anni, _, _ = ms.spatial_statistics.average_nearest_neighbour_index(

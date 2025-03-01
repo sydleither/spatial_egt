@@ -31,7 +31,6 @@ def main(feature_name, data_type):
         source = file_name.split(" ")[0]
         sample = file_name.split(" ")[1][:-4]
         df_entries.append({"source":source, "sample":sample, feature_name:feature})
-        break
 
     df = pd.DataFrame(df_entries)
     df.to_csv(f"{features_path}/{feature_name}.csv", index=False)

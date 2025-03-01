@@ -4,9 +4,9 @@ import numpy as np
 
 from data_processing.spatial_statistics.custom import nc_dist, proportion_s, sfp_dist
 from data_processing.spatial_statistics.muspan import (anni, entropy, cpcf, cross_k,
-                                                       kl_divergence, global_moransi,
-                                                       local_moransi_dist, nn_dist,
-                                                       qcm, wasserstein,
+                                                       j_function, kl_divergence,
+                                                       global_moransi, local_moransi_dist,
+                                                       nn_dist, qcm, wasserstein,
                                                        circularity, fractal_dimension)
 
 
@@ -20,6 +20,8 @@ FEATURE_REGISTRY = {
     "ANNI": anni,
     "Entropy": entropy,
     "CPCF": cpcf,
+    "Cross Ripleys k": cross_k,
+    "J Function": j_function,
     "KL Divergence": kl_divergence,
     "Global Morans i": global_moransi,
     "Local Morans i": local_moransi_dist,
@@ -36,7 +38,9 @@ FEATURE_PARAMS = {
         "NC (Resistant)": {"radius": 3, "return_fs": True},
         "NC (Sensitive)": {"radius": 3, "return_fs": False},
         "SFP": {"sample_length": 5},
+        "Cross Ripleys k": {"max_radius": 5, "step": 1},
         "CPCF": {"max_radius": 5, "annulus_step": 1, "annulus_width": 3},
+        "J Function": {"cell_type": "sensitive", "radius_step": 2},
         "KL Divergence": {"mesh_step": 3},
         "Global Morans i (Resistant)": {"cell_type": "resistant", "side_length": 5},
         "Global Morans i (Sensitive)": {"cell_type": "sensitive", "side_length": 5},
@@ -50,7 +54,9 @@ FEATURE_PARAMS = {
         "NC (Resistant)": {"radius": 30, "return_fs": True},
         "NC (Sensitive)": {"radius": 30, "return_fs": False},
         "SFP": {"sample_length": 50},
+        "Cross Ripleys k": {"max_radius": 50, "step": 10},
         "CPCF": {"max_radius": 50, "annulus_step": 10, "annulus_width": 30},
+        "J Function": {"cell_type": "sensitive", "radius_step": 20},
         "KL Divergence": {"mesh_step": 30},
         "Global Morans i (Resistant)": {"cell_type": "resistant", "side_length": 50},
         "Global Morans i (Sensitive)": {"cell_type": "sensitive", "side_length": 50},
