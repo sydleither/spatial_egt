@@ -10,17 +10,17 @@ from common import get_data_path, read_payoff_df
 
 def get_dist_statistics(row, name):
     dist = row[name]
-    row[f"{name} Mean"] = np.mean(dist)
-    row[f"{name} SD"] = np.std(dist)
-    row[f"{name} Skew"] = skew(dist)
+    row[f"{name}_Mean"] = np.mean(dist)
+    row[f"{name}_SD"] = np.std(dist)
+    row[f"{name}_Skew"] = skew(dist)
     return row
 
 
 def get_func_statistics(row, name):
     func = row[name]
-    row[f"{name} 0"] = func[0]
-    row[f"{name} Min"] = min(func)
-    row[f"{name} Max"] = max(func)
+    row[f"{name}_0"] = func[0]
+    row[f"{name}_Min"] = min(func)
+    row[f"{name}_Max"] = max(func)
     return row
 
 

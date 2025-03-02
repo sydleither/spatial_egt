@@ -17,9 +17,6 @@ def local_moransi_dist(df, cell_type, side_length):
                                      remove_empty_regions=False)
     _, _, lmi, _, _ = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
                                                      label_name=f"region counts: {cell_type}")
-    # if bins is None:
-    #     bins = np.arange(-1, 1.1, 0.1)
-    # lmi, _ = np.histogram(lmi, bins)
     return lmi
 
 
@@ -30,9 +27,6 @@ def nn_dist(df, cell_type1="sensitive", cell_type2="resistant"):
         population_A=("type", cell_type1),
         population_B=("type", cell_type2)
     )
-    # if bins is None:
-    #     bins = np.arange(0, 11, 1)
-    # nn, _ = np.histogram(nn, bins)
     return nn
 
 
@@ -135,7 +129,8 @@ def kl_divergence(df, mesh_step, cell_type1="sensitive", cell_type2="resistant")
     return kl_div
 
 
-def add_patches_to_domain(domain, cell_type, alpha):
+def circularity_dist(df, cell_type, alpha):
+    domain = create_muspan_domain(df)
     domain.convert_objects(
         population=cell_type,
         collection_name="shape",
@@ -144,19 +139,20 @@ def add_patches_to_domain(domain, cell_type, alpha):
         conversion_method_kwargs=dict(alpha=alpha)
     )
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
-    return domain, patch_pop
-
-
-def circularity(df, cell_type, alpha):
-    domain = create_muspan_domain(df)
-    domain, patch_pop = add_patches_to_domain(domain, cell_type, alpha)
     circ, _ = ms.geometry.circularity(domain, population=patch_pop)
     return circ
 
 
-def fractal_dimension(df, cell_type, alpha):
+def fractal_dimension_dist(df, cell_type, alpha):
     domain = create_muspan_domain(df)
-    domain, patch_pop = add_patches_to_domain(domain, cell_type, alpha)
+    domain.convert_objects(
+        population=cell_type,
+        collection_name="shape",
+        object_type="shape",
+        conversion_method="alpha shape",
+        conversion_method_kwargs=dict(alpha=alpha)
+    )
+    patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     area, _ = ms.geometry.area(domain, population=patch_pop)
     perim, _ = ms.geometry.perimeter(domain, population=patch_pop)
     frac_dim = 2*np.log(np.array(perim))/np.log(np.array(area))

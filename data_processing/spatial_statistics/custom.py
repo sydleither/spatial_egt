@@ -56,9 +56,6 @@ def sfp_dist(df, sample_length, num_samples=1000, bins=None):
             continue
         fs_counts.append(subset_s/subset_total)
 
-    # if bins is None:
-    #     bins = np.arange(0, 1.1, 0.1)
-    # fs_counts, _ = np.histogram(fs_counts, bins)
     return fs_counts
 
 
@@ -84,11 +81,7 @@ def nc_dist(df, radius, return_fs=True, bins=None):
             s_neighbors = len([x for x in neighbor_indices if x <= s_stop])
             if all_neighbors != 0 and s_neighbors != 0:
                 fs.append(s_neighbors/all_neighbors)
-    
-    # if bins is None:
-    #     bins = np.arange(0, 1.1, 0.1)
-    # fs, _ = np.histogram(fs, bins)
-    # fr, _ = np.histogram(fr, bins)
+
     if return_fs:
         return fs
     return fr

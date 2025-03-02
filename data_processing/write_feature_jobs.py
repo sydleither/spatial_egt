@@ -1,19 +1,17 @@
 import sys
 
-import numpy as np
-
 from data_processing.spatial_statistics.custom import nc_dist, proportion_s, sfp_dist
 from data_processing.spatial_statistics.muspan import (anni, entropy, cpcf, cross_k,
                                                        j_function, kl_divergence,
                                                        global_moransi, local_moransi_dist,
                                                        nn_dist, qcm, wasserstein,
-                                                       circularity, fractal_dimension)
+                                                       circularity_dist, fractal_dimension_dist)
 
 
 FEATURE_REGISTRY = {
     # Custom
-    "NC_(Resistant)": nc_dist,
-    "NC_(Sensitive)": nc_dist,
+    "NC_Resistant": nc_dist,
+    "NC_Sensitive": nc_dist,
     "Proportion_Sensitive": proportion_s,
     "SFP": sfp_dist,
     # MuSpAn
@@ -29,14 +27,14 @@ FEATURE_REGISTRY = {
     "SES": qcm,
     "Wasserstein": wasserstein,
     # Temp
-    "Patch_Circularity": circularity,
-    "Patch_Fractal_Dim": fractal_dimension
+    "Patch_Circularity": circularity_dist,
+    "Patch_Fractal_Dimension": fractal_dimension_dist
 }
 
 FEATURE_PARAMS = {
     "in_silico": {
-        "NC_(Resistant)": {"radius": 3, "return_fs": True},
-        "NC_(Sensitive)": {"radius": 3, "return_fs": False},
+        "NC_Resistant": {"radius": 3, "return_fs": True},
+        "NC_Sensitive": {"radius": 3, "return_fs": False},
         "SFP": {"sample_length": 5},
         "Cross_Ripleys_k": {"max_radius": 5, "step": 1},
         "CPCF": {"max_radius": 5, "annulus_step": 1, "annulus_width": 3},
@@ -48,11 +46,11 @@ FEATURE_PARAMS = {
         "Local_Morans_i (Sensitive)": {"cell_type": "sensitive", "side_length": 5},
         "SES": {"side_length": 10},
         "Patch_Circularity": {"cell_type": "sensitive", "alpha": 3},
-        "Patch_Fractal_Dim": {"cell_type": "sensitive", "alpha": 3}
+        "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 3}
     },
     "in_vitro": {
-        "NC_(Resistant)": {"radius": 30, "return_fs": True},
-        "NC_(Sensitive)": {"radius": 30, "return_fs": False},
+        "NC_Resistant": {"radius": 30, "return_fs": True},
+        "NC_Sensitive": {"radius": 30, "return_fs": False},
         "SFP": {"sample_length": 50},
         "Cross_Ripleys_k": {"max_radius": 50, "step": 10},
         "CPCF": {"max_radius": 50, "annulus_step": 10, "annulus_width": 30},
@@ -64,8 +62,27 @@ FEATURE_PARAMS = {
         "Local_Morans_i (Sensitive)": {"cell_type": "sensitive", "side_length": 50},
         "SES": {"side_length": 100},
         "Patch_Circularity": {"cell_type": "sensitive", "alpha": 30},
-        "Patch_Fractal_Dim": {"cell_type": "sensitive", "alpha": 30}
+        "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 30}
     }
+}
+
+FUNCTION_LABELS = {
+    "NC_Resistant": {"x":"Fraction Sensitive in Neighborhood", "y":"Fraction of Resistant Cells"},
+    "NC_Sensitive": {"x":"Fraction Resistant in Neighborhood", "y":"Fraction of Sensitive Cells"},
+    "SFP": {"x":"Fraction Sensitive", "y":"Frequency Across Subsamples"},
+    "CPCF": {"x":"r", "y":"g(r)"},
+    "Cross_Ripleys_k": {"x":"r", "y":"g(r)"},
+    "J_Function": {"x":"r", "y":"j(r)"},
+    "Local_Morans_i": {"x":"Moran's i", "y":"Proportion"},
+    "NN": {"x":"Distance", "y":"Proportion"},
+}
+
+DISTRIBUTION_BINS = {
+    "NC_Resistant": (0, 1.1, 0.1),
+    "NC_Sensitive": (0, 1.1, 0.1),
+    "SFP": (0, 1.1, 0.1),
+    "Local_Morans_i": (-1, 1.1, 0.1),
+    "NN": (0, 11, 1),
 }
 
 
