@@ -73,7 +73,7 @@ def main(data_type, run_local):
     run_cmd = "python3 -m" if run_local else "sbatch job.sb"
     output = []
     for feature_name in FEATURE_REGISTRY.keys():
-        output.append(f"{run_cmd} data_processing.processed_to_feature '{feature_name}' {data_type}\n")
+        output.append(f"{run_cmd} data_processing.processed_to_feature \"{feature_name}\" {data_type}\n")
     with open("process_features.sh", "w") as f:
         for output_line in output:
             f.write(output_line)

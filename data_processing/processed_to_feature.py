@@ -1,6 +1,7 @@
 import os
 import sys
 
+from pandas.api.types import is_object_dtype
 import pandas as pd
 
 from common import get_data_path
@@ -33,7 +34,14 @@ def main(feature_name, data_type):
         df_entries.append({"source":source, "sample":sample, feature_name:feature})
 
     df = pd.DataFrame(df_entries)
-    df.to_csv(f"{features_path}/{feature_name}.csv", index=False)
+    if is_object_dtype(df[feature_name]):
+        if feature_calculation.__name__.endswith("dist"):
+            df["type"] = "distribution"
+        else:
+            df["type"] = "function"
+    else:
+        df["type"] = "value"
+    df.to_pickle(f"{features_path}/{feature_name}.pkl")
 
 
 if __name__ == "__main__":

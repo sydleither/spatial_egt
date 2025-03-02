@@ -10,7 +10,7 @@ def create_muspan_domain(df):
     return domain
 
 
-def local_moransi_dist(df, cell_type, side_length, bins=None):
+def local_moransi_dist(df, cell_type, side_length):
     domain = create_muspan_domain(df)
     ms.region_based.generate_hexgrid(domain, side_length=side_length,
                                      regions_collection_name="grids",
@@ -23,7 +23,7 @@ def local_moransi_dist(df, cell_type, side_length, bins=None):
     return lmi
 
 
-def nn_dist(df, cell_type1="sensitive", cell_type2="resistant", bins=None):
+def nn_dist(df, cell_type1="sensitive", cell_type2="resistant"):
     domain = create_muspan_domain(df)
     nn = ms.spatial_statistics.nearest_neighbour_distribution(
         domain=domain,
