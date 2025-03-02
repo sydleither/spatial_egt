@@ -35,10 +35,10 @@ from scipy.spatial import KDTree
 
 
 # Spatial Subsample
-def sfp_dist(df, sample_length, num_samples=1000, bins=None):
+def sfp_dist(df, sample_length, num_samples=1000):
     dimensions = list(df.drop("type", axis=1).columns)
-    s_coords = df[df["type"] == "sensitive"][dimensions]
-    r_coords = df[df["type"] == "resistant"][dimensions]
+    s_coords = df[df["type"] == "sensitive"][dimensions].values
+    r_coords = df[df["type"] == "resistant"][dimensions].values
     dims = range(len(dimensions))
 
     max_dims = [max(np.max(s_coords[:, i]), np.max(r_coords[:, i])) for i in dims]
@@ -60,10 +60,10 @@ def sfp_dist(df, sample_length, num_samples=1000, bins=None):
 
 
 # Neighborhood Composition
-def nc_dist(df, radius, return_fs=True, bins=None):
+def nc_dist(df, radius, return_fs=True):
     dimensions = list(df.drop("type", axis=1).columns)
-    s_coords = df[df["type"] == "sensitive"][dimensions]
-    r_coords = df[df["type"] == "resistant"][dimensions]
+    s_coords = df[df["type"] == "sensitive"][dimensions].values
+    r_coords = df[df["type"] == "resistant"][dimensions].values
     all_coords = np.concatenate((s_coords, r_coords), axis=0)
 
     s_stop = len(s_coords)
