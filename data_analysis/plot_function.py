@@ -13,11 +13,14 @@ sns.set_style("white")
 
 
 def plot_funcs(df, func_name, save_loc, file_name, title, xlabel, ylabel, col="game"):
+    df["x"] = df.groupby(["source", "sample", "game"]).cumcount()
+    order = None
+    if col == "game":
+        order = game_colors.keys()
     facet = sns.FacetGrid(df, col=col, hue="game",
-                          hue_order=game_colors.keys(),
-                          palette=game_colors.values(),
-                          height=4, aspect=1)
-    facet.map_dataframe(sns.lineplot, x=func_name, y=None)
+                          col_order=order, hue_order=game_colors.keys(),
+                          palette=game_colors.values(), height=4, aspect=1)
+    facet.map_dataframe(sns.lineplot, x="x", y=func_name)
     facet.set_titles(col_template="{col_name}")
     facet.set(xlabel=xlabel, ylabel=ylabel)
     facet.figure.subplots_adjust(top=0.9)
@@ -30,10 +33,12 @@ def plot_funcs(df, func_name, save_loc, file_name, title, xlabel, ylabel, col="g
 def plot_dists(df, dist_name, save_loc, file_name, title, xlabel, ylabel, col="game"):
     start, stop, step = DISTRIBUTION_BINS[dist_name]
     bins = np.arange(start, stop, step)
+    order = None
+    if col == "game":
+        order = game_colors.keys()
     facet = sns.FacetGrid(df, col=col, hue="game",
-                          hue_order=game_colors.keys(),
-                          palette=game_colors.values(),
-                          height=4, aspect=1)
+                          col_order=order, hue_order=game_colors.keys(),
+                          palette=game_colors.values(), height=4, aspect=1)
     facet.map_dataframe(sns.histplot, x=dist_name, bins=bins, kde=True,
                         kde_kws={"bw_adjust":2}, stat="proportion")
     facet.set_titles(col_template="{col_name}")
@@ -48,14 +53,15 @@ def plot_dists(df, dist_name, save_loc, file_name, title, xlabel, ylabel, col="g
 def get_data(df_func, func_name, data_type, source="", sample_ids=None):
     processed_data_path = get_data_path(data_type, "processed")
     df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
+    df_payoff["sample"] = df_payoff["sample"].astype(str)
     df_payoff = df_payoff[df_payoff["game"] != "Unknown"]
+
     if not source == "":
         df_payoff = df_payoff[df_payoff["source"] == source]
     if sample_ids:
         df_payoff = df_payoff[df_payoff["sample"].isin(sample_ids)]
 
     df_func["sample"] = df_func["sample"].astype(str)
-    df_payoff["sample"] = df_payoff["sample"].astype(str)
     df = df_payoff.merge(df_func, on=["source", "sample"])
     df = df[["source", "sample", "game", func_name]]
     
@@ -78,8 +84,8 @@ def agg_plot(df_func, func_name, title, xlabel, ylabel, plot, data_type, source)
 
 
 def main():
-    func_name = sys.argv[1]
-    data_type = sys.argv[2]
+    data_type = sys.argv[1]
+    func_name = sys.argv[2]
 
     features_data_path = get_data_path(data_type, "features")
     df_func = pd.read_pickle(f"{features_data_path}/{func_name}.pkl")
@@ -90,7 +96,7 @@ def main():
         plot = plot_funcs
     else:
         return
-    
+
     xlabel = FUNCTION_LABELS[func_name]["x"]
     ylabel = FUNCTION_LABELS[func_name]["y"]
     title = func_name.replace("_", " ")

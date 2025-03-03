@@ -5,7 +5,7 @@ from data_processing.spatial_statistics.muspan import (anni, entropy, cpcf, cros
                                                        j_function, kl_divergence,
                                                        global_moransi, local_moransi_dist,
                                                        nn_dist, qcm, wasserstein,
-                                                       circularity_dist, fractal_dimension_dist)
+                                                       circularity_dist, fractal_dimension_dist, patch_count)
 
 
 FEATURE_REGISTRY = {
@@ -31,6 +31,7 @@ FEATURE_REGISTRY = {
     "SES": qcm,
     "Wasserstein": wasserstein,
     # Temp
+    "Patch_Count": patch_count,
     "Patch_Circularity": circularity_dist,
     "Patch_Fractal_Dimension": fractal_dimension_dist
 }
@@ -51,6 +52,7 @@ FEATURE_PARAMS = {
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
         "SES": {"side_length": 10},
+        "Patch_Count": {"cell_type": "sensitive", "alpha": 3},
         "Patch_Circularity": {"cell_type": "sensitive", "alpha": 3},
         "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 3}
     },
@@ -69,6 +71,7 @@ FEATURE_PARAMS = {
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
         "SES": {"side_length": 100},
+        "Patch_Count": {"cell_type": "sensitive", "alpha": 30},
         "Patch_Circularity": {"cell_type": "sensitive", "alpha": 30},
         "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 30}
     }
@@ -98,7 +101,7 @@ def main(data_type, run_local):
     run_cmd = "python3 -m" if run_local else "sbatch job.sb"
     output = []
     for feature_name in FEATURE_REGISTRY.keys():
-        output.append(f"{run_cmd} data_processing.processed_to_feature {feature_name} {data_type}\n")
+        output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name}\n")
     with open("process_features.sh", "w") as f:
         for output_line in output:
             f.write(output_line)

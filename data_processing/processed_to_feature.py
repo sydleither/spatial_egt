@@ -8,7 +8,7 @@ from common import get_data_path
 from data_processing.write_feature_jobs import FEATURE_PARAMS, FEATURE_REGISTRY
 
 
-def main(feature_name, data_type):
+def main(data_type, feature_name):
     processed_path = get_data_path(data_type, "processed")
     features_path = get_data_path(data_type, "features")
 
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
     else:
-        print("Please provide the feature name and data type.")
+        print("Please provide the data type and feature name.")

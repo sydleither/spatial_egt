@@ -45,7 +45,7 @@ def cpcf(df, max_radius, annulus_step, annulus_width, cell_type1="sensitive", ce
 
 def cross_k(df, max_radius, step, cell_type1="sensitive", cell_type2="resistant"):
     domain = create_muspan_domain(df)
-    _, ck = ms.spatial_statistics.cross_pair_correlation_function(
+    _, ck = ms.spatial_statistics.cross_k_function(
         domain=domain,
         population_A=("type", cell_type1),
         population_B=("type", cell_type2),
@@ -129,10 +129,23 @@ def kl_divergence(df, mesh_step, cell_type1="sensitive", cell_type2="resistant")
     return kl_div
 
 
+def patch_count(df, cell_type, alpha):
+    domain = create_muspan_domain(df)
+    patches = domain.convert_objects(
+        population=("type", cell_type),
+        collection_name="shape",
+        object_type="shape",
+        conversion_method="alpha shape",
+        conversion_method_kwargs=dict(alpha=alpha),
+        return_IDs=True
+    )
+    return len(patches)
+
+
 def circularity_dist(df, cell_type, alpha):
     domain = create_muspan_domain(df)
     domain.convert_objects(
-        population=cell_type,
+        population=("type", cell_type),
         collection_name="shape",
         object_type="shape",
         conversion_method="alpha shape",
@@ -146,7 +159,7 @@ def circularity_dist(df, cell_type, alpha):
 def fractal_dimension_dist(df, cell_type, alpha):
     domain = create_muspan_domain(df)
     domain.convert_objects(
-        population=cell_type,
+        population=("type", cell_type),
         collection_name="shape",
         object_type="shape",
         conversion_method="alpha shape",
