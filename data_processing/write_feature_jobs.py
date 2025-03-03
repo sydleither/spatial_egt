@@ -23,9 +23,8 @@ FEATURE_REGISTRY = {
     "KL_Divergence": kl_divergence,
     "Global_Morans_i_Resistant": global_moransi,
     "Global_Morans_i_Sensitive": global_moransi,
-    "Local_Morans_i_Resistant": global_moransi,
-    "Local_Morans_i_Sensitive": global_moransi,
-    "Local_Morans_i": local_moransi_dist,
+    "Local_Morans_i_Resistant": local_moransi_dist,
+    "Local_Morans_i_Sensitive": local_moransi_dist,
     "NN_Resistant": nn_dist,
     "NN_Sensitive": nn_dist,
     "SES": qcm,
@@ -84,16 +83,20 @@ FUNCTION_LABELS = {
     "CPCF": {"x":"r", "y":"g(r)"},
     "Cross_Ripleys_k": {"x":"r", "y":"g(r)"},
     "J_Function": {"x":"r", "y":"j(r)"},
-    "Local_Morans_i": {"x":"Moran's i", "y":"Proportion"},
-    "NN": {"x":"Distance", "y":"Proportion"},
+    "Local_Morans_i_Resistant": {"x":"Moran's i", "y":"Proportion"},
+    "Local_Morans_i_Sensitive": {"x":"Moran's i", "y":"Proportion"},
+    "NN_Resistant": {"x":"Distance", "y":"Proportion"},
+    "NN_Sensitive": {"x":"Distance", "y":"Proportion"},
 }
 
 DISTRIBUTION_BINS = {
     "NC_Resistant": (0, 1.1, 0.1),
     "NC_Sensitive": (0, 1.1, 0.1),
     "SFP": (0, 1.1, 0.1),
-    "Local_Morans_i": (-1, 1.1, 0.1),
-    "NN": (0, 11, 1),
+    "Local_Morans_i_Resistant": (-1, 1.1, 0.1),
+    "Local_Morans_i_Sensitive": (-1, 1.1, 0.1),
+    "NN_Resistant": (0, 11, 1),
+    "NN_Sensitive": (0, 11, 1),
 }
 
 
