@@ -20,7 +20,7 @@ def plot_funcs(df, func_name, save_loc, file_name, title, xlabel, ylabel, col="g
     facet = sns.FacetGrid(df, col=col, hue="game",
                           col_order=order, hue_order=game_colors.keys(),
                           palette=game_colors.values(), height=4, aspect=1)
-    facet.map_dataframe(sns.lineplot, x="x", y=func_name)
+    facet.map_dataframe(sns.lineplot, x="x", y=func_name, errorbar="sd")
     facet.set_titles(col_template="{col_name}")
     facet.set(xlabel=xlabel, ylabel=ylabel)
     facet.figure.subplots_adjust(top=0.9)
