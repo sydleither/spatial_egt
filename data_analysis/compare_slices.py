@@ -1,3 +1,6 @@
+'''
+THIS NEEDS TO BE UPDATED
+'''
 import random
 import sys
 
@@ -8,7 +11,7 @@ from scipy.stats import ks_2samp
 import seaborn as sns
 
 from common import game_colors, get_data_path
-from data_analysis.dist_plot import get_data
+from data_analysis.plot_function import get_data
 
 
 def sample_lines(save_loc, feature, df_slices, data_type_3d, num_plots=5):

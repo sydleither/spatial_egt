@@ -143,7 +143,7 @@ def main(experiment_name, *data_types):
     if len(data_types[0]) == 1:
         parent_dir = data_types[0][0]
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}/features")
-    feature_df = read_and_clean_features(data_types[0], label)
+    feature_df = read_and_clean_features(data_types[0], label, experiment_name)
     X, y, _, feature_names = df_to_xy(feature_df, label[0])
 
     univariate(save_loc, X, y, feature_names)
@@ -157,4 +157,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         main(sys.argv[1], sys.argv[2:])
     else:
-        print("Please provide an experiment name and the data types to train the model with.")
+        print("Please provide a feature set and the data types to train the model with.")

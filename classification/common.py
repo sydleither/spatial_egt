@@ -6,8 +6,11 @@ from sklearn.preprocessing import StandardScaler
 from common import game_colors, get_data_path
 
 
-feature_sets = {"prop_s":["Proportion Sensitive"],
-                "nc":["NC (Sensitive) Mean", "NC (Resistant) Mean"]}
+feature_sets = {"prop_s":["Proportion_Sensitive"],
+                "nc":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Resistant_Skew",
+                      "NC_Sensitive_Mean", "NC_Sensitive_SD", "NC_Sensitive_Skew"],
+                "nc_cpcf":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Resistant_Skew", "Proportion_Sensitive",
+                           "NC_Sensitive_Mean", "NC_Sensitive_SD", "NC_Sensitive_Skew", "CPCF_Min"]}
 
 
 def df_to_xy(df, label_name):
@@ -30,7 +33,7 @@ def clean_feature_data(df):
     return df
 
 
-def read_and_clean_features(data_types, labels, feature_set_name=None):
+def read_and_clean_features(data_types, labels, feature_set_name):
     df = pd.DataFrame()
     for data_type in data_types:
         features_data_path = get_data_path(data_type, "features")
@@ -39,7 +42,7 @@ def read_and_clean_features(data_types, labels, feature_set_name=None):
         df = pd.concat([df, df_dt])
     df = clean_feature_data(df)
 
-    if feature_set_name is None:
+    if feature_set_name == "all":
         feature_df = df
     else:
         features = feature_sets[feature_set_name]
@@ -49,6 +52,6 @@ def read_and_clean_features(data_types, labels, feature_set_name=None):
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(100,100,100,100))
+    estimator = MLPClassifier(hidden_layer_sizes=(100,100,100,100), max_iter=500)
     clf = make_pipeline(StandardScaler(), estimator)
     return clf
