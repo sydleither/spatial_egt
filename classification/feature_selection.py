@@ -15,16 +15,14 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
 from classification.common import df_to_xy, read_and_clean_features
-from common import get_data_path
-
-
-two_colors = ["xkcd:faded purple", "xkcd:lemon yellow"]
+from common import get_data_path, theme_colors
 
 
 def plot_feature_selection(save_loc, measurement, df):
     df = df.sort_values(measurement, ascending=False)
     fig, ax = plt.subplots(figsize=(6, 12))
-    sns.barplot(data=df, x=measurement, y="Feature", color=two_colors[0], ax=ax)
+    sns.barplot(data=df, x=measurement, y="Feature", color=theme_colors[0], ax=ax)
+    ax.set(title=f"Feature {measurement} Score")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/fs_{measurement}.png", bbox_inches="tight")
@@ -42,14 +40,12 @@ def feature_selection(X, y, feature_names):
     m_info = mutual_info_classif(X, y)
     f_stat, _ = f_classif(X, y)
     rf = rf_importance(X, y)
-
     data = []
     for i,name in enumerate(feature_names):
         data.append({"Feature": name,
                      "Mutual Information":m_info[i],
                      "F-Statistic":f_stat[i],
                      "Mean Decrease in Test Accuracy":rf[i]})
-
     df = pd.DataFrame(data)
     return df
 
@@ -58,10 +54,10 @@ def sfs(X, y, feature_names):
     feature_names = np.array(feature_names)
     cv = StratifiedKFold(5)
     rf = RandomForestClassifier()
-    sfs_forward = SequentialFeatureSelector(rf, tol=0.1, direction="forward", cv=cv)
+    sfs_forward = SequentialFeatureSelector(rf, tol=0.05, direction="forward", cv=cv)
     sfs_forward.fit(X, y)
     print("Forward:", feature_names[sfs_forward.get_support()])
-    sfs_backward = SequentialFeatureSelector(rf, tol=-0.1, direction="backward", cv=cv)
+    sfs_backward = SequentialFeatureSelector(rf, tol=-0.05, direction="backward", cv=cv)
     sfs_backward.fit(X, y)
     print("Backward:", feature_names[sfs_backward.get_support()])
 
@@ -79,7 +75,7 @@ def main(experiment_name, *data_types):
     measurements = [x for x in df.columns if x != "Feature"]
     for m in measurements:
         plot_feature_selection(save_loc, m, df)
-    #sfs(X, y, feature_names)
+    sfs(X, y, feature_names)
 
 
 if __name__ == "__main__":

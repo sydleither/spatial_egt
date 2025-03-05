@@ -193,7 +193,7 @@ def class_balance(df, label_names):
         print(f"\tProportions: {proportions}")
 
 
-def print_correlated(df, label_names):
+def print_correlated_clusters(df, label_names):
     feature_names = sorted(list(df.columns))
     [feature_names.remove(ln) for ln in label_names]
 
@@ -210,7 +210,7 @@ def main(experiment_name, data_type):
     feature_df = read_and_clean_features([data_type], label, experiment_name)
     save_loc = get_data_path(data_type, f"model/{experiment_name}/features")
     
-    print_correlated(feature_df, label)
+    print_correlated_clusters(feature_df, label)
     features_ridgeplots(save_loc, feature_df, label, game_colors,
                         label_orders={"game":game_colors.keys()})
     class_balance(feature_df, label)

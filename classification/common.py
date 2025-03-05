@@ -11,9 +11,8 @@ feature_sets = {"prop_s":["Proportion_Sensitive"],
                       "NC_Sensitive_Mean", "NC_Sensitive_SD", "NC_Sensitive_Skew"],
                 "nn":["NN_Resistant_Mean", "NN_Resistant_SD", "NN_Resistant_Skew",
                       "NN_Sensitive_Mean", "NN_Sensitive_SD", "NN_Sensitive_Skew"],
-                "mi_noncorr":['NC_Resistant_Mean', 'NN_Sensitive_Skew', 'NN_Resistant_Skew', 'ANNI', 'NC_Resistant_SD'],
-                "f_noncorr":['SES', 'KL_Divergence', 'ANNI', 'NN_Resistant_Skew', 'NC_Resistant_SD', 'NC_Sensitive_SD', 'NN_Sensitive_Skew', 'NC_Resistant_Mean', 'Local_Morans_i_Sensitive_Skew', 'SFP_SD'],
-                "sfs":['CPCF_Min', 'NC_Resistant_SD', 'NC_Sensitive_SD', 'NN_Resistant_Mean', 'NN_Sensitive_Mean']}
+                "sfs":['CPCF_Min', 'NC_Resistant_SD', 'NC_Sensitive_SD', 'NN_Resistant_Mean', 'NN_Sensitive_Mean'],
+                "test":['NC_Resistant_Mean', 'NN_Sensitive_Skew', 'NN_Resistant_Skew', 'ANNI', 'NC_Resistant_SD'],}
 #feature_sets = feature_sets | {"nc_plus":feature_sets["nc"]+["Cross_Ripleys_k_Max"]}
 
 
