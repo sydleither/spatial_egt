@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import euclidean
-from scipy.stats import wasserstein_distance
+from scipy.stats import mannwhitneyu, wasserstein_distance
 import seaborn as sns
 
 from common import game_colors, get_data_path
 from data_analysis.plot_function import get_data
 from data_processing.write_feature_jobs import DISTRIBUTION_BINS
+
+
+two_colors = ["xkcd:faded purple", "xkcd:lemon yellow"]
 
 
 def bin_samples(function_name, samples):
@@ -43,7 +46,7 @@ def plot_allgame_heatmap(save_loc, feature, df, stat):
     df = df.reindex(order)
     df = df[order]
     fig, ax = plt.subplots()
-    sns.heatmap(df, annot=True, fmt=".2f", cmap="Greens", ax=ax)
+    sns.heatmap(df, annot=True, fmt=".2f", cmap="Purples", ax=ax)
     ax.set(xlabel="Game", ylabel="Game")
     feature_title = feature.replace("_", " ")
     ax.set(title=f"{feature_title} {stat} Between Games")
@@ -70,7 +73,8 @@ def plot_allgame_barplot(save_loc, feature, df, stat):
 def plot_binary_barplot(save_loc, feature, df, stat):
     df["Same Game"] = df["Game 1"] == df["Game 2"]
     fig, ax = plt.subplots()
-    sns.barplot(data=df, x="Same Game", y=stat, color="#cf6275", ax=ax)
+    sns.barplot(data=df, x="Same Game", y=stat, 
+                order=[True, False], palette=two_colors, ax=ax)
     feature_title = feature.replace("_", " ")
     ax.set(title=f"Binarized {feature_title} {stat} Between Games")
     fig.patch.set_alpha(0)
@@ -78,25 +82,56 @@ def plot_binary_barplot(save_loc, feature, df, stat):
     fig.savefig(f"{save_loc}/distinguish_bpbin_{feature}.png", bbox_inches="tight")
 
 
+def plot_1vrest_barplot(save_loc, feature, df, stat):
+    df["Same Game"] = df["Game 1"] == df["Game 2"]
+
+    for game in game_colors.keys():
+        df_game = df[df["Game 1"] == game]
+        vals1 = df_game[df_game["Same Game"] == True][stat].values
+        vals2 = df_game[df_game["Same Game"] == False][stat].values
+        u, p = mannwhitneyu(vals1, vals2)
+        print(f"{game} {p}")
+
+    fig, ax = plt.subplots()
+    sns.barplot(data=df, x="Game 1", y=stat, hue="Same Game",
+                order=game_colors.keys(), hue_order=[True, False],
+                palette=two_colors, ax=ax)
+    ax.set(xlabel="Game")
+    feature_title = feature.replace("_", " ")
+    ax.set(title=f"{feature_title} One-vs-Rest {stat}")
+    fig.patch.set_alpha(0)
+    fig.tight_layout()
+    fig.savefig(f"{save_loc}/distinguish_bp1vr_{feature}.png", bbox_inches="tight")
+
+
 def plot_allfeature_allgame_barplot(save_loc, df):
     df = df.sort_values("Pct Difference", ascending=False)
-    fig, ax = plt.subplots()
-    sns.barplot(data=df, x="Spatial Statistic", y="Pct Difference", color="#cf6275", ax=ax)
-    ax.set(title="Percent Difference of Spatial Statistics Between Samples with the Same vs Different Game")
-    ax.tick_params(axis="x", labelrotation=90)
+    fig, ax = plt.subplots(figsize=(6, 12))
+    sns.barplot(data=df, x="Pct Difference", y="Spatial Statistic", color=two_colors[0], ax=ax)
+    #ax.set(title="Percent Difference of Spatial Statistics Between Samples with the Same vs Different Game")
     fig.patch.set_alpha(0)
     fig.tight_layout()
     fig.savefig(f"{save_loc}/distinguish_all.png", bbox_inches="tight")
 
 
+def plot_allfeature_1vrest_barplot(save_loc, df, stat):
+    df = pd.melt(df, id_vars="Spatial Statistic", value_vars=list(game_colors.keys()))
+    df = df.rename({"variable":"Game", "value":stat}, axis=1)
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.barplot(data=df, x="Spatial Statistic", y=stat, hue="Game", ax=ax,
+                hue_order=game_colors.keys(), palette=game_colors.values())
+    fig.patch.set_alpha(0)
+    fig.tight_layout()
+    fig.savefig(f"{save_loc}/distinguish_1vrest.png", bbox_inches="tight")
+
+
 def plot_allfeature_bingame_barplot(save_loc, df):
     for game in game_colors.keys():
         df = df.sort_values(game, ascending=False)
-        fig, ax = plt.subplots()
-        sns.barplot(data=df, x="Spatial Statistic", y=game, color=game_colors[game], ax=ax)
+        fig, ax = plt.subplots(figsize=(6, 12))
+        sns.barplot(data=df, x=game, y="Spatial Statistic", color=game_colors[game], ax=ax)
         ax.set(title=f"{game} vs Rest Percent Difference in Spatial Statistic")
         ax.set(ylabel="Pct Difference")
-        ax.tick_params(axis="x", labelrotation=90)
         fig.patch.set_alpha(0)
         fig.tight_layout()
         fig.savefig(f"{save_loc}/distinguish_{game}.png", bbox_inches="tight")
@@ -108,7 +143,7 @@ def get_binary_pct_diff(df, stat):
     df = df[[stat, "same"]].groupby("same").mean()
     d = df.at[False, stat]
     s = df.at[True, stat]
-    return abs((s-d)/((s+d)/2))
+    return abs(s-d) #abs((s-d)/((s+d)/2))
 
 
 def get_1vrest_pct_diffs(df, stat):
@@ -124,7 +159,7 @@ def get_1vrest_pct_diffs(df, stat):
     return result
 
 
-def get_difference_data(data_type, features_data_path, feature_name, df_features, limit=500):
+def get_difference_data(data_type, features_data_path, feature_name, df_features, limit=None):
     if feature_name in df_features.columns:
         samples = df_features[[feature_name, "game"]].values
         get_difference = get_difference_feature
@@ -142,7 +177,8 @@ def get_difference_data(data_type, features_data_path, feature_name, df_features
             stat = "Euclidean Distance"
 
     data = []
-    samples = samples[0:limit]
+    if limit:
+        samples = samples[0:limit]
     for i in range(len(samples)):
         for j in range(i+1, len(samples)):
             feature_i, game_i = samples[i]
@@ -160,12 +196,13 @@ def main_idv(data_type, feature_name):
     df_features = pd.read_csv(f"{features_data_path}/all.csv")
     df_features = df_features[df_features["game"] != "Unknown"]
 
-    df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features)
+    df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features, 1000)
 
-    save_loc = get_data_path(data_type, "images")
+    save_loc = get_data_path(data_type, f"images/{feature_name}")
     plot_allgame_heatmap(save_loc, feature_name, df, stat)
     plot_allgame_barplot(save_loc, feature_name, df, stat)
     plot_binary_barplot(save_loc, feature_name, df, stat)
+    plot_1vrest_barplot(save_loc, feature_name, df, stat)
 
 
 def main_all(data_type):
@@ -173,12 +210,16 @@ def main_all(data_type):
     df_features = pd.read_csv(f"{features_data_path}/all.csv")
     df_features = df_features[df_features["game"] != "Unknown"]
 
+    just_features = False
+    if just_features:
+        feature_names = [x for x in df_features.columns if x not in ["game", "source", "sample"]]
+    else:
+        #feature_names = [x[:-4] for x in os.listdir(features_data_path) if not x[:-4] in list(df_features.columns)+["all"]]
+        feature_names = ["NC_Resistant", "NC_Sensitive", "NN_Resistant", "NN_Sensitive"]
+
     pct_diff_data = []
-    for feature_file in os.listdir(features_data_path):
-        if feature_file == "all.csv":
-            continue
-        feature_name = feature_file[:-4]
-        df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features, 50)
+    for feature_name in feature_names:
+        df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features)
         pct_diff = get_binary_pct_diff(df, stat)
         display_name = feature_name.replace("_", " ")
         one_vs_rest = get_1vrest_pct_diffs(df, stat)
@@ -186,8 +227,9 @@ def main_all(data_type):
 
     save_loc = get_data_path(data_type, "images")
     df = pd.DataFrame(pct_diff_data)
-    plot_allfeature_allgame_barplot(save_loc, df)
-    plot_allfeature_bingame_barplot(save_loc, df)
+    #plot_allfeature_allgame_barplot(save_loc, df)
+    #plot_allfeature_bingame_barplot(save_loc, df)
+    plot_allfeature_1vrest_barplot(save_loc, df, "Euclidean Distance")
 
 
 if __name__ == "__main__":

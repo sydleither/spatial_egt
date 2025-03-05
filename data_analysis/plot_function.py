@@ -69,7 +69,7 @@ def get_data(df_func, func_name, data_type, source="", sample_ids=None):
 
 
 def idv_plots(df_func, func_name, title, xlabel, ylabel, plot, data_type, source, *sample_ids):
-    save_loc = get_data_path(data_type, "images")
+    save_loc = get_data_path(data_type, f"images/{func_name}")
     df = get_data(df_func, func_name, data_type, source=source, sample_ids=sample_ids)
     df = df.explode(func_name)
     file_name = func_name+"_"+source+"_"+"_".join(sample_ids)
@@ -77,7 +77,7 @@ def idv_plots(df_func, func_name, title, xlabel, ylabel, plot, data_type, source
 
 
 def agg_plot(df_func, func_name, title, xlabel, ylabel, plot, data_type, source):
-    save_loc = get_data_path(data_type, "images")
+    save_loc = get_data_path(data_type, f"images/{func_name}")
     df = get_data(df_func, func_name, data_type, source=source)
     df = df.explode(func_name)
     plot(df, func_name, save_loc, func_name+source, title, xlabel, ylabel, "game")
