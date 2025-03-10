@@ -39,8 +39,9 @@ def plot_dists(df, dist_name, save_loc, file_name, title, xlabel, ylabel, col="g
     facet = sns.FacetGrid(df, col=col, hue="game",
                           col_order=order, hue_order=game_colors.keys(),
                           palette=game_colors.values(), height=4, aspect=1)
-    facet.map_dataframe(sns.histplot, x=dist_name, bins=bins, kde=True,
-                        kde_kws={"bw_adjust":2}, stat="proportion")
+    facet.map_dataframe(sns.histplot, x=dist_name, bins=bins, stat="proportion")
+                        #kde=True, kde_kws={"bw_adjust":2})
+    facet.set(xlim=(start,stop))
     facet.set_titles(col_template="{col_name}")
     facet.set(xlabel=xlabel, ylabel=ylabel)
     facet.figure.subplots_adjust(top=0.9)

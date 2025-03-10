@@ -95,8 +95,8 @@ DISTRIBUTION_BINS = {
     "SFP": (0, 1.1, 0.1),
     "Local_Morans_i_Resistant": (-1, 1.1, 0.1),
     "Local_Morans_i_Sensitive": (-1, 1.1, 0.1),
-    "NN_Resistant": (0, 11, 1),
-    "NN_Sensitive": (0, 11, 1),
+    "NN_Resistant": (0, 6, 1),
+    "NN_Sensitive": (0, 6, 1),
 }
 
 

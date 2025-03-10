@@ -15,17 +15,21 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
 from classification.common import df_to_xy, read_and_clean_features
-from common import get_data_path, theme_colors
+from common import game_colors, get_data_path, theme_colors
 
 
-def plot_feature_selection(save_loc, measurement, df):
+def plot_feature_selection(save_loc, measurement, game, df):
     df = df.sort_values(measurement, ascending=False)
+    if game == "all":
+        color = theme_colors[0]
+    else:
+        color = game_colors[game]
     fig, ax = plt.subplots(figsize=(6, 12))
-    sns.barplot(data=df, x=measurement, y="Feature", color=theme_colors[0], ax=ax)
+    sns.barplot(data=df, x=measurement, y="Feature", color=color, ax=ax)
     ax.set(title=f"Feature {measurement} Score")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/fs_{measurement}.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/fs_{measurement}_{game}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -69,13 +73,20 @@ def main(experiment_name, *data_types):
         parent_dir = data_types[0][0]
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}/features")
     feature_df = read_and_clean_features(data_types[0], label, experiment_name)
-    X, y, _, feature_names = df_to_xy(feature_df, label[0])
+    X, y, int_to_class, feature_names = df_to_xy(feature_df, label[0])
 
     df = feature_selection(X, y, feature_names)
     measurements = [x for x in df.columns if x != "Feature"]
     for m in measurements:
-        plot_feature_selection(save_loc, m, df)
-    sfs(X, y, feature_names)
+        plot_feature_selection(save_loc, m, "all", df)
+
+    for i,game in int_to_class.items():
+        y_game = [1 if label == i else 0 for label in y]
+        df = feature_selection(X, y_game, feature_names)
+        for m in measurements:
+            plot_feature_selection(save_loc, m, game, df)
+
+    #sfs(X, y, feature_names)
 
 
 if __name__ == "__main__":

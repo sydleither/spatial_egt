@@ -28,8 +28,8 @@ def get_difference_function(function1, function2):
 
 
 def get_difference_distribution(distribution1, distribution2):
-    return euclidean(distribution1, distribution2)
-    #return wasserstein_distance(distribution1, distribution2)
+    #return euclidean(distribution1, distribution2)
+    return wasserstein_distance(distribution1, distribution2)
 
 
 def get_difference_feature(feature1, feature2):
@@ -170,8 +170,8 @@ def get_difference_data(data_type, features_data_path, feature_name, df_features
         if df_func["type"].iloc[0] == "distribution":
             samples = bin_samples(feature_name, samples)
             get_difference = get_difference_distribution
-            #stat = "Wasserstein Distance"
-            stat = "Euclidean Distance"
+            stat = "Wasserstein Distance"
+            #stat = "Euclidean Distance"
         else:
             get_difference = get_difference_function
             stat = "Euclidean Distance"
@@ -193,7 +193,6 @@ def get_difference_data(data_type, features_data_path, feature_name, df_features
 
 def main_idv(data_type, features_data_path, feature_name, df_features):
     df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features, 1000)
-
     save_loc = get_data_path(data_type, f"images/{feature_name}")
     plot_allgame_heatmap(save_loc, feature_name, df, stat)
     plot_allgame_barplot(save_loc, feature_name, df, stat)
@@ -205,13 +204,12 @@ def main_all(data_type, features_data_path, feature_names, df_features, title_ex
     diff_data = []
     diff_stat = ""
     for feature_name in feature_names:
-        df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features, 100)
-        diff = get_binary_diff(df, stat)
+        df, stat = get_difference_data(data_type, features_data_path, feature_name, df_features)
+        diff = get_binary_diff(df, stat, True)
         display_name = feature_name.replace("_", " ")
-        one_vs_rest = get_1vrest_diffs(df, stat)
-        diff_stat = f"Absolute Difference in {stat}"
+        one_vs_rest = get_1vrest_diffs(df, stat, True)
+        diff_stat = f"Percent Difference in {stat}"
         diff_data.append({"Spatial Statistic":display_name, diff_stat:diff} | one_vs_rest)
-
     save_loc = get_data_path(data_type, "images")
     df = pd.DataFrame(diff_data)
     plot_allfeature_allgame_barplot(save_loc, df, diff_stat, title_extra)
