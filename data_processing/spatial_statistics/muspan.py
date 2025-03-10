@@ -52,7 +52,7 @@ def cross_k(df, max_radius, step, cell_type1="sensitive", cell_type2="resistant"
         max_R=max_radius,
         step=step
     )
-    return ck
+    return ck[1:]
 
 
 def j_function(df, cell_type, radius_step):
