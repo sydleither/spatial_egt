@@ -1,7 +1,6 @@
-'''
-Based on: https://scikit-learn.org/stable/modules/feature_selection.html
-'''
 import sys
+import warnings
+warnings.filterwarnings("ignore")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,18 +14,30 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
 from classification.common import df_to_xy, read_and_clean_features
-from common import game_colors, get_data_path, theme_colors
+from common import get_data_path
+
+
+def color_by_statistic(features, split_char=" "):
+    extra = ["Sensitive", "Resistant", "Mean", "SD", "Skew", "Min", "Max", "0"]
+    feature_categories = []
+    feature_to_statistic = dict()
+    for feature in features:
+        feature_category = [x for x in feature.split(split_char) if x not in extra]
+        feature_category = split_char.join(feature_category)
+        feature_to_statistic[feature] = feature_category
+        if feature_category not in feature_categories:
+            feature_categories.append(feature_category)
+    return feature_to_statistic
 
 
 def plot_feature_selection(save_loc, measurement, game, df):
     df = df.sort_values(measurement, ascending=False)
-    if game == "all":
-        color = theme_colors[0]
-    else:
-        color = game_colors[game]
+    df["Feature"] = df["Feature"].str.replace("_", " ")
+    df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
     fig, ax = plt.subplots(figsize=(6, 12))
-    sns.barplot(data=df, x=measurement, y="Feature", color=color, ax=ax)
-    ax.set(title=f"Feature {measurement} Score")
+    sns.barplot(data=df, x=measurement, y="Feature", ax=ax,
+                hue="Statistic", palette=sns.color_palette("Set2"))
+    ax.set(title=f"Feature {measurement} Score: {game}")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/fs_{measurement}_{game}.png", bbox_inches="tight")
@@ -78,7 +89,7 @@ def main(experiment_name, *data_types):
     df = feature_selection(X, y, feature_names)
     measurements = [x for x in df.columns if x != "Feature"]
     for m in measurements:
-        plot_feature_selection(save_loc, m, "all", df)
+        plot_feature_selection(save_loc, m, "All", df)
 
     for i,game in int_to_class.items():
         y_game = [1 if label == i else 0 for label in y]
@@ -86,7 +97,7 @@ def main(experiment_name, *data_types):
         for m in measurements:
             plot_feature_selection(save_loc, m, game, df)
 
-    #sfs(X, y, feature_names)
+    sfs(X, y, feature_names)
 
 
 if __name__ == "__main__":
