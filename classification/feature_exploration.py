@@ -9,7 +9,7 @@ import numpy as np
 from scipy import stats
 import seaborn as sns
 
-from classification.common import read_and_clean_features
+from classification.common import read_and_clean_features, remove_correlated
 from common import game_colors, get_data_path
 from classification.DDIT.DDIT import DDIT
 
@@ -193,11 +193,24 @@ def class_balance(df, label_names):
         print(f"\tProportions: {proportions}")
 
 
+def print_correlated_clusters(df, label_names):
+    feature_names = sorted(list(df.columns))
+    [feature_names.remove(ln) for ln in label_names]
+
+    corr_matrix = df[feature_names].corr()
+    non_correlated = remove_correlated(df, label_names)
+    for feature in non_correlated:
+        row = corr_matrix[feature]
+        correlated = list(row[((row >= 0.9) | (row <= -0.9)) & (row != 1)].index)
+        print(f"{feature}: {correlated}")
+
+
 def main(experiment_name, data_type):
     label = ["game"]
     feature_df = read_and_clean_features([data_type], label, experiment_name)
     save_loc = get_data_path(data_type, f"model/{experiment_name}/features")
     
+    print_correlated_clusters(feature_df, label)
     features_ridgeplots(save_loc, feature_df, label, game_colors,
                         label_orders={"game":game_colors.keys()})
     class_balance(feature_df, label)
