@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.stats import skew
+from scipy.stats import kurtosis, skew
 
 from common import get_data_path, read_payoff_df
 
@@ -15,14 +15,15 @@ def get_dist_statistics(row, name):
     row[f"{name}_SD"] = sd
     if sd == 0:
         row[f"{name}_Skew"] = 0
+        row[f"{name}_Kurtosis"] = 0
     else:
         row[f"{name}_Skew"] = skew(dist)
+        row[f"{name}_Kurtosis"] = kurtosis(dist, fisher=True, bias=True)
     return row
 
 
 def get_func_statistics(row, name):
     func = row[name]
-    row[f"{name}_0"] = func[0]
     row[f"{name}_Min"] = min(func)
     row[f"{name}_Max"] = max(func)
     return row

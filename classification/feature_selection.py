@@ -18,12 +18,19 @@ from common import get_data_path
 
 
 def color_by_statistic(features, split_char=" "):
-    extra = ["Sensitive", "Resistant", "Mean", "SD", "Skew", "Min", "Max", "0"]
+    extra = [
+        "Sensitive", "Resistant",
+        "Local", "Global",
+        "Mean", "SD", "Skew", "Kurtosis",
+        "Min", "Max", "0"
+    ]
     feature_categories = []
     feature_to_statistic = dict()
     for feature in features:
         feature_category = [x for x in feature.split(split_char) if x not in extra]
         feature_category = split_char.join(feature_category)
+        if feature_category == "Proportion":
+            feature_category = "Proportion"+split_char+"Sensitive"
         feature_to_statistic[feature] = feature_category
         if feature_category not in feature_categories:
             feature_categories.append(feature_category)
@@ -36,8 +43,9 @@ def plot_feature_selection(save_loc, measurement, game, df):
     df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
     fig, ax = plt.subplots(figsize=(6, 12))
     sns.barplot(data=df, x=measurement, y="Feature", ax=ax,
-                hue="Statistic", palette=sns.color_palette("Set2"))
-    ax.set(title=f"Feature {measurement} Score: {game}")
+                hue="Statistic", palette=sns.color_palette("Set2"),
+                hue_order=sorted(df["Statistic"].unique()))
+    ax.set(title=f"Feature {measurement}: {game}")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/fs_{measurement}_{game}.png", bbox_inches="tight")

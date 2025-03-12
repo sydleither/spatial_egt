@@ -39,6 +39,8 @@ FEATURE_REGISTRY = {
 
 FEATURE_PARAMS = {
     "in_silico": {
+        "ANNI_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
+        "ANNI_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
         "NC_Resistant": {"radius": 3, "return_fs": True},
         "NC_Sensitive": {"radius": 3, "return_fs": False},
         "SFP": {"sample_length": 5},
@@ -59,6 +61,8 @@ FEATURE_PARAMS = {
         "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 3}
     },
     "in_vitro": {
+        "ANNI_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
+        "ANNI_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
         "NC_Resistant": {"radius": 30, "return_fs": True},
         "NC_Sensitive": {"radius": 30, "return_fs": False},
         "SFP": {"sample_length": 50},
@@ -100,8 +104,8 @@ DISTRIBUTION_BINS = {
     "SFP": (0, 1.1, 0.1),
     "Local_Morans_i_Resistant": (-1, 1.1, 0.1),
     "Local_Morans_i_Sensitive": (-1, 1.1, 0.1),
-    "NN_Resistant": (0, 6, 1),
-    "NN_Sensitive": (0, 6, 1),
+    "NN_Resistant": (1, 5, 0.2),
+    "NN_Sensitive": (1, 5, 0.2),
 }
 
 
