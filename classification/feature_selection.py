@@ -5,12 +5,14 @@ warnings.filterwarnings("ignore")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.stats import wasserstein_distance
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import (f_classif,
                                        mutual_info_classif)
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import scale
 
 from classification.common import df_to_xy, read_and_clean_features
 from common import get_data_path
@@ -79,6 +81,34 @@ def run_feature_selection(save_loc, X, y, feature_names, condition):
         plot_feature_selection(save_loc, m, condition, df)
 
 
+def pairwise_distributions(X_i, X_j, feature_names):
+    X_i = list(zip(*X_i))
+    X_j = list(zip(*X_j))
+    data = []
+    for k,name in enumerate(feature_names):
+        feature_i = X_i[k]
+        feature_j = X_j[k]
+        wass = wasserstein_distance(feature_i, feature_j)
+        data.append({"Feature": name,
+                     "Wasserstein Distance":wass})
+    df = pd.DataFrame(data)
+    return df
+
+
+def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names):
+    for i in range(len(int_to_class)):
+        i_indices = [k for k in range(len(y)) if y[k] == i]
+        i_X_pair = [X[k] for k in i_indices]
+        for j in range(i+1, len(int_to_class)):  
+            j_indices = [k for k in range(len(y)) if y[k] == j]
+            j_X_pair = [X[k] for k in j_indices]
+            pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
+            df = pairwise_distributions(i_X_pair, j_X_pair, feature_names)
+            measurements = [x for x in df.columns if x != "Feature"]
+            for m in measurements:
+                plot_feature_selection(save_loc, m, pair_name, df)
+
+
 def main(experiment_name, *data_types):
     label = ["game"]
     parent_dir = "."
@@ -87,20 +117,10 @@ def main(experiment_name, *data_types):
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}/features/fs")
     feature_df = read_and_clean_features(data_types[0], label, experiment_name)
     X, y, int_to_class, feature_names = df_to_xy(feature_df, label[0])
+    X = scale(X, axis=0)
 
     run_feature_selection(save_loc, X, y, feature_names, "All")
-
-    for i,game in int_to_class.items():
-        y_game = [1 if label == i else 0 for label in y]
-        run_feature_selection(save_loc, X, y_game, feature_names, game)
-
-    for i in range(len(int_to_class)):
-        for j in range(i+1, len(int_to_class)):
-            indices = [k for k in range(len(y)) if y[k] == i or y[k] == j]
-            X_pair = [X[k] for k in indices]
-            y_pair = [y[k] for k in indices]
-            pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
-            run_feature_selection(save_loc, X_pair, y_pair, feature_names, pair_name)
+    run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names)
 
 
 if __name__ == "__main__":

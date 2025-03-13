@@ -27,7 +27,7 @@ def df_to_xy(df, label_name):
     label_classes = list(game_colors.keys())
     class_to_int = {lc:i for i,lc in enumerate(label_classes)}
     int_to_class = {i:lc for i,lc in enumerate(label_classes)}
-    X = list(df[feature_names].values)
+    X = df[feature_names].values.tolist()
     y = [class_to_int[x] for x in df[label_name].values]
     return X, y, int_to_class, feature_names
 
