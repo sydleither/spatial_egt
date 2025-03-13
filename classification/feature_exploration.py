@@ -209,7 +209,7 @@ def main(experiment_name, data_type):
     label = ["game"]
     feature_df = read_and_clean_features([data_type], label, experiment_name)
     save_loc = get_data_path(data_type, f"model/{experiment_name}/features")
-    
+
     print_correlated_clusters(feature_df, label)
     features_ridgeplots(save_loc, feature_df, label, game_colors,
                         label_orders={"game":game_colors.keys()})

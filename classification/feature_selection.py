@@ -8,10 +8,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import (f_classif,
-                                       mutual_info_classif,
-                                       SequentialFeatureSelector)
+                                       mutual_info_classif)
 from sklearn.inspection import permutation_importance
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import train_test_split
 
 from classification.common import df_to_xy, read_and_clean_features
 from common import get_data_path
@@ -37,7 +36,7 @@ def color_by_statistic(features, split_char=" "):
     return feature_to_statistic
 
 
-def plot_feature_selection(save_loc, measurement, game, df):
+def plot_feature_selection(save_loc, measurement, condition, df):
     df = df.sort_values(measurement, ascending=False)
     df["Feature"] = df["Feature"].str.replace("_", " ")
     df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
@@ -45,10 +44,10 @@ def plot_feature_selection(save_loc, measurement, game, df):
     sns.barplot(data=df, x=measurement, y="Feature", ax=ax,
                 hue="Statistic", palette=sns.color_palette("Set2"),
                 hue_order=sorted(df["Statistic"].unique()))
-    ax.set(title=f"Feature {measurement}: {game}")
+    ax.set(title=f"Feature {measurement}\n{condition}")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/fs_{measurement}_{game}.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/{measurement}_{condition}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -73,16 +72,11 @@ def feature_selection(X, y, feature_names):
     return df
 
 
-def sfs(X, y, feature_names):
-    feature_names = np.array(feature_names)
-    cv = StratifiedKFold(5)
-    rf = RandomForestClassifier()
-    sfs_forward = SequentialFeatureSelector(rf, tol=0.05, direction="forward", cv=cv)
-    sfs_forward.fit(X, y)
-    print("Forward:", feature_names[sfs_forward.get_support()])
-    sfs_backward = SequentialFeatureSelector(rf, tol=-0.05, direction="backward", cv=cv)
-    sfs_backward.fit(X, y)
-    print("Backward:", feature_names[sfs_backward.get_support()])
+def run_feature_selection(save_loc, X, y, feature_names, condition):
+    df = feature_selection(X, y, feature_names)
+    measurements = [x for x in df.columns if x != "Feature"]
+    for m in measurements:
+        plot_feature_selection(save_loc, m, condition, df)
 
 
 def main(experiment_name, *data_types):
@@ -90,22 +84,23 @@ def main(experiment_name, *data_types):
     parent_dir = "."
     if len(data_types[0]) == 1:
         parent_dir = data_types[0][0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}/features")
+    save_loc = get_data_path(parent_dir, f"model/{experiment_name}/features/fs")
     feature_df = read_and_clean_features(data_types[0], label, experiment_name)
     X, y, int_to_class, feature_names = df_to_xy(feature_df, label[0])
 
-    df = feature_selection(X, y, feature_names)
-    measurements = [x for x in df.columns if x != "Feature"]
-    for m in measurements:
-        plot_feature_selection(save_loc, m, "All", df)
+    run_feature_selection(save_loc, X, y, feature_names, "All")
 
     for i,game in int_to_class.items():
         y_game = [1 if label == i else 0 for label in y]
-        df = feature_selection(X, y_game, feature_names)
-        for m in measurements:
-            plot_feature_selection(save_loc, m, game, df)
+        run_feature_selection(save_loc, X, y_game, feature_names, game)
 
-    sfs(X, y, feature_names)
+    for i in range(len(int_to_class)):
+        for j in range(i+1, len(int_to_class)):
+            indices = [k for k in range(len(y)) if y[k] == i or y[k] == j]
+            X_pair = [X[k] for k in indices]
+            y_pair = [y[k] for k in indices]
+            pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
+            run_feature_selection(save_loc, X_pair, y_pair, feature_names, pair_name)
 
 
 if __name__ == "__main__":
