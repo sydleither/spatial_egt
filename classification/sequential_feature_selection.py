@@ -3,21 +3,20 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.model_selection import StratifiedKFold
 
-from classification.common import df_to_xy, read_and_clean_features
+from classification.common import df_to_xy, get_model, read_and_clean_features
 
 
-def sfs(X, y, feature_names): #TODO add standard scalar
+def sfs(X, y, feature_names):
     feature_names = np.array(feature_names)
     cv = StratifiedKFold(5)
-    rf = RandomForestClassifier()
-    sfs_forward = SequentialFeatureSelector(rf, tol=0.05, direction="forward", cv=cv)
+    clf = get_model()
+    sfs_forward = SequentialFeatureSelector(clf, tol=0.05, direction="forward", cv=cv)
     sfs_forward.fit(X, y)
     print("Forward:", feature_names[sfs_forward.get_support()])
-    sfs_backward = SequentialFeatureSelector(rf, tol=-0.05, direction="backward", cv=cv)
+    sfs_backward = SequentialFeatureSelector(clf, tol=-0.05, direction="backward", cv=cv)
     sfs_backward.fit(X, y)
     print("Backward:", feature_names[sfs_backward.get_support()])
 

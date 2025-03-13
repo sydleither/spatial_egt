@@ -53,6 +53,20 @@ def plot_feature_selection(save_loc, measurement, condition, df):
     plt.close()
 
 
+def plot_pairwise_distances(save_loc, measurement, df):
+    df["Feature"] = df["Feature"].str.replace("_", " ")
+    df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
+    df = df.sort_values("Statistic", ascending=False)
+    fig, ax = plt.subplots(figsize=(6, 12))
+    sns.barplot(data=df, x=measurement, y="Feature", hue="Pair", ax=ax,
+                palette=sns.color_palette("Set2"))
+    ax.set(title=f"Feature Pairwise {measurement}")
+    fig.tight_layout()
+    fig.figure.patch.set_alpha(0.0)
+    fig.savefig(f"{save_loc}/{measurement}_pairwise.png", bbox_inches="tight")
+    plt.close()
+
+
 def rf_importance(X, y, n_repeats=10):
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
     rf = RandomForestClassifier().fit(X_train, y_train)
@@ -81,7 +95,7 @@ def run_feature_selection(save_loc, X, y, feature_names, condition):
         plot_feature_selection(save_loc, m, condition, df)
 
 
-def pairwise_distributions(X_i, X_j, feature_names):
+def pairwise_distributions(X_i, X_j, feature_names, condition):
     X_i = list(zip(*X_i))
     X_j = list(zip(*X_j))
     data = []
@@ -90,9 +104,23 @@ def pairwise_distributions(X_i, X_j, feature_names):
         feature_j = X_j[k]
         wass = wasserstein_distance(feature_i, feature_j)
         data.append({"Feature": name,
-                     "Wasserstein Distance":wass})
+                     "Wasserstein Distance":wass,
+                     "Pair": condition})
+    return data
+
+
+def run_pairwise_distributions_all(save_loc, X, y, int_to_class, feature_names):
+    data = []
+    for i in range(len(int_to_class)):
+        i_indices = [k for k in range(len(y)) if y[k] == i]
+        i_X_pair = [X[k] for k in i_indices]
+        for j in range(i+1, len(int_to_class)):  
+            j_indices = [k for k in range(len(y)) if y[k] == j]
+            j_X_pair = [X[k] for k in j_indices]
+            pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
+            data += pairwise_distributions(i_X_pair, j_X_pair, feature_names, pair_name)
     df = pd.DataFrame(data)
-    return df
+    plot_pairwise_distances(save_loc, "Wasserstein Distance", df)
 
 
 def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names):
@@ -103,10 +131,10 @@ def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names):
             j_indices = [k for k in range(len(y)) if y[k] == j]
             j_X_pair = [X[k] for k in j_indices]
             pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
-            df = pairwise_distributions(i_X_pair, j_X_pair, feature_names)
-            measurements = [x for x in df.columns if x != "Feature"]
-            for m in measurements:
-                plot_feature_selection(save_loc, m, pair_name, df)
+            data = pairwise_distributions(i_X_pair, j_X_pair, feature_names, pair_name)
+            df = pd.DataFrame(data)
+            plot_feature_selection(save_loc, "Wasserstein Distance", pair_name, df)
+            print(df)
 
 
 def main(experiment_name, *data_types):

@@ -5,18 +5,21 @@ from sklearn.preprocessing import StandardScaler
 
 from common import game_colors, get_data_path
 
-
 feature_sets = {"prop_s":["Proportion_Sensitive"],
                 "nc":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Resistant_Skew",
                       "NC_Sensitive_Mean", "NC_Sensitive_SD", "NC_Sensitive_Skew"],
                 "nn":["NN_Resistant_Mean", "NN_Resistant_SD", "NN_Resistant_Skew",
                       "NN_Sensitive_Mean", "NN_Sensitive_SD", "NN_Sensitive_Skew"],
-                "nc_noncorr":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Sensitive_SD"],
-                "moransi":["Local_Morans_i_Resistant_Mean", "Local_Morans_i_Resistant_SD", "Local_Morans_i_Resistant_Skew",
-                           "Local_Morans_i_Sensitive_Mean", "Local_Morans_i_Sensitive_SD", "Local_Morans_i_Sensitive_Skew",
-                           "Global_Morans_i_Resistant", "Global_Morans_i_Sensitive"],
-                "sfs":['CPCF_Min', 'NC_Resistant_SD', 'NC_Sensitive_SD', 'NN_Resistant_Mean', 'NN_Sensitive_Mean'],
-                "test":['NC_Resistant_Mean', 'NN_Sensitive_Skew', 'NN_Resistant_Skew', 'ANNI', 'NC_Resistant_SD']}
+                "sfs2": ['NN_Resistant_SD', 'NN_Sensitive_SD', 'NC_Sensitive_SD', 'NC_Sensitive_Skew'],
+                "top_pairs":["NC_Sensitive_Mean", "NN_Sensitive_Skew",
+                             "SES", "Cross_Ripleys_k_Sensitive_Max",
+                             "NC_Resistant_Skew",
+                             "NC_Resistant_Mean", "Global_Morans_i_Sensitive",
+                             "NC_Sensitive_Skew"],
+                "top_pairs_noncorr":["NN_Sensitive_Skew", "NC_Resistant_SD",
+                                    "SES", "KL_Divergence",
+                                    "NN_Resistant_Skew", "NC_Sensitive_SD",
+                                    "Proportion_Sensitive"]}
 feature_sets = feature_sets | {"nc_plus":feature_sets["nc"]+["CPCF_Min"]}
 feature_sets = feature_sets | {"nc_noncorr_plus":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Sensitive_SD", "CPCF_Min"]}
 
