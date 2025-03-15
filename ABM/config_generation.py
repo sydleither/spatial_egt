@@ -1,12 +1,12 @@
 import os
 import sys
 
-from ABM.config_utils import lhs, write_config, write_run_scripts
+from config_utils import lhs, write_config, write_run_scripts
 
 
 def main(data_dir, experiment_name, num_samples, seed):
     replicates = 1
-    run_command = "sbatch spatial-egt/ABM/run_config.sb"
+    run_command = "sbatch run_config.sb"
     space = "2D"
 
     run_output = []
