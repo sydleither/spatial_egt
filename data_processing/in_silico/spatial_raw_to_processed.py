@@ -11,7 +11,7 @@ from common import cell_type_map, get_data_path
 
 
 def main(extra=""):
-    data_type = f"in_silico{extra}"
+    data_type = f"in_silico_{extra}"
     raw_data_path = get_data_path(data_type, "raw")
     processed_data_path = get_data_path(data_type, "processed")
     for experiment_name in os.listdir(raw_data_path):
@@ -26,6 +26,8 @@ def main(extra=""):
                     continue
                 for model_file in os.listdir(rep_path):
                     model_path = f"{rep_path}/{model_file}"
+                    if not model_file.endswith("coords.csv"):
+                        continue
                     if not os.path.exists(model_path) or os.path.getsize(model_path) == 0:
                         print(f"Data not found in {model_path}")
                         continue

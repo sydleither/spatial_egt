@@ -10,11 +10,13 @@ def main(data_dir, experiment_name):
     space = "2D"
     end_time = 250
 
+    high = 0.06
+    low = 0.01
     samples = {
-        "Sensitive_Wins":[0.1, 0.1, 0, 0],
-        "Coexistence":[0, 0.1, 0.1, 0],
-        "Bistability":[0.1, 0, 0, 0.1],
-        "Resistant_Wins":[0, 0, 0.1, 0.1]
+        "Sensitive_Wins":[high, high, low, low],
+        "Coexistence":[low, high, high, low],
+        "Bistability":[high, low, low, high],
+        "Resistant_Wins":[low, low, high, high]
     }
 
     run_output = []
@@ -24,6 +26,7 @@ def main(data_dir, experiment_name):
         for r in range(replicates):
             os.makedirs(data_dir+"/"+experiment_name+"/"+config_name+"/"+str(r))
             run_output.append(f"{run_str} {config_name} {space} {r} {end_time}\n")
+            run_output.append(f"{run_str} {config_name} {space} {r}\n")
         write_config(data_dir, experiment_name, config_name, payoff,
                      15625, 0.5, write_freq=end_time, ticks=end_time)
     write_run_scripts(data_dir, experiment_name, run_output)

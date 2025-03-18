@@ -83,6 +83,7 @@ FEATURE_PARAMS = {
         "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 30}
     }
 }
+FEATURE_PARAMS["in_silico_games"] = FEATURE_PARAMS["in_silico"]
 
 FUNCTION_LABELS = {
     "NC_Resistant": {"x":"Fraction Sensitive in Neighborhood", "y":"Fraction of Resistant Cells"},
@@ -114,7 +115,7 @@ def main(data_type, run_local):
     output = []
     for feature_name in FEATURE_REGISTRY.keys():
         output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name}\n")
-    with open("process_features.sh", "w") as f:
+    with open(f"process_features_{data_type}.sh", "w") as f:
         for output_line in output:
             f.write(output_line)
 

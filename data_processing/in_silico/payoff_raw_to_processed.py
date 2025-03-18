@@ -12,7 +12,7 @@ from common import calculate_game, get_data_path
 
 
 def main(extra=""):
-    data_type = f"in_silico{extra}"
+    data_type = f"in_silico_{extra}"
     raw_data_path = get_data_path(data_type, "raw")
     processed_data_path = get_data_path(data_type, "processed")
     df_entries = []
