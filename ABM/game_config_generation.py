@@ -18,12 +18,12 @@ def main(data_dir, experiment_name):
     }
 
     run_output = []
+    run_str = f"{run_command} {data_dir} {experiment_name}"
     for game,payoff in samples.items():
         config_name = game
         for r in range(replicates):
             os.makedirs(data_dir+"/"+experiment_name+"/"+config_name+"/"+str(r))
-            run_str = f"{run_command} {data_dir} {experiment_name} {config_name} {space} {r} {end_time}"
-            run_output.append(f"{run_str}\n")
+            run_output.append(f"{run_str} {config_name} {space} {r} {end_time}\n")
         write_config(data_dir, experiment_name, config_name, payoff,
                      15625, 0.5, write_freq=end_time, ticks=end_time)
     write_run_scripts(data_dir, experiment_name, run_output)

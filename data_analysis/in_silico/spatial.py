@@ -7,7 +7,7 @@ import pandas as pd
 
 from common import game_colors, get_data_path
 
-cell_colors = [game_colors["sensitive_wins"], game_colors["resistant_wins"]]
+cell_colors = [game_colors["Sensitive Wins"], game_colors["Resistant Wins"]]
 
 
 def plot_sample(df, save_loc, sample_id):

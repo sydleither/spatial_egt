@@ -5,27 +5,27 @@ from config_utils import lhs, write_config, write_run_scripts
 
 
 def main(data_dir, experiment_name, num_samples, seed):
-    replicates = 1
     run_command = "sbatch run_config.sb"
     space = "2D"
+    end_time = 250
 
-    run_output = []
     samples = lhs(num_samples,
                   ["A", "B", "C", "D", "fr", "cells"],
-                  [0, 0, 0, 0, 0.25, 625],
-                  [0.1, 0.1, 0.1, 0.1, 0.75, 15000],
+                  [0, 0, 0, 0, 0.2, 625],
+                  [0.1, 0.1, 0.1, 0.1, 0.8, 15000],
                   [False, False, False, False, False, True],
                   seed=seed)
 
+    run_output = []
+    run_str = f"{run_command} {data_dir} {experiment_name}"
     for s,sample in enumerate(samples):
         config_name = str(s)
-        for r in range(replicates):
-            os.makedirs(data_dir+"/"+experiment_name+"/"+config_name+"/"+str(r))
+        os.makedirs(f"{data_dir}/{experiment_name}/{config_name}/{config_name}")
         payoff = [sample["A"], sample["B"], sample["C"], sample["D"]]
         write_config(data_dir, experiment_name, config_name,
-                     payoff, sample["cells"], sample["fr"])
-        run_output.append(f"{run_command} {data_dir} {experiment_name} {config_name} {space}\n")
-
+                     payoff, sample["cells"], sample["fr"],
+                     write_freq=end_time, ticks=end_time)
+        run_output.append(f"{run_str} {config_name} {space} {config_name}\n")
     write_run_scripts(data_dir, experiment_name, run_output)
 
 
