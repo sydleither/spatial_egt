@@ -5,6 +5,7 @@ import os
 
 cell_type_map = {0: "sensitive", 1:"resistant",
                  "S-E9-gfp": "sensitive", "KRAS-mcherry":"resistant",
+                 "BRAF-mcherry":"resistant", "PIK3CA-mcherry": "resistant",
                  "Red":"sensitive", "Green":"resistant", "Blue":"unknown"}
 game_colors = {"Sensitive Wins":"#4C956C", "Coexistence":"#F97306",
                "Bistability":"#047495", "Resistant Wins":"#EF7C8E"}
