@@ -15,36 +15,42 @@ warnings.filterwarnings("ignore")
 
 
 def run(X, y):
-    estimator = MLPClassifier(hidden_layer_sizes=(100,))
+    estimator = MLPClassifier(hidden_layer_sizes=(1,))
     clf = make_pipeline(StandardScaler(), estimator)
     scores = cross_val_score(clf, X, y, cv=5)
-    print(scores)
-    return np.mean(scores), np.std(scores)
+    return np.mean(scores)
 
 
-def main(experiment_name, *data_types):
+def main(experiment_name, num_features, *data_types):
     parent_dir = "."
     if len(data_types[0]) == 1:
         parent_dir = data_types[0][0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
+    save_loc = get_data_path(parent_dir, f"model/{experiment_name}/model_iteration")
     feature_df = read_and_clean_features(data_types[0], ["game"], experiment_name)
     feature_names = list(feature_df.columns)
     feature_names.remove("game")
-    
+
     class_to_int = {lc:i for i,lc in enumerate(feature_df["game"].unique())}
-    for num_features in range(5, 11):
-        features = combinations(feature_names, num_features)
-        for set_of_features in features:
-            X = list(feature_df[feature_names].values)
-            y = [class_to_int[x] for x in feature_df["game"].values]
-            mean, std = run(X, y)
-            print(set_of_features)
-            print(mean, std)
-            print()
+    y = [class_to_int[x] for x in feature_df["game"].values]
+
+    results = []
+    num_features = int(num_features)
+    features = combinations(feature_names, num_features)
+    for set_of_features in features:
+        set_of_features = list(set_of_features)
+        X = list(feature_df[set_of_features].values)
+        mean = run(X, y)
+        set_of_features.append(f"{mean:5.3f}")
+        results.append(set_of_features)
+
+    with open(f"{save_loc}/{num_features}.csv", "w") as f:
+        f.write(",".join([str(i) for i in range(num_features)])+","+"mean\n")
+        for result in results:
+            f.write(",".join(result)+"\n")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
-        main(sys.argv[1], sys.argv[2:])
+    if len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide a feature set and the data types to train the model with.")
+        print("Please provide a feature set, number of features, and the data types to train the model with.")
