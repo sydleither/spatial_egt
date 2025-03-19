@@ -7,7 +7,10 @@ import os
 
 import pandas as pd
 
-from common import cell_type_map, get_data_path
+from common import get_data_path
+
+
+cell_type_map = {0: "sensitive", 1:"resistant"}
 
 
 def main(extra=""):

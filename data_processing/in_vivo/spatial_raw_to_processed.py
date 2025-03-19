@@ -1,7 +1,10 @@
 import os
 import pandas as pd
 
-from common import cell_type_map, get_data_path
+from common import get_data_path
+
+
+cell_type_map = {"Red":"sensitive", "Green":"resistant", "Blue":"unknown"}
 
 
 def raw_to_processed():

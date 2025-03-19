@@ -69,7 +69,7 @@ def plot_pairwise_distances(save_loc, measurement, df):
 
 def rf_importance(X, y, n_repeats=10):
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
-    rf = RandomForestClassifier().fit(X_train, y_train)
+    rf = RandomForestClassifier(max_depth=10).fit(X_train, y_train)
     result = permutation_importance(rf, X_test, y_test, n_repeats=n_repeats)
     return [np.mean(x) for x in result.importances]
 

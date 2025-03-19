@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import game_colors, cell_type_map, get_data_path
+from common import game_colors, get_data_path
 
 cell_colors = [game_colors["Sensitive Wins"], game_colors["Resistant Wins"]]
 
@@ -100,6 +100,14 @@ def plot_game_gr_dc0(df, save_loc, source):
     plt.close()
 
 
+def map_cell_type(df):
+    df["CellType"] = df["CellType"].str.lower()
+    df["type"] = "sensitive"
+    df.loc[df["CellType"].str.contains("mcherry"), "type"] = "resistant"
+    df["CellType"] = df["type"]
+    return df
+
+
 def main():
     raw_data_path = get_data_path("in_vitro", "raw")
     for exp_name in os.listdir(raw_data_path):
@@ -110,13 +118,13 @@ def main():
 
         growth_name = f"{exp_name}_growth_rate_df.csv"
         df = pd.read_csv(f"{raw_data_path}/{exp_name}/{growth_name}")
-        df["CellType"] = df["CellType"].map(cell_type_map)
+        df = map_cell_type(df)
         plot_game_gr(df, image_data_path)
         plot_game_gr_dc0(df, image_data_path, exp_name)
 
         counts_name = f"{exp_name}_counts_df_processed.csv"
         df = pd.read_csv(f"{raw_data_path}/{exp_name}/{counts_name}")
-        df["CellType"] = df["CellType"].map(cell_type_map)
+        df = map_cell_type(df)
         plot_growth_over_time(df, image_data_path)
         plot_drug_concentration(df, image_data_path)
         plot_fs(df, image_data_path)
