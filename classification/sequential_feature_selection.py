@@ -21,9 +21,9 @@ def sfs(X, y, feature_names):
     print("Backward:", feature_names[sfs_backward.get_support()])
 
 
-def main(experiment_name, *data_types):
+def main(experiment_name, data_types):
     label = ["game"]
-    feature_df = read_and_clean_features(data_types[0], label, experiment_name)
+    feature_df = read_and_clean_features(data_types, label, experiment_name)
     X, y, _, feature_names = df_to_xy(feature_df, label[0])
     sfs(X, y, feature_names)
 

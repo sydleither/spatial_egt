@@ -1,7 +1,5 @@
 from collections import Counter
-from itertools import chain, combinations
 import sys
-import warnings
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as grid_spec
@@ -11,9 +9,6 @@ import seaborn as sns
 
 from classification.common import read_and_clean_features, remove_correlated
 from common import game_colors, get_data_path
-from classification.DDIT.DDIT import DDIT
-
-warnings.filterwarnings("ignore")
 
 
 def feature_pairplot(save_loc, df, label_hue):
@@ -116,72 +111,6 @@ def feature_correlation(save_loc, df, label_names):
     plt.close()
 
 
-def fragmentation_matrix_plot(save_loc, df, label_names, binning_method):
-    #initializations
-    ddit = DDIT()
-    feature_names = list(df.columns)
-    [feature_names.remove(ln) for ln in label_names]
-    num_labels = len(label_names)
-    num_features = len(feature_names)
-    feature_name_map = {name:str(i) for i,name in enumerate(feature_names)}
-
-    if num_features > 10:
-        return
-
-    #bin and register features
-    for feature_name in feature_names:
-        feature_name_index = feature_name_map[feature_name]
-        column_data = df[feature_name].values
-        if binning_method == "round":
-            column_data = [round(x,2) for x in column_data]
-        elif binning_method == "equal":
-            _, bin_edges = np.histogram(column_data, bins=10)
-            column_data = np.digitize(column_data, bin_edges)
-        else:
-            print("Invalid binning method  provided to create_fragmentation_matrix().")
-            return
-        ddit.register_column_tuple(feature_name_index, tuple(column_data))
-    for ln in label_names:
-        ddit.register_column_tuple(ln, tuple(df[ln].values))
-    
-    #calculate entropies
-    feature_powerset = chain.from_iterable(combinations(feature_name_map.values(), r) for r in range(num_features+1))
-    feature_powerset = list(feature_powerset)[1:]
-    entropies = [[] for _ in range(num_labels)]
-    valid_feature_sets = []
-    for l,label_name in enumerate(label_names):
-        label_entropy = ddit.H(label_name)
-        print(f"\t{label_name} entropy: {label_entropy}")
-        print(f"\t\tideal: log({len(df[label_name].unique())}) = {np.log2(len(df[label_name].unique()))}")
-        for feature_set in feature_powerset:
-            if len(feature_set) > 2 and len(feature_set) < num_features and num_features > 6:
-                continue
-            ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
-            entropies[l].append(ent)
-            if l == 0:
-                valid_feature_sets.append("".join(feature_set))
-
-    #visualize
-    textcolors = ("black", "white")
-    num_feature_sets = len(entropies[0])
-    entropies = np.array(entropies)
-    fig, ax = plt.subplots(figsize=(30,5))
-    im = ax.imshow(entropies, cmap="Greens")
-    threshold = im.norm(entropies.max())/2
-    ax.set_xticks(np.arange(num_feature_sets), labels=valid_feature_sets)
-    ax.set_yticks(np.arange(num_labels), labels=label_names)
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
-    for l in range(num_labels):
-        for j in range(num_feature_sets):
-            color = textcolors[int(im.norm(entropies[l, j]) > threshold)]
-            ax.text(j, l, f"{entropies[l, j]:5.3f}", ha="center", va="center", color=color)
-    ax.set_title(f"Fragmentation Matrix\n{feature_name_map}")
-    fig.patch.set_alpha(0.0)
-    fig.tight_layout()
-    fig.savefig(f"{save_loc}/fragmentation{num_labels}.png", bbox_inches="tight")
-    plt.close()
-
-
 def class_balance(df, label_names):
     for label_name in label_names:
         print(label_name)
@@ -217,7 +146,6 @@ def main(experiment_name, data_type):
     feature_correlation(save_loc, feature_df, label)
     features_by_labels_plot(save_loc, feature_df, label, 
                             game_colors.values(), game_colors.keys())
-    fragmentation_matrix_plot(save_loc, feature_df, label, "equal")
     feature_pairplot(save_loc, feature_df, label[0])
 
 

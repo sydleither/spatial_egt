@@ -9,7 +9,7 @@ from classification.common import get_model
 from common import game_colors
 
 
-def plot_all(save_loc, int_to_name, y_trues, y_preds, data_set):
+def plot_performance(save_loc, data_set, int_to_name, y_trues, y_preds):
     plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds)
     plot_performance_stats(save_loc, data_set, int_to_name, y_trues, y_preds)
 
@@ -47,22 +47,15 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
     plt.close()
 
 
-# def plot_prediction_distributions(save_loc, X, feature_names, y_true, y_pred, int_to_name, features_to_plot):
-#     feature_data = list(zip(*X))
-#     df_dict = {feature_names[i]:feature_data[i] for i in range(len(feature_names))}
-#     df_dict = df_dict | {"True Label":y_true, "Predicted Label":y_pred}
-#     df = pd.DataFrame(df_dict)
-#     df["True Label"] = df["True Label"].map(lambda x: int_to_name[x])
-#     df["Predicted Label"] = df["Predicted Label"].map(lambda x: int_to_name[x])
-#     for feature_name in features_to_plot:
-#         facet = sns.FacetGrid(df, col="Predicted Label", col_order=game_colors.keys(), height=6, aspect=1)
-#         facet.map_dataframe(sns.histplot, x=feature_name, hue="True Label",
-#                             palette=game_colors.values(), hue_order=game_colors.keys())
-#         facet.set_titles(col_template="{col_name}", row_template="{row_name}")
-#         facet.tight_layout()
-#         facet.figure.patch.set_alpha(0.0)
-#         facet.savefig(f"{save_loc}/{feature_name}.png", bbox_inches="tight")
-#         plt.close()
+def plot_prediction_distributions(save_loc, data_set, df):
+    for feature_name in ["initial_density", "initial_fr", "Proportion_Sensitive"]:
+        facet = sns.FacetGrid(df, col="game", col_order=game_colors.keys(), height=6, aspect=1)
+        facet.map_dataframe(sns.violinplot, x="correct", y=feature_name)
+        facet.set_titles(col_template="{col_name}")
+        facet.tight_layout()
+        facet.figure.patch.set_alpha(0.0)
+        facet.savefig(f"{save_loc}/{data_set}_{feature_name}.png", bbox_inches="tight")
+        plt.close()
 
 
 def get_binary_confusion_matrix(n, y_true, y_pred):
@@ -149,7 +142,7 @@ def roc_curve(save_loc, data_set, int_to_name, y_trues, y_probs):
             ax[label].plot(fpr, tpr, color=game_colors[cat], alpha=0.25)
             fprs.append(fpr)
             tprs.append(tpr)
-            aucs.append(abs(np.trapz(y=tpr, x=fpr)))
+            aucs.append(abs(np.trapezoid(y=tpr, x=fpr)))
         avg_fpr = np.mean(np.array(fprs), axis=0)
         avg_tpr = np.mean(np.array(tprs), axis=0)
         avg_auc = np.mean(aucs)

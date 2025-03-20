@@ -14,12 +14,12 @@ def save_model(save_loc, X, y, int_to_name):
         pickle.dump(clf, f)
 
 
-def main(experiment_name, *data_types):
+def main(experiment_name, data_types):
     parent_dir = "."
-    if len(data_types[0]) == 1:
-        parent_dir = data_types[0][0]
+    if len(data_types) == 1:
+        parent_dir = data_types[0]
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
-    feature_df = read_and_clean_features(data_types[0], ["game"], experiment_name)
+    feature_df = read_and_clean_features(data_types, ["game"], experiment_name)
     X, y, int_to_name, _ = df_to_xy(feature_df, "game")
     save_model(save_loc, X, y, int_to_name)
 

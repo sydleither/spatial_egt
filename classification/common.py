@@ -10,18 +10,17 @@ feature_sets = {"prop_s":["Proportion_Sensitive"],
                       "NC_Sensitive_Mean", "NC_Sensitive_SD", "NC_Sensitive_Skew"],
                 "nn":["NN_Resistant_Mean", "NN_Resistant_SD", "NN_Resistant_Skew",
                       "NN_Sensitive_Mean", "NN_Sensitive_SD", "NN_Sensitive_Skew"],
-                "sfs2": ['NN_Resistant_SD', 'NN_Sensitive_SD', 'NC_Sensitive_SD', 'NC_Sensitive_Skew'],
                 "top_pairs":["NC_Sensitive_Mean", "NN_Sensitive_Skew",
                              "SES", "Cross_Ripleys_k_Sensitive_Max",
                              "NC_Resistant_Skew",
                              "NC_Resistant_Mean", "Global_Morans_i_Sensitive",
                              "NC_Sensitive_Skew"],
                 "top_pairs_noncorr":["NN_Sensitive_Skew", "NC_Resistant_SD",
-                                    "SES", "KL_Divergence",
+                                    "KL_Divergence",
                                     "NN_Resistant_Skew", "NC_Sensitive_SD",
-                                    "Proportion_Sensitive"]}
-feature_sets = feature_sets | {"nc_plus":feature_sets["nc"]+["CPCF_Min"]}
-feature_sets = feature_sets | {"nc_noncorr_plus":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Sensitive_SD", "CPCF_Min"]}
+                                    "Proportion_Sensitive"],
+                "frag_top5_noncorr":["Local_Morans_i_Resistant_Skew", "NC_Resistant_SD", "NC_Sensitive_SD", "SES", "Wasserstein"],
+                "frag_top5_all":["Local_Morans_i_Resistant_Mean", "Local_Morans_i_Sensitive_Mean", "NC_Sensitive_SD", "SES", "Wasserstein"]}
 
 
 def df_to_xy(df, label_name):
@@ -62,28 +61,30 @@ def remove_correlated(df, label_names):
     return features_to_keep
 
 
-def read_and_clean_features(data_types, labels, feature_set_name):
+def read_and_clean_features(data_types, labels, feature_set_name, return_all=False):
     df = pd.DataFrame()
     for data_type in data_types:
         features_data_path = get_data_path(data_type, "features")
         df_dt = pd.read_csv(f"{features_data_path}/all.csv")
-        df_dt = df_dt.drop(["source", "sample"], axis=1)
         df = pd.concat([df, df_dt])
     df = clean_feature_data(df)
 
+    feature_df = df.drop(["source", "sample"], axis=1)
     if feature_set_name == "all":
-        feature_df = df
+        feature_df = feature_df
     elif feature_set_name == "noncorr":
-        features = remove_correlated(df, labels)
-        feature_df = df[features+labels]
+        features = remove_correlated(feature_df, labels)
+        feature_df = feature_df[features+labels]
     else:
         features = feature_sets[feature_set_name]
-        feature_df = df[features+labels]
+        feature_df = feature_df[features+labels]
 
+    if return_all:
+        return feature_df, df
     return feature_df
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(100,100,100), max_iter=500)
+    estimator = MLPClassifier(hidden_layer_sizes=(16,), max_iter=5000, solver="lbfgs")
     clf = make_pipeline(StandardScaler(), estimator)
     return clf

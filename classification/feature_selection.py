@@ -137,13 +137,13 @@ def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names):
             print(df)
 
 
-def main(experiment_name, *data_types):
+def main(experiment_name, data_types):
     label = ["game"]
     parent_dir = "."
-    if len(data_types[0]) == 1:
-        parent_dir = data_types[0][0]
+    if len(data_types) == 1:
+        parent_dir = data_types[0]
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}/features/fs")
-    feature_df = read_and_clean_features(data_types[0], label, experiment_name)
+    feature_df = read_and_clean_features(data_types, label, experiment_name)
     X, y, int_to_class, feature_names = df_to_xy(feature_df, label[0])
     X = scale(X, axis=0)
 

@@ -1,17 +1,23 @@
 import sys
 
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 from classification.common import df_to_xy, get_model, read_and_clean_features
-from classification.performance_plots import plot_all, learning_curve, roc_curve
-from common import get_data_path
+from classification.performance_plots import (plot_prediction_distributions,
+                                              plot_performance,
+                                              learning_curve, roc_curve)
+from common import get_data_path, read_payoff_df
 
 
-def cross_val(save_loc, X, y, int_to_name):
-    all_y_train = []
-    all_y_test = []
-    all_y_train_pred = []
-    all_y_test_pred = []
+def cross_val(X, y):
+    train_indices = []
+    test_indices = []
+    y_train_trues = []
+    y_test_trues = []
+    y_train_probs = []
+    y_test_probs = []
     cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
     for (train_i, test_i) in cross_validation.split(X, y):
         X_train = [X[i] for i in train_i]
@@ -19,41 +25,72 @@ def cross_val(save_loc, X, y, int_to_name):
         y_train = [y[i] for i in train_i]
         y_test = [y[i] for i in test_i]
         clf = get_model().fit(X_train, y_train)
-        y_train_pred = clf.predict(X_train)
-        y_test_pred = clf.predict(X_test)
-        all_y_train.append(y_train)
-        all_y_test.append(y_test)
-        all_y_train_pred.append(y_train_pred.tolist())
-        all_y_test_pred.append(y_test_pred.tolist())
-    plot_all(save_loc, int_to_name, all_y_train, all_y_train_pred, "train")
-    plot_all(save_loc, int_to_name, all_y_test, all_y_test_pred, "test")
-
-
-def roc(save_loc, X, y, int_to_name):
-    all_y_test = []
-    all_y_test_proba = []
-    cross_validation = StratifiedKFold(n_splits=5, shuffle=True)
-    for (train_i, test_i) in cross_validation.split(X, y):
-        X_train = [X[i] for i in train_i]
-        X_test = [X[i] for i in test_i]
-        y_train = [y[i] for i in train_i]
-        y_test = [y[i] for i in test_i]
-        clf = get_model().fit(X_train, y_train)
+        y_train_pred = clf.predict_proba(X_train)
         y_test_pred = clf.predict_proba(X_test)
-        all_y_test.append(y_test)
-        all_y_test_proba.append(y_test_pred)
-    roc_curve(save_loc, "test", int_to_name, all_y_test, all_y_test_proba)
+        train_indices.append(train_i)
+        test_indices.append(test_i)
+        y_train_trues.append(y_train)
+        y_test_trues.append(y_test)
+        y_train_probs.append(y_train_pred)
+        y_test_probs.append(y_test_pred)
+    return (train_indices, test_indices, y_train_trues,
+            y_train_probs, y_test_trues, y_test_probs)
 
 
-def main(experiment_name, *data_types):
+def flatten_lists(lists):
+    flat_lists = []
+    for l in lists:
+        flat_lists.append([x for y in l for x in y])
+    return flat_lists
+
+
+def prob_to_pred(y):
+    return [np.argmax(sample) for sample in y]
+
+
+def result_to_dataframe(data_types, all_df, indices, y_trues, y_probs, y_preds):
+    k = [[i for _ in range(len(indices[i]))] for i in range(len(indices))]
+    k, indices, y_trues, y_probs, y_preds = flatten_lists([k, indices, y_trues, y_probs, y_preds])
+    y_probs_split = {f"{i}_prob":[x[i] for x in y_probs] for i in range(4)}
+    true_probs = [y_probs[i][y_trues[i]] for i in range(len(y_trues))]
+    data = {"k":k, "true":y_trues, "pred":y_preds, "true_prob":true_probs}
+    df = pd.DataFrame(data|y_probs_split, index=indices)
+    df["correct"] = df["true"] == df["pred"]
+
+    df = df.merge(all_df, left_index=True, right_index=True)
+    df["sample"] = df["sample"].astype(str)
+    df = df.set_index(["source", "sample"], drop=True)
+    for data_type in data_types:
+        payoff_df = read_payoff_df(get_data_path(data_type, "processed"))
+        payoff_df = payoff_df.drop(["game"], axis=1)
+        df = df.merge(payoff_df, left_index=True, right_index=True)
+
+    return df
+
+
+def main(experiment_name, data_types):
     parent_dir = "."
-    if len(data_types[0]) == 1:
-        parent_dir = data_types[0][0]
+    if len(data_types) == 1:
+        parent_dir = data_types[0]
     save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
-    feature_df = read_and_clean_features(data_types[0], ["game"], experiment_name)
+    feature_df, all_df = read_and_clean_features(data_types, ["game"], experiment_name, True)
     X, y, int_to_name, _ = df_to_xy(feature_df, "game")
-    cross_val(save_loc, X, y, int_to_name)
-    roc(save_loc, X, y, int_to_name)
+
+    cross_val_results = cross_val(X, y)
+    train_indices, test_indices = cross_val_results[0:2]
+    y_train_trues, y_train_probs = cross_val_results[2:4]
+    y_test_trues, y_test_probs = cross_val_results[4:6]
+    y_train_preds = [prob_to_pred(probs) for probs in y_train_probs]
+    y_test_preds = [prob_to_pred(probs) for probs in y_test_probs]
+
+    plot_performance(save_loc, "train", int_to_name, y_train_trues, y_train_preds)
+    plot_performance(save_loc, "test", int_to_name, y_test_trues, y_test_preds)
+    roc_curve(save_loc, "test", int_to_name, y_test_trues, y_test_probs)
+
+    df_test = result_to_dataframe(data_types, all_df, test_indices,
+                                  y_test_trues, y_test_probs, y_test_preds)
+    plot_prediction_distributions(save_loc, "test", df_test)
+    
     learning_curve(save_loc, X, y)
 
 
