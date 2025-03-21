@@ -14,7 +14,7 @@ from common import get_data_path
 
 def finetune_layers(save_loc, X, y):
     cv = 5
-    hidden_layer_sizes = [(i,) for i in range(52, 102, 2)]
+    hidden_layer_sizes = [(i,) for i in range(5, 105, 5)]
     params = {"clf__hidden_layer_sizes":hidden_layer_sizes}
 
     pipeline = Pipeline([("scale", StandardScaler()), ("clf", MLPClassifier(max_iter=5000, solver="adam"))])
@@ -23,10 +23,14 @@ def finetune_layers(save_loc, X, y):
     df = pd.DataFrame(search.cv_results_)
     df = pd.melt(df, id_vars="param_clf__hidden_layer_sizes",
                  value_vars=[f"split{i}_test_score" for i in range(cv)])
-    df["param_clf__hidden_layer_sizes"] = df["param_clf__hidden_layer_sizes"].astype(str)
+    df["param_clf__hidden_layer_sizes"] = df["param_clf__hidden_layer_sizes"].astype(str).str[1:-2]
+    df["param_clf__hidden_layer_sizes"] = df["param_clf__hidden_layer_sizes"].astype(int)
+    df = df.rename({"param_clf__hidden_layer_sizes":"Number of Nodes", "value":"Accuracy"}, axis=1)
+
+    print(df[["Number of Nodes", "Accuracy"]].groupby("Number of Nodes").mean().to_string())
 
     fig, ax = plt.subplots()
-    sns.lineplot(df, x="param_clf__hidden_layer_sizes", y="value", color="pink", ax=ax)
+    sns.lineplot(df, x="Number of Nodes", y="Accuracy", color="purple", ax=ax)
     ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
     fig.patch.set_alpha(0.0)

@@ -50,12 +50,20 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
 def plot_prediction_distributions(save_loc, data_set, df):
     for feature_name in ["initial_density", "initial_fr", "Proportion_Sensitive"]:
         facet = sns.FacetGrid(df, col="game", col_order=game_colors.keys(), height=6, aspect=1)
-        facet.map_dataframe(sns.violinplot, x="correct", y=feature_name)
+        facet.map_dataframe(sns.stripplot, x="correct", y=feature_name)
         facet.set_titles(col_template="{col_name}")
         facet.tight_layout()
         facet.figure.patch.set_alpha(0.0)
-        facet.savefig(f"{save_loc}/{data_set}_{feature_name}.png", bbox_inches="tight")
+        facet.savefig(f"{save_loc}/{feature_name}_{data_set}.png", bbox_inches="tight")
         plt.close()
+
+
+def plot_scatter_prob(save_loc, data_set, df, x, y, hue):
+    fig, ax = plt.subplots()
+    sns.scatterplot(data=df, x=x, y=y, hue=hue, palette="Purples", ax=ax)
+    fig.tight_layout()
+    fig.savefig(f"{save_loc}/{x}_{y}_{hue}_{data_set}.png", bbox_inches="tight")
+    plt.close()
 
 
 def get_binary_confusion_matrix(n, y_true, y_pred):

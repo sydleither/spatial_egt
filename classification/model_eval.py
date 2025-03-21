@@ -5,7 +5,8 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 from classification.common import df_to_xy, get_model, read_and_clean_features
-from classification.performance_plots import (plot_prediction_distributions,
+from classification.performance_plots import (plot_scatter_prob,
+                                              plot_prediction_distributions,
                                               plot_performance,
                                               learning_curve, roc_curve)
 from common import get_data_path, read_payoff_df
@@ -64,6 +65,8 @@ def result_to_dataframe(data_types, all_df, indices, y_trues, y_probs, y_preds):
         payoff_df = read_payoff_df(get_data_path(data_type, "processed"))
         payoff_df = payoff_df.drop(["game"], axis=1)
         df = df.merge(payoff_df, left_index=True, right_index=True)
+    df["C-A"] = df["c"] - df["a"]
+    df["B-D"] = df["b"] - df["d"]
 
     return df
 
@@ -90,6 +93,10 @@ def main(experiment_name, data_types):
     df_test = result_to_dataframe(data_types, all_df, test_indices,
                                   y_test_trues, y_test_probs, y_test_preds)
     plot_prediction_distributions(save_loc, "test", df_test)
+    plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "true_prob")
+    plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "correct")
+    plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "0_prob")
+    plot_scatter_prob(save_loc, "test", df_test, "initial_fr", "initial_density", "correct")
     
     learning_curve(save_loc, X, y)
 

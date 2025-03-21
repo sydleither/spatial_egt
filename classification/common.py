@@ -85,6 +85,6 @@ def read_and_clean_features(data_types, labels, feature_set_name, return_all=Fal
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(16,), max_iter=5000, solver="lbfgs")
+    estimator = MLPClassifier(hidden_layer_sizes=(15,), max_iter=5000, solver="lbfgs")
     clf = make_pipeline(StandardScaler(), estimator)
     return clf

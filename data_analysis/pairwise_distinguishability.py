@@ -180,8 +180,8 @@ def get_difference_data(data_type, features_data_path, feature_name, df_features
     if limit:
         samples = samples[0:limit]
     for i in range(len(samples)):
+        feature_i, game_i = samples[i]
         for j in range(i+1, len(samples)):
-            feature_i, game_i = samples[i]
             feature_j, game_j = samples[j]
             diff = get_difference(feature_i, feature_j)
             data.append({"i":i, "j":j, "Game 1":game_i, "Game 2":game_j, stat:diff})
