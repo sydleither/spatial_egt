@@ -38,18 +38,30 @@ def color_by_statistic(features, split_char=" "):
     return feature_to_statistic
 
 
-def plot_feature_selection(save_loc, measurement, condition, df):
-    df = df.sort_values(measurement, ascending=False)
+def plot_feature_selection(save_loc, measurement, condition, df, topn):
+    file_name = f"{measurement}_{condition}"
     df["Feature"] = df["Feature"].str.replace("_", " ")
-    df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
+    if topn is None:
+        df = df.sort_values(measurement, ascending=False)
+        df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
+        hue = "Statistic"
+        hue_order = sorted(df["Statistic"].unique())
+        palette = sns.color_palette("Set2")
+        color = None
+    else:
+        file_name += f"_{topn}"
+        df = df.nlargest(topn, measurement)
+        hue = None
+        hue_order = None
+        palette = None
+        color = "purple"
     fig, ax = plt.subplots(figsize=(6, 12))
-    sns.barplot(data=df, x=measurement, y="Feature", ax=ax,
-                hue="Statistic", palette=sns.color_palette("Set2"),
-                hue_order=sorted(df["Statistic"].unique()))
+    sns.barplot(data=df, x=measurement, y="Feature", color=color,
+                hue=hue, palette=palette, hue_order=hue_order, ax=ax)
     ax.set(title=f"Feature {measurement}\n{condition}")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/{measurement}_{condition}.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -88,11 +100,11 @@ def feature_selection(X, y, feature_names):
     return df
 
 
-def run_feature_selection(save_loc, X, y, feature_names, condition):
+def run_feature_selection(save_loc, X, y, feature_names, condition, topn=None):
     df = feature_selection(X, y, feature_names)
     measurements = [x for x in df.columns if x != "Feature"]
     for m in measurements:
-        plot_feature_selection(save_loc, m, condition, df)
+        plot_feature_selection(save_loc, m, condition, df, topn)
 
 
 def pairwise_distributions(X_i, X_j, feature_names, condition):
@@ -123,17 +135,19 @@ def run_pairwise_distributions_all(save_loc, X, y, int_to_class, feature_names):
     plot_pairwise_distances(save_loc, "Wasserstein Distance", df)
 
 
-def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names):
+def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names, topn=None):
     for i in range(len(int_to_class)):
         i_indices = [k for k in range(len(y)) if y[k] == i]
         i_X_pair = [X[k] for k in i_indices]
-        for j in range(i+1, len(int_to_class)):  
+        for j in range(i+1, len(int_to_class)):
             j_indices = [k for k in range(len(y)) if y[k] == j]
             j_X_pair = [X[k] for k in j_indices]
             pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
+            if len(i_indices) == 0 or len(j_indices) == 0:
+                continue
             data = pairwise_distributions(i_X_pair, j_X_pair, feature_names, pair_name)
             df = pd.DataFrame(data)
-            plot_feature_selection(save_loc, "Wasserstein Distance", pair_name, df)
+            plot_feature_selection(save_loc, "Wasserstein Distance", pair_name, df, topn)
             print(df)
 
 
@@ -147,8 +161,8 @@ def main(experiment_name, data_types):
     X, y, int_to_class, feature_names = df_to_xy(feature_df, label[0])
     X = scale(X, axis=0)
 
-    run_feature_selection(save_loc, X, y, feature_names, "All")
-    run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names)
+    run_feature_selection(save_loc, X, y, feature_names, "All", 5)
+    run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names, 5)
 
 
 if __name__ == "__main__":

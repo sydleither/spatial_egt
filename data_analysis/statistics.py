@@ -18,15 +18,8 @@ def main(data_type):
         print(f"\t{game}: {len(df_game)}")
     unknown = len(df[df["game"] == "Unknown"])
     print(f"Unknown games: {unknown}")
-    high_fs = len(df[df["Proportion_Sensitive"] > 0.9])
-    low_fs = len(df[df["Proportion_Sensitive"] < 0.1])
-    print(f"fS > 0.95: {high_fs}")
-    print(f"fS < 0.05: {low_fs}")
-    new_total = total_samples - (unknown + high_fs + low_fs)
-    print(f"Total Valid Samples: {new_total}")
+    print(f"Total Valid Samples: {total_samples - unknown}")
     df = df[df["game"] != "Unknown"]
-    df = df[df["Proportion_Sensitive"] <= 0.9]
-    df = df[df["Proportion_Sensitive"] >= 0.1]
     for game in df["game"].unique():
         df_game = df[df["game"] == game]
         print(f"\t{game}: {len(df_game)}")

@@ -136,16 +136,22 @@ def print_correlated_clusters(df, label_names):
 
 def main(experiment_name, data_type):
     label = ["game"]
-    feature_df = read_and_clean_features([data_type], label, experiment_name)
+    feature_df, df = read_and_clean_features([data_type], label, experiment_name, True)
     save_loc = get_data_path(data_type, f"model/{experiment_name}/features")
+    colors = {k:v for k,v in game_colors.items() if k in feature_df["game"].unique()}
+
+    # df["cell_type"] = df["source"].apply(lambda x: "_".join(x.split("_")[1:-1]).lower())
+    # c = {s:"purple" for s in df["cell_type"].unique()}
+    # s = {"cell_type":list(df["cell_type"].unique())}
+    # df = df.drop(["source", "sample", "game"], axis=1)
+    # features_ridgeplots(save_loc, df, ["cell_type"], c, s)
 
     print_correlated_clusters(feature_df, label)
-    features_ridgeplots(save_loc, feature_df, label, game_colors,
-                        label_orders={"game":game_colors.keys()})
+    features_ridgeplots(save_loc, feature_df, label, colors, {"game":colors.keys()})
     class_balance(feature_df, label)
     feature_correlation(save_loc, feature_df, label)
     features_by_labels_plot(save_loc, feature_df, label, 
-                            game_colors.values(), game_colors.keys())
+                            colors.values(), colors.keys())
     feature_pairplot(save_loc, feature_df, label[0])
 
 

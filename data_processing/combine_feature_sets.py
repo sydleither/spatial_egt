@@ -48,6 +48,7 @@ def main(data_type):
         df_feature = df_feature.drop("type", axis=1)
         df_feature["sample"] = df_feature["sample"].astype(str)
         df = pd.merge(df, df_feature, on=["source", "sample"])
+    df = df.replace(np.inf, 1e8)
     df.to_csv(f"{features_data_path}/all.csv", index=False)
 
 
