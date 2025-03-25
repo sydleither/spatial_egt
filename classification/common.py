@@ -20,6 +20,7 @@ feature_sets = {"prop_s":["Proportion_Sensitive"],
                                     "NN_Resistant_Skew", "NC_Sensitive_SD",
                                     "Proportion_Sensitive"],
                 "frag_top5_noncorr":["Local_Morans_i_Resistant_Skew", "NC_Resistant_SD", "NC_Sensitive_SD", "SES", "Wasserstein"],
+                "ml_top5_noncorr":["Cross_Ripleys_k_Sensitive_Min", "Entropy", "NN_Resistant_SD", "NN_Sensitive_SD", "SFP_Mean"],
                 "frag_top5_all":["Local_Morans_i_Resistant_Mean", "Local_Morans_i_Sensitive_Mean", "NC_Sensitive_SD", "SES", "Wasserstein"]}
 
 

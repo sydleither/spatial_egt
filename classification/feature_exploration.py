@@ -64,32 +64,6 @@ def features_ridgeplots(save_loc, df, label_names, colors, label_orders):
         plt.close()
 
 
-def features_by_labels_plot(save_loc, df, label_names, colors, color_order):
-    feature_names = list(df.columns)
-    [feature_names.remove(ln) for ln in label_names]
-    num_features = len(feature_names)
-    num_labels = len(label_names)
-
-    fig, ax = plt.subplots(num_labels, num_features, figsize=(7*num_features, 7*num_labels))
-    if num_features == 1:
-        ax = [ax]
-    for l,label_name in enumerate(label_names):
-        label_dtype = df[label_name].dtypes
-        for f,feature_name in enumerate(feature_names):
-            axis = ax[f] if num_labels == 1 else ax[l][f]
-            if label_dtype == float:
-                sns.scatterplot(data=df, x=feature_name, y=label_name, 
-                                color=colors[0], ax=axis)
-            else:
-                sns.violinplot(data=df, x=feature_name, y=label_name,
-                               cut=0, legend=False, ax=axis,
-                               order=color_order, palette=colors)
-    fig.patch.set_alpha(0.0)
-    fig.tight_layout()
-    fig.savefig(f"{save_loc}/feature_labels{num_labels}.png", bbox_inches="tight")
-    plt.close()
-
-
 def feature_correlation(save_loc, df, label_names):
     feature_names = list(df.columns)
     [feature_names.remove(ln) for ln in label_names]
@@ -150,8 +124,6 @@ def main(experiment_name, data_type):
     features_ridgeplots(save_loc, feature_df, label, colors, {"game":colors.keys()})
     class_balance(feature_df, label)
     feature_correlation(save_loc, feature_df, label)
-    features_by_labels_plot(save_loc, feature_df, label, 
-                            colors.values(), colors.keys())
     feature_pairplot(save_loc, feature_df, label[0])
 
 

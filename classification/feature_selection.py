@@ -105,6 +105,7 @@ def run_feature_selection(save_loc, X, y, feature_names, condition, topn=None):
     measurements = [x for x in df.columns if x != "Feature"]
     for m in measurements:
         plot_feature_selection(save_loc, m, condition, df, topn)
+    print(df.nlargest(10, "Mutual Information"))
 
 
 def pairwise_distributions(X_i, X_j, feature_names, condition):
@@ -121,20 +122,6 @@ def pairwise_distributions(X_i, X_j, feature_names, condition):
     return data
 
 
-def run_pairwise_distributions_all(save_loc, X, y, int_to_class, feature_names):
-    data = []
-    for i in range(len(int_to_class)):
-        i_indices = [k for k in range(len(y)) if y[k] == i]
-        i_X_pair = [X[k] for k in i_indices]
-        for j in range(i+1, len(int_to_class)):  
-            j_indices = [k for k in range(len(y)) if y[k] == j]
-            j_X_pair = [X[k] for k in j_indices]
-            pair_name = f"{int_to_class[i]} - {int_to_class[j]}"
-            data += pairwise_distributions(i_X_pair, j_X_pair, feature_names, pair_name)
-    df = pd.DataFrame(data)
-    plot_pairwise_distances(save_loc, "Wasserstein Distance", df)
-
-
 def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names, topn=None):
     for i in range(len(int_to_class)):
         i_indices = [k for k in range(len(y)) if y[k] == i]
@@ -148,7 +135,9 @@ def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names, topn
             data = pairwise_distributions(i_X_pair, j_X_pair, feature_names, pair_name)
             df = pd.DataFrame(data)
             plot_feature_selection(save_loc, "Wasserstein Distance", pair_name, df, topn)
-            print(df)
+            print(df.nlargest(10, "Wasserstein Distance"))
+            print(df["Wasserstein Distance"].quantile([0.25, 0.5, 0.75]))
+            print()
 
 
 def main(experiment_name, data_types):
