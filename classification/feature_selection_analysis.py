@@ -9,9 +9,10 @@ from common import get_data_path, theme_colors
 from classification.feature_pairwise_games import plot_feature_selection
 
 
-def feature_set_plot(data_path, feature_set_size, df, xlabel):
-    fig, ax = plt.subplots(figsize=(6, 3+feature_set_size))
-    sns.barplot(data=df, x="value", y="features", color=theme_colors[0], ax=ax)
+def feature_set_plot(data_path, feature_set_size, df, xlabel, n=10):
+    df_top = df.nlargest(n, xlabel)
+    fig, ax = plt.subplots(figsize=(6, (n*feature_set_size)//3))
+    sns.barplot(data=df_top, x=xlabel, y="features", color=theme_colors[0], ax=ax)
     ax.set(title=feature_set_size, xlabel=xlabel, ylabel="Feature")
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
@@ -33,21 +34,18 @@ def main(feature_set, data_dir, data_type):
 
     if data_dir == "fragmentation":
         xlabel = "Entropy Shared with Game"
-        df[xlabel] = df["value"]
     else:
         xlabel = "Mean Accuracy"
-        df[xlabel] = df["value"]
+    df[xlabel] = df["value"]
+    df = df.drop(["value"], axis=1)
 
-    n = 10
     for feature_set_size in df["feature_set_size"].unique():
         df_num = df[df["feature_set_size"] == feature_set_size]
-        df_num_top = df_num.nlargest(n, xlabel)
-        print(df_num_top)
         if feature_set_size == 1:
             df_num["Feature"] = df_num["features"]
             plot_feature_selection(data_path, xlabel, None, df_num)
         else:
-            feature_set_plot(data_path, feature_set_size, df_num_top, xlabel)
+            feature_set_plot(data_path, feature_set_size, df_num, xlabel)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,8 @@ def main(experiment_name, num_features_start, *data_types):
     results = []
     for set_of_features in starting_sets:
         for feature_name in feature_names:
+            if feature_name in set_of_features:
+                continue
             full_feature_set = set_of_features + [feature_name]
             X = list(feature_df[full_feature_set].values)
             mean = run(X, y)
