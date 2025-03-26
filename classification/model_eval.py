@@ -5,10 +5,10 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 from classification.common import df_to_xy, get_model, read_and_clean_features
-from classification.performance_plots import (plot_scatter_prob,
-                                              plot_prediction_distributions,
-                                              plot_performance,
-                                              learning_curve, roc_curve)
+from classification.model_eval_utils import (plot_scatter_prob,
+                                             plot_prediction_distributions,
+                                             plot_performance,
+                                             learning_curve, roc_curve)
 from common import get_data_path, read_payoff_df
 
 

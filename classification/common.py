@@ -6,22 +6,14 @@ from sklearn.preprocessing import StandardScaler
 from common import game_colors, get_data_path
 
 feature_sets = {"prop_s":["Proportion_Sensitive"],
-                "nc":["NC_Resistant_Mean", "NC_Resistant_SD", "NC_Resistant_Skew",
-                      "NC_Sensitive_Mean", "NC_Sensitive_SD", "NC_Sensitive_Skew"],
-                "nn":["NN_Resistant_Mean", "NN_Resistant_SD", "NN_Resistant_Skew",
-                      "NN_Sensitive_Mean", "NN_Sensitive_SD", "NN_Sensitive_Skew"],
                 "top_pairs":["NC_Sensitive_Mean", "NN_Sensitive_Skew",
                              "SES", "Cross_Ripleys_k_Sensitive_Max",
                              "NC_Resistant_Skew",
                              "NC_Resistant_Mean", "Global_Morans_i_Sensitive",
                              "NC_Sensitive_Skew"],
-                "top_pairs_noncorr":["NN_Sensitive_Skew", "NC_Resistant_SD",
-                                    "KL_Divergence",
-                                    "NN_Resistant_Skew", "NC_Sensitive_SD",
-                                    "Proportion_Sensitive"],
-                "frag_top5_noncorr":["Local_Morans_i_Resistant_Skew", "NC_Resistant_SD", "NC_Sensitive_SD", "SES", "Wasserstein"],
-                "ml_top5_noncorr":["Cross_Ripleys_k_Sensitive_Min", "Entropy", "NN_Resistant_SD", "NN_Sensitive_SD", "SFP_Mean"],
-                "frag_top5_all":["Local_Morans_i_Resistant_Mean", "Local_Morans_i_Sensitive_Mean", "NC_Sensitive_SD", "SES", "Wasserstein"]}
+                "frag_top5_noncorr":["Local_Morans_i_Resistant_Skew", "Local_Morans_i_Sensitive_Skew",
+                                     "NC_Sensitive_Kurtosis", "NC_Resistant_Kurtosis", "Wasserstein"],
+                "ml_top5_noncorr":["Cross_Ripleys_k_Sensitive_Min", "Entropy", "NN_Resistant_SD", "NN_Sensitive_SD", "SFP_Mean"]}
 
 
 def df_to_xy(df, label_name):
@@ -87,5 +79,6 @@ def read_and_clean_features(data_types, labels, feature_set_name, return_all=Fal
 
 def get_model():
     estimator = MLPClassifier(hidden_layer_sizes=(15,), max_iter=5000, solver="lbfgs")
-    clf = make_pipeline(StandardScaler(), estimator)
-    return clf
+    #clf = make_pipeline(StandardScaler(), estimator)
+    #return clf
+    return estimator

@@ -2,14 +2,14 @@ import pickle
 import sys
 
 from classification.common import df_to_xy, get_model, read_and_clean_features
-from classification.performance_plots import plot_all
+from classification.model_eval_utils import plot_performance
 from common import get_data_path
 
 
 def save_model(save_loc, X, y, int_to_name):
     clf = get_model().fit(X, y)
     y_pred = clf.predict(X)
-    plot_all(save_loc, int_to_name, [y], [y_pred], "train")
+    plot_performance(save_loc, int_to_name, [y], [y_pred], "train")
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 

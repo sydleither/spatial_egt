@@ -2,7 +2,7 @@ import pickle
 import sys
 
 from classification.common import df_to_xy, read_and_clean_features
-from classification.performance_plots import plot_all
+from classification.model_eval_utils import plot_performance
 from common import get_data_path
 
 
@@ -10,7 +10,7 @@ def test_model(save_loc, X, y, int_to_name):
     with open(f"{save_loc}/model.pkl", "rb") as f:
         clf = pickle.load(f)
     y_pred = clf.predict(X)
-    plot_all(save_loc, int_to_name, [y], [y_pred], "test")
+    plot_performance(save_loc, "test", int_to_name, [y], [y_pred])
 
 
 def main(experiment_name, data_types):
