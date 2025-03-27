@@ -13,7 +13,9 @@ feature_sets = {"prop_s":["Proportion_Sensitive"],
                              "NC_Sensitive_Skew"],
                 "frag_top5_noncorr":["Local_Morans_i_Resistant_Skew", "Local_Morans_i_Sensitive_Skew",
                                      "NC_Sensitive_Kurtosis", "NC_Resistant_Kurtosis", "Wasserstein"],
-                "ml_top5_noncorr":["Cross_Ripleys_k_Sensitive_Min", "Entropy", "NN_Resistant_SD", "NN_Sensitive_SD", "SFP_Mean"]}
+                "ml_top5_noncorr":["Cross_Ripleys_k_Sensitive_Min", "Entropy", "NN_Resistant_SD", "NN_Sensitive_SD", "SFP_Mean"],
+                "top10":["NC_Resistant_SD","NC_Sensitive_SD","NN_Sensitive_SD","ANNI_Sensitive","NN_Resistant_SD",
+                         "Entropy","Local_Morans_i_Resistant_Skew","SFP_Kurtosis","ANNI_Resistant","Local_Morans_i_Sensitive_Skew"]}
 
 
 def df_to_xy(df, label_name):
@@ -78,7 +80,6 @@ def read_and_clean_features(data_types, labels, feature_set_name, return_all=Fal
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(15,), max_iter=5000, solver="lbfgs")
-    #clf = make_pipeline(StandardScaler(), estimator)
-    #return clf
-    return estimator
+    estimator = MLPClassifier(hidden_layer_sizes=(30,), max_iter=5000, solver="adam")
+    clf = make_pipeline(StandardScaler(), estimator)
+    return clf

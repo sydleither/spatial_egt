@@ -14,7 +14,7 @@ from common import get_data_path
 
 def finetune_layers(save_loc, X, y):
     cv = 5
-    hidden_layer_sizes = [(i,) for i in range(5, 105, 5)]
+    hidden_layer_sizes = [(i,) for i in range(10, 110, 10)]
     params = {"clf__hidden_layer_sizes":hidden_layer_sizes}
 
     pipeline = Pipeline([("scale", StandardScaler()), ("clf", MLPClassifier(max_iter=5000, solver="adam"))])

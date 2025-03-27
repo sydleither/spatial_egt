@@ -67,6 +67,9 @@ def result_to_dataframe(data_types, all_df, indices, y_trues, y_probs, y_preds):
         df = df.merge(payoff_df, left_index=True, right_index=True)
     df["C-A"] = df["c"] - df["a"]
     df["B-D"] = df["b"] - df["d"]
+    df["Stationary Solution"] = (df["c"]-df["a"])/((df["c"]-df["a"])+(df["b"]-df["d"]))
+    df.loc[df["game"] == "Sensitive Wins", "Stationary Solution"] = 0
+    df.loc[df["game"] == "Resistant Wins", "Stationary Solution"] = 1
 
     return df
 
@@ -97,7 +100,7 @@ def main(experiment_name, data_types):
     plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "correct")
     plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "0_prob")
     plot_scatter_prob(save_loc, "test", df_test, "initial_fr", "initial_density", "correct")
-    
+
     learning_curve(save_loc, X, y)
 
 
