@@ -129,7 +129,10 @@ def kl_divergence(df, mesh_step, cell_type1="sensitive", cell_type2="resistant")
     return kl_div
 
 
-def patch_count(df, cell_type, alpha):
+def create_patches(df, cell_type, alpha, pad):
+    if pad:
+        df["x"] = 2*df["x"]
+        df["y"] = 2*df["y"]
     domain = create_muspan_domain(df)
     patches = domain.convert_objects(
         population=("type", cell_type),
@@ -139,32 +142,23 @@ def patch_count(df, cell_type, alpha):
         conversion_method_kwargs=dict(alpha=alpha),
         return_IDs=True
     )
+    return domain, patches
+
+
+def patch_count(df, cell_type, alpha, pad=False):
+    _, patches = create_patches(df, cell_type, alpha, pad)
     return len(patches)
 
 
-def circularity_dist(df, cell_type, alpha):
-    domain = create_muspan_domain(df)
-    domain.convert_objects(
-        population=("type", cell_type),
-        collection_name="shape",
-        object_type="shape",
-        conversion_method="alpha shape",
-        conversion_method_kwargs=dict(alpha=alpha)
-    )
+def circularity_dist(df, cell_type, alpha, pad=False):
+    domain, _ = create_patches(df, cell_type, alpha, pad)
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     circ, _ = ms.geometry.circularity(domain, population=patch_pop)
     return circ
 
 
-def fractal_dimension_dist(df, cell_type, alpha):
-    domain = create_muspan_domain(df)
-    domain.convert_objects(
-        population=("type", cell_type),
-        collection_name="shape",
-        object_type="shape",
-        conversion_method="alpha shape",
-        conversion_method_kwargs=dict(alpha=alpha)
-    )
+def fractal_dimension_dist(df, cell_type, alpha, pad=False):
+    domain, _ = create_patches(df, cell_type, alpha, pad)
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     area, _ = ms.geometry.area(domain, population=patch_pop)
     perim, _ = ms.geometry.perimeter(domain, population=patch_pop)

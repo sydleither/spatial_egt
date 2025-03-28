@@ -1,11 +1,9 @@
 import sys
 
 from data_processing.spatial_statistics.custom import nc_dist, proportion_s, sfp_dist
-from data_processing.spatial_statistics.muspan import (anni, entropy, cpcf, cross_k,
-                                                       kl_divergence, global_moransi,
-                                                       local_moransi_dist,
-                                                       nn_dist, qcm, wasserstein,
-                                                       circularity_dist, fractal_dimension_dist, patch_count)
+from data_processing.spatial_statistics.muspan import (anni, circularity_dist, cpcf, cross_k, entropy,
+                                                       fractal_dimension_dist, global_moransi, kl_divergence, 
+                                                       local_moransi_dist, nn_dist, patch_count, qcm, wasserstein)
 
 
 FEATURE_REGISTRY = {
@@ -22,19 +20,18 @@ FEATURE_REGISTRY = {
     "CPCF_Sensitive": cpcf,
     "Cross_Ripleys_k_Resistant": cross_k,
     "Cross_Ripleys_k_Sensitive": cross_k,
-    "KL_Divergence": kl_divergence,
     "Global_Morans_i_Resistant": global_moransi,
     "Global_Morans_i_Sensitive": global_moransi,
+    "KL_Divergence": kl_divergence,
     "Local_Morans_i_Resistant": local_moransi_dist,
     "Local_Morans_i_Sensitive": local_moransi_dist,
     "NN_Resistant": nn_dist,
     "NN_Sensitive": nn_dist,
-    "SES": qcm,
-    "Wasserstein": wasserstein,
-    # Temp
-    "Patch_Count": patch_count,
     "Patch_Circularity": circularity_dist,
-    "Patch_Fractal_Dimension": fractal_dimension_dist
+    "Patch_Count": patch_count,
+    "Patch_Fractal_Dimension": fractal_dimension_dist,
+    "SES": qcm,
+    "Wasserstein": wasserstein
 }
 
 FEATURE_PARAMS = {
@@ -48,17 +45,17 @@ FEATURE_PARAMS = {
         "Cross_Ripleys_k_Sensitive": {"max_radius": 6, "step": 1, "cell_type1":"sensitive", "cell_type2":"resistant"},
         "CPCF_Sensitive": {"max_radius": 5, "annulus_step": 1, "annulus_width": 3, "cell_type1":"sensitive", "cell_type2":"resistant"},
         "CPCF_Resistant": {"max_radius": 5, "annulus_step": 1, "annulus_width": 3, "cell_type1":"resistant", "cell_type2":"sensitive"},
-        "KL_Divergence": {"mesh_step": 3},
         "Global_Morans_i_Resistant": {"cell_type": "resistant", "side_length": 5},
         "Global_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 5},
+        "KL_Divergence": {"mesh_step": 3},
         "Local_Morans_i_Resistant": {"cell_type": "resistant", "side_length": 5},
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 5},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "SES": {"side_length": 10},
-        "Patch_Count": {"cell_type": "sensitive", "alpha": 3},
-        "Patch_Circularity": {"cell_type": "sensitive", "alpha": 3},
-        "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 3}
+        "Patch_Count": {"cell_type": "sensitive", "alpha": 3, "pad":True},
+        "Patch_Circularity": {"cell_type": "sensitive", "alpha": 3, "pad":True},
+        "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 3, "pad":True},
+        "SES": {"side_length": 10}
     },
     "in_vitro": {
         "ANNI_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
@@ -70,17 +67,16 @@ FEATURE_PARAMS = {
         "Cross_Ripleys_k_Sensitive": {"max_radius": 60, "step": 10, "cell_type1":"sensitive", "cell_type2":"resistant"},
         "CPCF_Sensitive": {"max_radius": 50, "annulus_step": 10, "annulus_width": 30, "cell_type1":"sensitive", "cell_type2":"resistant"},
         "CPCF_Resistant": {"max_radius": 50, "annulus_step": 10, "annulus_width": 30, "cell_type1":"resistant", "cell_type2":"sensitive"},
-        "KL_Divergence": {"mesh_step": 30},
         "Global_Morans_i_Resistant": {"cell_type": "resistant", "side_length": 50},
         "Global_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 50},
         "Local_Morans_i_Resistant": {"cell_type": "resistant", "side_length": 50},
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 50},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "SES": {"side_length": 100},
         "Patch_Count": {"cell_type": "sensitive", "alpha": 30},
         "Patch_Circularity": {"cell_type": "sensitive", "alpha": 30},
-        "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 30}
+        "Patch_Fractal_Dimension": {"cell_type": "sensitive", "alpha": 30},
+        "SES": {"side_length": 100}
     }
 }
 FEATURE_PARAMS["in_silico_games"] = FEATURE_PARAMS["in_silico"]
@@ -97,16 +93,20 @@ FUNCTION_LABELS = {
     "Local_Morans_i_Sensitive": {"x":"Moran's i", "y":"Proportion"},
     "NN_Resistant": {"x":"Distance", "y":"Proportion"},
     "NN_Sensitive": {"x":"Distance", "y":"Proportion"},
+    "Patch_Circularity": {"x":"Patch Circularity", "y":"Proportion"},
+    "Patch_Fractal_Dimension": {"x":"Patch Fractal Dimension", "y":"Proportion"}
 }
 
 DISTRIBUTION_BINS = {
     "NC_Resistant": (0, 1.1, 0.1),
     "NC_Sensitive": (0, 1.1, 0.1),
     "SFP": (0, 1.1, 0.1),
-    "Local_Morans_i_Resistant": (-1, 1.1, 0.1),
-    "Local_Morans_i_Sensitive": (-1, 1.1, 0.1),
+    "Local_Morans_i_Resistant": (-5, 5.5, 0.5),
+    "Local_Morans_i_Sensitive": (-5, 5.5, 0.5),
     "NN_Resistant": (1, 5, 0.2),
     "NN_Sensitive": (1, 5, 0.2),
+    "Patch_Circularity": (0, 1.1, 0.1),
+    "Patch_Fractal_Dimension": (0, 1.1, 0.1)
 }
 
 
