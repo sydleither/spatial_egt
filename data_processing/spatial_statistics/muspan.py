@@ -151,6 +151,13 @@ def patch_count(df, cell_type, alpha, pad=False):
     return len(patches)
 
 
+def area_dist(df, cell_type, alpha, pad=False):
+    domain, _ = create_patches(df, cell_type, alpha, pad)
+    patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
+    area, _ = ms.geometry.area(domain, population=patch_pop)
+    return area
+
+
 def circularity_dist(df, cell_type, alpha, pad=False):
     domain, _ = create_patches(df, cell_type, alpha, pad)
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")

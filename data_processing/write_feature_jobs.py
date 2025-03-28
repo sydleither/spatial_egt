@@ -1,8 +1,8 @@
 import sys
 
 from data_processing.spatial_statistics.custom import nc_dist, proportion_s, sfp_dist
-from data_processing.spatial_statistics.muspan import (anni, circularity_dist, cpcf, cross_k,
-                                                       entropy, fractal_dimension_dist,
+from data_processing.spatial_statistics.muspan import (anni, area_dist, circularity_dist, cpcf,
+                                                       cross_k, entropy, fractal_dimension_dist,
                                                        global_moransi, j_function, kl_divergence,
                                                        local_moransi_dist, nn_dist,
                                                        patch_count, qcm, wasserstein)
@@ -31,6 +31,8 @@ FEATURE_REGISTRY = {
     "Local_Morans_i_Sensitive": local_moransi_dist,
     "NN_Resistant": nn_dist,
     "NN_Sensitive": nn_dist,
+    "Patch_Area_Resistant": area_dist,
+    "Patch_Area_Sensitive": area_dist,
     "Patch_Circularity_Resistant": circularity_dist,
     "Patch_Circularity_Sensitive": circularity_dist,
     "Patch_Count_Resistant": patch_count,
@@ -61,12 +63,14 @@ FEATURE_PARAMS = {
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 5},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
+        "Patch_Area_Resistant": {"cell_type": "resistant", "alpha": 2, "pad":True},
+        "Patch_Area_Sensitive": {"cell_type": "sensitive", "alpha": 2, "pad":True},
+        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 2, "pad":True},
+        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 2, "pad":True},
+        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 2, "pad":True},
+        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 2, "pad":True},
+        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 2, "pad":True},
+        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 2, "pad":True},
         "SES": {"side_length": 10}
     },
     "in_vitro": {
@@ -87,12 +91,14 @@ FEATURE_PARAMS = {
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 50},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 30},
-        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 30},
-        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 30},
-        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 30},
-        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 30},
-        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 30},
+        "Patch_Area_Resistant": {"cell_type": "resistant", "alpha": 10},
+        "Patch_Area_Sensitive": {"cell_type": "sensitive", "alpha": 10},
+        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 10},
+        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 10},
+        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 10},
+        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 10},
+        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 10},
+        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 10},
         "SES": {"side_length": 100}
     }
 }
@@ -112,6 +118,8 @@ FUNCTION_LABELS = {
     "Local_Morans_i_Sensitive": {"x":"Moran's i", "y":"Proportion"},
     "NN_Resistant": {"x":"Distance", "y":"Proportion"},
     "NN_Sensitive": {"x":"Distance", "y":"Proportion"},
+    "Patch_Area_Resistant": {"x":"Patch Circularity", "y":"Proportion"},
+    "Patch_Area_Sensitive": {"x":"Patch Circularity", "y":"Proportion"},
     "Patch_Circularity_Resistant": {"x":"Patch Circularity", "y":"Proportion"},
     "Patch_Circularity_Sensitive": {"x":"Patch Circularity", "y":"Proportion"},
     "Patch_Fractal_Dimension_Resistant": {"x":"Patch Fractal Dimension", "y":"Proportion"},
@@ -126,10 +134,12 @@ DISTRIBUTION_BINS = {
     "Local_Morans_i_Sensitive": (-5, 5.5, 0.5),
     "NN_Resistant": (1, 5, 0.2),
     "NN_Sensitive": (1, 5, 0.2),
+    "Patch_Area_Resisant": (0, 105, 5),
+    "Patch_Area_Sensitive": (0, 105, 5),
     "Patch_Circularity_Resisant": (0, 1.1, 0.1),
     "Patch_Circularity_Sensitive": (0, 1.1, 0.1),
-    "Patch_Fractal_Dimension_Resistant": (0, 1.1, 0.1),
-    "Patch_Fractal_Dimension_Sensitive": (0, 1.1, 0.1)
+    "Patch_Fractal_Dimension_Resistant": (0, 11, 1),
+    "Patch_Fractal_Dimension_Sensitive": (0, 11, 1)
 }
 
 
