@@ -1,9 +1,8 @@
 import pickle
 import sys
 
-from classification.common import df_to_xy, read_and_clean_features
+from classification.common import df_to_xy, get_feature_data
 from classification.model_eval_utils import plot_performance
-from common import get_data_path
 
 
 def test_model(save_loc, X, y, int_to_name):
@@ -13,18 +12,15 @@ def test_model(save_loc, X, y, int_to_name):
     plot_performance(save_loc, "test", int_to_name, [y], [y_pred])
 
 
-def main(experiment_name, data_types):
-    parent_dir = "."
-    if len(data_types) == 1:
-        parent_dir = data_types[0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
-    feature_df = read_and_clean_features(data_types, ["game"], experiment_name)
-    X, y, int_to_name, _ = df_to_xy(feature_df, "game")
-    test_model(save_loc, X, y, int_to_name)
+def main(data_type, feature_names):
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    feature_df = df[feature_names+[label_name]]
+    X, y, int_to_class = df_to_xy(feature_df, feature_names, label_name)
+    test_model(save_loc, X, y, int_to_class)
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
         main(sys.argv[1], sys.argv[2:])
     else:
-        print("Please provide a feature set and the data types to train the model with.")
+        print("Please provide the data type and the feature set/names.")

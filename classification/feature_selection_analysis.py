@@ -20,8 +20,9 @@ def feature_set_plot(data_path, feature_set_size, df, xlabel, n=10):
     plt.close()
 
 
-def main(feature_set, data_dir, data_type):
-    data_path = get_data_path(data_type, f"model/{feature_set}/{data_dir}")
+def main(data_type, data_source, feature_names):
+    feature_dir = "_".join(feature_names)
+    data_path = get_data_path(data_type, f"model/{feature_dir}/{data_source}")
     df = pd.DataFrame()
     for file in os.listdir(data_path):
         if not file.endswith(".csv"):
@@ -32,7 +33,7 @@ def main(feature_set, data_dir, data_type):
         df_fs["feature_set_size"] = int(file[:-4])
         df = pd.concat([df, df_fs[["feature_set_size", "features", "value"]]])
 
-    if data_dir == "fragmentation":
+    if data_source == "fragmentation":
         xlabel = "Entropy Shared with Game"
     else:
         xlabel = "Mean Accuracy"
@@ -49,7 +50,7 @@ def main(feature_set, data_dir, data_type):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        main(sys.argv[1], sys.argv[2], sys.argv[3])
+    if len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide a feature set, data dir, and the data type.")
+        print("Please provide the data type, data source (fragmentation or model_iteration), and feature set/names.")

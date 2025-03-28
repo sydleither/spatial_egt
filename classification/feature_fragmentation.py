@@ -4,9 +4,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-from classification.common import read_and_clean_features
+from classification.common import get_feature_data
 from classification.DDIT.DDIT import DDIT
-from common import get_data_path
 
 
 def fragmentation_data(save_loc, df, label_name, feature_set_size):
@@ -40,15 +39,14 @@ def fragmentation_data(save_loc, df, label_name, feature_set_size):
             f.write(",".join(result)+"\n")
 
 
-def main(experiment_name, feature_set_size, data_type):
-    label = ["game"]
-    feature_df = read_and_clean_features([data_type], label, experiment_name)
-    save_loc = get_data_path(data_type, f"model/{experiment_name}/fragmentation")
-    fragmentation_data(save_loc, feature_df, label[0], int(feature_set_size))
+def main(data_type, feature_set_size, feature_names):
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    feature_df = df[feature_names+[label_name]]
+    fragmentation_data(save_loc, feature_df, label_name, int(feature_set_size))
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        main(sys.argv[1], sys.argv[2], sys.argv[3])
+    if len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide a feature set, size, and the data type.")
+        print("Please provide the data type, number of features, and feature set/names.")

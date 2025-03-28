@@ -1,82 +1,69 @@
 import pandas as pd
+from scipy.sparse.csgraph import connected_components
+from scipy.sparse import csr_matrix
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from common import game_colors, get_data_path
 
-feature_sets = {"prop_s":["Proportion_Sensitive"],
-                "top_pairs":["NC_Sensitive_Mean", "NN_Sensitive_Skew",
-                             "SES", "Cross_Ripleys_k_Sensitive_Max",
-                             "NC_Resistant_Skew",
-                             "NC_Resistant_Mean", "Global_Morans_i_Sensitive",
-                             "NC_Sensitive_Skew"],
-                "frag_top5_noncorr":["Local_Morans_i_Resistant_Skew", "Local_Morans_i_Sensitive_Skew",
-                                     "NC_Sensitive_Kurtosis", "NC_Resistant_Kurtosis", "Wasserstein"],
-                "ml_top5_noncorr":["Cross_Ripleys_k_Sensitive_Min", "Entropy", "NN_Resistant_SD", "NN_Sensitive_SD", "SFP_Mean"],
-                "top10":["NC_Resistant_SD","NC_Sensitive_SD","NN_Sensitive_SD","ANNI_Sensitive","NN_Resistant_SD",
-                         "Entropy","Local_Morans_i_Resistant_Skew","SFP_Kurtosis","ANNI_Resistant","Local_Morans_i_Sensitive_Skew"]}
 
-
-def df_to_xy(df, label_name):
-    feature_names = list(df.columns)
-    feature_names.remove(label_name)
+def df_to_xy(df, feature_names, label_name):
     label_classes = list(game_colors.keys())
     class_to_int = {lc:i for i,lc in enumerate(label_classes)}
     int_to_class = {i:lc for i,lc in enumerate(label_classes)}
     X = df[feature_names].values.tolist()
     y = [class_to_int[x] for x in df[label_name].values]
-    return X, y, int_to_class, feature_names
+    return X, y, int_to_class
 
 
-def clean_feature_data(df):
-    df = df[df["game"] != "Unknown"]
-    return df
+def remove_correlated(df, feature_names, verbose=False):
+    corr_matrix = df[feature_names].corr(method="spearman")
+    high_corr = ((corr_matrix >= 0.9) | (corr_matrix <= -0.9)) & (corr_matrix != 1.0)
 
+    adj_matrix = csr_matrix(high_corr.values)
+    _, labels = connected_components(csgraph=adj_matrix, directed=False)
+    clusters = dict()
+    for i, label in enumerate(labels.tolist()):
+        if label not in clusters:
+            clusters[label] = []
+        clusters[label].append(feature_names[i])
+    features_to_keep = [x[0] for x in clusters.values()]
 
-def remove_correlated(df, label_names):
-    feature_names = sorted(list(df.columns))
-    [feature_names.remove(ln) for ln in label_names]
-    num_features = len(feature_names)
-
-    corr_matrix = df[feature_names].corr()
-    features_to_keep = []
-    for i in range(num_features):
-        feature_i = feature_names[i]
-        unique = True
-        for j in range(i+1, num_features):
-            feature_j = feature_names[j]
-            corr = corr_matrix[feature_i][feature_j]
-            if abs(corr) >= 0.9:
-                unique = False
-                break
-        if unique:
-            features_to_keep.append(feature_i)
+    if verbose:
+        print("Correlated Clusters")
+        for c in clusters.values():
+            print("\t", c)
 
     return features_to_keep
 
 
-def read_and_clean_features(data_types, labels, feature_set_name, return_all=False):
-    df = pd.DataFrame()
-    for data_type in data_types:
-        features_data_path = get_data_path(data_type, "features")
-        df_dt = pd.read_csv(f"{features_data_path}/all.csv")
-        df = pd.concat([df, df_dt])
-    df = clean_feature_data(df)
-
+def feature_set_to_names(df, feature_names, label_name):
     feature_df = df.drop(["source", "sample"], axis=1)
-    if feature_set_name == "all":
-        feature_df = feature_df
-    elif feature_set_name == "noncorr":
-        features = remove_correlated(feature_df, labels)
-        feature_df = feature_df[features+labels]
+    all_feature_names = list(feature_df.drop(label_name, axis=1).columns)
+    if feature_names == ["all"]:
+        true_features = all_feature_names
+    elif feature_names == ["noncorr"]:
+        true_features = remove_correlated(feature_df, all_feature_names)
     else:
-        features = feature_sets[feature_set_name]
-        feature_df = feature_df[features+labels]
+        true_features = feature_names
+    return true_features
 
-    if return_all:
-        return feature_df, df
-    return feature_df
+
+def read_and_clean_feature_df(data_type, label_name):
+    features_data_path = get_data_path(data_type, "features")
+    df = pd.read_csv(f"{features_data_path}/all.csv")
+    df = df[df[label_name] != "Unknown"]
+    return df
+
+
+def get_feature_data(data_type, feature_names):
+    label_name = "game"
+    data_dir = "_".join(feature_names)
+    save_loc = get_data_path(data_type, f"images/model/{data_dir}/features")
+    df = read_and_clean_feature_df(data_type, label_name)
+    feature_names = feature_set_to_names(df, feature_names, label_name)
+    return save_loc, df, feature_names, label_name
 
 
 def get_model():

@@ -8,8 +8,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from classification.common import df_to_xy, read_and_clean_features
-from common import get_data_path
+from classification.common import df_to_xy, get_feature_data
 
 
 def finetune_layers(save_loc, X, y):
@@ -37,13 +36,10 @@ def finetune_layers(save_loc, X, y):
     fig.savefig(f"{save_loc}/layersize_tuning.png", bbox_inches="tight")
 
 
-def main(experiment_name, data_types):
-    parent_dir = "."
-    if len(data_types) == 1:
-        parent_dir = data_types[0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
-    feature_df = read_and_clean_features(data_types, ["game"], experiment_name)
-    X, y, _, _ = df_to_xy(feature_df, "game")
+def main(data_type, feature_names):
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    feature_df = df[feature_names+[label_name]]
+    X, y, _ = df_to_xy(feature_df, feature_names, label_name)
     finetune_layers(save_loc, X, y)
 
 
@@ -51,4 +47,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         main(sys.argv[1], sys.argv[2:])
     else:
-        print("Please provide a feature set and the data types to train the model with.")
+        print("Please provide the data type and the feature set/names.")

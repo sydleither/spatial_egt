@@ -8,8 +8,7 @@ from scipy.stats import wasserstein_distance
 import seaborn as sns
 from sklearn.preprocessing import scale
 
-from classification.common import df_to_xy, read_and_clean_features
-from common import get_data_path
+from classification.common import df_to_xy, get_feature_data
 
 
 def color_by_statistic(features, split_char=" "):
@@ -69,7 +68,7 @@ def pairwise_distributions(X_i, X_j, feature_names, condition):
     return data
 
 
-def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names, topn=None):
+def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names):
     for i in range(len(int_to_class)):
         i_indices = [k for k in range(len(y)) if y[k] == i]
         i_X_pair = [X[k] for k in i_indices]
@@ -81,20 +80,13 @@ def run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names, topn
                 continue
             data = pairwise_distributions(i_X_pair, j_X_pair, feature_names, pair_name)
             df = pd.DataFrame(data)
-            plot_feature_selection(save_loc, "Wasserstein Distance", pair_name, df, topn)
-            print(df.nlargest(topn, "Wasserstein Distance"))
-            print(df["Wasserstein Distance"].quantile([0.25, 0.5, 0.75]))
-            print()
+            plot_feature_selection(save_loc, "Wasserstein Distance", pair_name, df)
 
 
-def main(experiment_name, data_types):
-    label = ["game"]
-    parent_dir = "."
-    if len(data_types) == 1:
-        parent_dir = data_types[0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}/pairwise_games")
-    feature_df = read_and_clean_features(data_types, label, experiment_name)
-    X, y, int_to_class, feature_names = df_to_xy(feature_df, label[0])
+def main(data_type, feature_names):
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    feature_df = df[feature_names+[label_name]]
+    X, y, int_to_class = df_to_xy(feature_df, feature_names, label_name)
     X = scale(X, axis=0)
     run_pairwise_distributions(save_loc, X, y, int_to_class, feature_names)
 
@@ -103,4 +95,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         main(sys.argv[1], sys.argv[2:])
     else:
-        print("Please provide a feature set and the data types to train the model with.")
+        print("Please provide the data type and the feature set/names.")

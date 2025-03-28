@@ -7,8 +7,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from classification.common import read_and_clean_features
-from common import get_data_path
+from classification.common import get_feature_data
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -21,16 +20,7 @@ def run(X, y):
     return np.mean(scores)
 
 
-def main(experiment_name, num_features_start, *data_types):
-    #read in and clean feature data
-    parent_dir = "."
-    if len(data_types[0]) == 1:
-        parent_dir = data_types[0][0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}/model_iteration")
-    feature_df = read_and_clean_features(data_types[0], ["game"], experiment_name)
-    feature_names = list(feature_df.columns)
-    feature_names.remove("game")
-
+def sfs(save_loc, feature_df, feature_names, num_features_start):
     #turn game data into classes readable by ML model
     class_to_int = {lc:i for i,lc in enumerate(feature_df["game"].unique())}
     y = [class_to_int[x] for x in feature_df["game"].values]
@@ -39,8 +29,7 @@ def main(experiment_name, num_features_start, *data_types):
     if num_features_start == "0":
         starting_sets = [[]]
     else:
-        data_path = get_data_path(parent_dir, f"model/{experiment_name}/model_iteration")
-        df_start = pd.read_csv(f"{data_path}/{num_features_start}.csv")
+        df_start = pd.read_csv(f"{save_loc}/{num_features_start}.csv")
         df_start_top = df_start.nlargest(10, "value")
         cols = [x for x in df_start_top.columns if x != "value"]
         starting_sets = df_start_top[cols].values.tolist()
@@ -65,8 +54,14 @@ def main(experiment_name, num_features_start, *data_types):
             f.write(",".join(result)+"\n")
 
 
+def main(data_type, num_features_start, feature_names):
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    feature_df = df[feature_names+[label_name]]
+    sfs(save_loc, feature_df, feature_names, num_features_start)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 3:
         main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide a feature set, staring number of features, and the data types to train the model with.")
+        print("Please provide the data type, number of features, and feature set/names.")

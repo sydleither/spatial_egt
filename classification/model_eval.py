@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-from classification.common import df_to_xy, get_model, read_and_clean_features
+from classification.common import df_to_xy, get_feature_data, get_model
 from classification.model_eval_utils import (plot_scatter_prob,
                                              plot_prediction_distributions,
                                              plot_performance,
@@ -49,7 +49,7 @@ def prob_to_pred(y):
     return [np.argmax(sample) for sample in y]
 
 
-def result_to_dataframe(data_types, all_df, indices, y_trues, y_probs, y_preds):
+def result_to_dataframe(data_type, all_df, indices, y_trues, y_probs, y_preds):
     k = [[i for _ in range(len(indices[i]))] for i in range(len(indices))]
     k, indices, y_trues, y_probs, y_preds = flatten_lists([k, indices, y_trues, y_probs, y_preds])
     y_probs_split = {f"{i}_prob":[x[i] for x in y_probs] for i in range(4)}
@@ -61,10 +61,10 @@ def result_to_dataframe(data_types, all_df, indices, y_trues, y_probs, y_preds):
     df = df.merge(all_df, left_index=True, right_index=True)
     df["sample"] = df["sample"].astype(str)
     df = df.set_index(["source", "sample"], drop=True)
-    for data_type in data_types:
-        payoff_df = read_payoff_df(get_data_path(data_type, "processed"))
-        payoff_df = payoff_df.drop(["game"], axis=1)
-        df = df.merge(payoff_df, left_index=True, right_index=True)
+    payoff_df = read_payoff_df(get_data_path(data_type, "processed"))
+    payoff_df = payoff_df.drop(["game"], axis=1)
+    df = df.merge(payoff_df, left_index=True, right_index=True)
+
     df["C-A"] = df["c"] - df["a"]
     df["B-D"] = df["b"] - df["d"]
     df["Stationary Solution"] = (df["c"]-df["a"])/((df["c"]-df["a"])+(df["b"]-df["d"]))
@@ -74,13 +74,10 @@ def result_to_dataframe(data_types, all_df, indices, y_trues, y_probs, y_preds):
     return df
 
 
-def main(experiment_name, data_types):
-    parent_dir = "."
-    if len(data_types) == 1:
-        parent_dir = data_types[0]
-    save_loc = get_data_path(parent_dir, f"model/{experiment_name}")
-    feature_df, all_df = read_and_clean_features(data_types, ["game"], experiment_name, True)
-    X, y, int_to_name, _ = df_to_xy(feature_df, "game")
+def main(data_type, feature_names):
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    feature_df = df[feature_names+[label_name]]
+    X, y, int_to_class = df_to_xy(feature_df, feature_names, label_name)
 
     cross_val_results = cross_val(X, y)
     train_indices, test_indices = cross_val_results[0:2]
@@ -89,11 +86,11 @@ def main(experiment_name, data_types):
     y_train_preds = [prob_to_pred(probs) for probs in y_train_probs]
     y_test_preds = [prob_to_pred(probs) for probs in y_test_probs]
 
-    plot_performance(save_loc, "train", int_to_name, y_train_trues, y_train_preds)
-    plot_performance(save_loc, "test", int_to_name, y_test_trues, y_test_preds)
-    roc_curve(save_loc, "test", int_to_name, y_test_trues, y_test_probs)
+    plot_performance(save_loc, "train", int_to_class, y_train_trues, y_train_preds)
+    plot_performance(save_loc, "test", int_to_class, y_test_trues, y_test_preds)
+    roc_curve(save_loc, "test", int_to_class, y_test_trues, y_test_probs)
 
-    df_test = result_to_dataframe(data_types, all_df, test_indices,
+    df_test = result_to_dataframe(data_type, df, test_indices,
                                   y_test_trues, y_test_probs, y_test_preds)
     plot_prediction_distributions(save_loc, "test", df_test)
     plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "true_prob")
@@ -108,4 +105,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         main(sys.argv[1], sys.argv[2:])
     else:
-        print("Please provide a feature set and the data types to train the model with.")
+        print("Please provide the data type and the feature set/names.")
