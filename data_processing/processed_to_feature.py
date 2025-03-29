@@ -23,6 +23,7 @@ def main(data_type, feature_name):
         if file_name == "payoff.csv":
             continue
         df_sample = pd.read_csv(f"{processed_path}/{file_name}")
+        print(file_name)
         try:
             feature = feature_calculation(df_sample, **feature_args)
         except Exception as e:
