@@ -154,12 +154,15 @@ def main(data_type, run_local):
     run_cmd = "python3 -m" if run_local else "sbatch job.sb"
     patch = [x for x in FEATURE_REGISTRY.keys() if x.startswith("Patch")]
     for feature_name in patch:
-        output = [f"mkdir data/{data_type}/features/{feature_name}"]
-        for i in range(len(2500)):
+        output = []
+        for i in range(2500):
             output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name} HAL {i}\n")
-        with open(f"process_features_{data_type}_{patch}.sh", "w") as f:
-            for output_line in output:
-                f.write(output_line)
+        output_batches = [output[i:i + 999] for i in range(0, len(output), 999)]
+        for i,batch in enumerate(output_batches):
+            with open(f"process_features_{data_type}_{feature_name}_{i}.sh", "w") as f:
+                for output_line in batch:
+                    f.write(output_line)
+        print(f"mkdir data/{data_type}/features/{feature_name}")
 
 
 if __name__ == "__main__":
