@@ -132,8 +132,8 @@ def kl_divergence(df, mesh_step, cell_type1="sensitive", cell_type2="resistant")
 
 def create_patches(df, cell_type, alpha, pad):
     if pad:
-        df["x"] = 2*df["x"]
-        df["y"] = 2*df["y"]
+        df["x"] = 4*df["x"]
+        df["y"] = 4*df["y"]
     domain = create_muspan_domain(df)
     patches = domain.convert_objects(
         population=("type", cell_type),

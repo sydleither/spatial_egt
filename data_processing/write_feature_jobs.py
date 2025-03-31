@@ -1,5 +1,7 @@
+import os
 import sys
 
+from common import get_data_path
 from data_processing.spatial_statistics.custom import nc_dist, proportion_s, sfp_dist
 from data_processing.spatial_statistics.muspan import (anni, area_dist, circularity_dist, cpcf,
                                                        cross_k, entropy, fractal_dimension_dist,
@@ -9,12 +11,10 @@ from data_processing.spatial_statistics.muspan import (anni, area_dist, circular
 
 
 FEATURE_REGISTRY = {
-    # Custom
     "NC_Resistant": nc_dist,
     "NC_Sensitive": nc_dist,
     "Proportion_Sensitive": proportion_s,
     "SFP": sfp_dist,
-    # MuSpAn
     "ANNI_Resistant": anni,
     "ANNI_Sensitive": anni,
     "Entropy": entropy,
@@ -143,32 +143,55 @@ DISTRIBUTION_BINS = {
 }
 
 
-def main(data_type, run_local):
-    # run_cmd = "python3 -m" if run_local else "sbatch job.sb"
-    # output = []
-    # for feature_name in FEATURE_REGISTRY.keys():
-    #     output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name}\n")
-    # with open(f"process_features_{data_type}.sh", "w") as f:
-    #     for output_line in output:
-    #         f.write(output_line)
-    run_cmd = "python3 -m" if run_local else "sbatch job.sb"
-    patch = [x for x in FEATURE_REGISTRY.keys() if x.startswith("Patch")]
-    for feature_name in patch:
+def write_individual(run_cmd, python_file, data_type, feature_names):
+    processed_path = get_data_path(data_type, "processed")
+    sample_files = os.listdir(processed_path)
+    for feature_name in feature_names:
         output = []
-        for i in range(2500):
-            output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name} HAL {i}\n")
+        for sample_file in sample_files:
+            source = sample_file.split(" ")[0]
+            sample = sample_file.split(" ")[1][:-4]
+            output.append(f"{run_cmd} {python_file} {data_type} {feature_name} {source} {sample}\n")
         output_batches = [output[i:i + 999] for i in range(0, len(output), 999)]
         for i,batch in enumerate(output_batches):
             with open(f"process_features_{data_type}_{feature_name}_{i}.sh", "w") as f:
                 for output_line in batch:
                     f.write(output_line)
-        print(f"mkdir data/{data_type}/features/{feature_name}")
+        os.mkdir(f"data/{data_type}/features/{feature_name}")
+
+
+def write_aggregated(run_cmd, python_file, data_type, feature_names):
+    output = []
+    for feature_name in feature_names:
+        output.append(f"{run_cmd} {python_file} {data_type} {feature_name}\n")
+    with open(f"process_features_{data_type}.sh", "w") as f:
+        for output_line in output:
+            f.write(output_line)
+
+
+def main(data_type, run_loc, feature_names=None):
+    if run_loc == "hpcc":
+        run_cmd = "sbatch job.sb"
+    elif run_loc == "local":
+        run_cmd = "python3 -m"
+    else:
+        print(f"Invalid run location given: {run_loc}")
+        return
+    
+    python_file = "data_processing.processed_to_feature"
+    if feature_names is None:
+        feature_names = FEATURE_REGISTRY.keys()
+        write_aggregated(run_cmd, python_file, data_type, feature_names)
+    else:
+        write_individual(run_cmd, python_file, data_type, feature_names)
 
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        main(sys.argv[1], False)
+        main(sys.argv[1], sys.argv[2])
     elif len(sys.argv) == 3:
-        main(sys.argv[1], True)
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide the data type and an extra flag if running locally.")
+        print("Please provide the data type,")
+        print("'local' or 'hpcc' for where the features will be processed,")
+        print("and (optionally) the feature names if running samples independently.")

@@ -34,7 +34,7 @@ def main(data_type):
     features_data_path = get_data_path(data_type, "features")
     df = read_payoff_df(processed_data_path)[["game"]]
     for feature_file in os.listdir(features_data_path):
-        if feature_file == "all.csv":
+        if not feature_file.endswith(".pkl"):
             continue
         df_feature = pd.read_pickle(f"{features_data_path}/{feature_file}")
         feature_name = feature_file[:-4]
