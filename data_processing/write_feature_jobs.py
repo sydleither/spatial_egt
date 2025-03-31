@@ -31,14 +31,10 @@ FEATURE_REGISTRY = {
     "Local_Morans_i_Sensitive": local_moransi_dist,
     "NN_Resistant": nn_dist,
     "NN_Sensitive": nn_dist,
-    "Patch_Area_Resistant": area_dist,
-    "Patch_Area_Sensitive": area_dist,
-    "Patch_Circularity_Resistant": circularity_dist,
-    "Patch_Circularity_Sensitive": circularity_dist,
-    "Patch_Count_Resistant": patch_count,
-    "Patch_Count_Sensitive": patch_count,
-    "Patch_Fractal_Dimension_Resistant": fractal_dimension_dist,
-    "Patch_Fractal_Dimension_Sensitive": fractal_dimension_dist,
+    "Patch_Area": area_dist,
+    "Patch_Circularity": circularity_dist,
+    "Patch_Count": patch_count,
+    "Patch_Fractal_Dimension": fractal_dimension_dist,
     "SES": qcm,
     "Wasserstein": wasserstein
 }
@@ -63,14 +59,10 @@ FEATURE_PARAMS = {
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 5},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "Patch_Area_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Area_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
+        "Patch_Area": {"alpha": 1},
+        "Patch_Count": {"alpha": 1},
+        "Patch_Circularity": {"alpha": 1},
+        "Patch_Fractal_Dimension": {"alpha": 1},
         "SES": {"side_length": 10}
     },
     "in_vitro": {
@@ -91,14 +83,10 @@ FEATURE_PARAMS = {
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 50},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "Patch_Area_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Area_Sensitive": {"cell_type": "sensitive", "alpha": 10},
-        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 10},
-        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 10},
-        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 10},
+        "Patch_Area": {"alpha": 10},
+        "Patch_Count": {"alpha": 10},
+        "Patch_Circularity": {"alpha": 10},
+        "Patch_Fractal_Dimension": {"alpha": 10},
         "SES": {"side_length": 100}
     }
 }
@@ -118,12 +106,9 @@ FUNCTION_LABELS = {
     "Local_Morans_i_Sensitive": {"x":"Moran's i", "y":"Proportion"},
     "NN_Resistant": {"x":"Distance", "y":"Proportion"},
     "NN_Sensitive": {"x":"Distance", "y":"Proportion"},
-    "Patch_Area_Resistant": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Area_Sensitive": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Circularity_Resistant": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Circularity_Sensitive": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Fractal_Dimension_Resistant": {"x":"Patch Fractal Dimension", "y":"Proportion"},
-    "Patch_Fractal_Dimension_Sensitive": {"x":"Patch Fractal Dimension", "y":"Proportion"}
+    "Patch_Area": {"x":"Patch Circularity", "y":"Proportion"},
+    "Patch_Circularity": {"x":"Patch Circularity", "y":"Proportion"},
+    "Patch_Fractal_Dimension": {"x":"Patch Fractal Dimension", "y":"Proportion"}
 }
 
 DISTRIBUTION_BINS = {
@@ -134,12 +119,9 @@ DISTRIBUTION_BINS = {
     "Local_Morans_i_Sensitive": (-5, 5.5, 0.5),
     "NN_Resistant": (1, 5, 0.2),
     "NN_Sensitive": (1, 5, 0.2),
-    "Patch_Area_Resisant": (0, 105, 5),
-    "Patch_Area_Sensitive": (0, 105, 5),
-    "Patch_Circularity_Resisant": (0, 1.1, 0.1),
-    "Patch_Circularity_Sensitive": (0, 1.1, 0.1),
-    "Patch_Fractal_Dimension_Resistant": (0, 11, 1),
-    "Patch_Fractal_Dimension_Sensitive": (0, 11, 1)
+    "Patch_Area": (0, 105, 5),
+    "Patch_Circularity": (0, 1.1, 0.1),
+    "Patch_Fractal_Dimension": (0, 11, 1)
 }
 
 
