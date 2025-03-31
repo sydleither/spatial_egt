@@ -144,13 +144,22 @@ DISTRIBUTION_BINS = {
 
 
 def main(data_type, run_local):
+    # run_cmd = "python3 -m" if run_local else "sbatch job.sb"
+    # output = []
+    # for feature_name in FEATURE_REGISTRY.keys():
+    #     output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name}\n")
+    # with open(f"process_features_{data_type}.sh", "w") as f:
+    #     for output_line in output:
+    #         f.write(output_line)
     run_cmd = "python3 -m" if run_local else "sbatch job.sb"
-    output = []
-    for feature_name in FEATURE_REGISTRY.keys():
-        output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name}\n")
-    with open(f"process_features_{data_type}.sh", "w") as f:
-        for output_line in output:
-            f.write(output_line)
+    patch = [x for x in FEATURE_REGISTRY.keys() if x.startswith("Patch")]
+    for feature_name in patch:
+        output = [f"mkdir data/{data_type}/features/{feature_name}"]
+        for i in range(len(2500)):
+            output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name} HAL {i}\n")
+        with open(f"process_features_{data_type}_{patch}.sh", "w") as f:
+            for output_line in output:
+                f.write(output_line)
 
 
 if __name__ == "__main__":
