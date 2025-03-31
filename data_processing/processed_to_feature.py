@@ -40,6 +40,7 @@ def main(data_type, feature_name, source=None, sample=None):
         save_loc = f"{features_path}/{feature_name}.pkl"
         file_names = os.listdir(processed_path)
     else:
+        print(source, sample)
         features_path = get_data_path(data_type, f"features/{feature_name}")
         save_loc = f"{features_path}/{sample}.pkl"
         file_names = [f"{source} {sample}.csv"]
