@@ -19,11 +19,11 @@ def main(data_type, feature_name):
         feature_args = feature_args_datatype[feature_name]
 
     df_entries = []
+    cnt = 0
     for file_name in os.listdir(processed_path):
         if file_name == "payoff.csv":
             continue
         df_sample = pd.read_csv(f"{processed_path}/{file_name}")
-        print(file_name)
         try:
             feature = feature_calculation(df_sample, **feature_args)
         except Exception as e:
@@ -34,15 +34,17 @@ def main(data_type, feature_name):
         sample = file_name.split(" ")[1][:-4]
         df_entries.append({"source":source, "sample":sample, feature_name:feature})
 
-    df = pd.DataFrame(df_entries)
-    if is_object_dtype(df[feature_name]):
-        if feature_calculation.__name__.endswith("dist"):
-            df["type"] = "distribution"
-        else:
-            df["type"] = "function"
-    else:
-        df["type"] = "value"
-    df.to_pickle(f"{features_path}/{feature_name}.pkl")
+        if cnt % 100 == 0:
+            df = pd.DataFrame(df_entries)
+            if is_object_dtype(df[feature_name]):
+                if feature_calculation.__name__.endswith("dist"):
+                    df["type"] = "distribution"
+                else:
+                    df["type"] = "function"
+            else:
+                df["type"] = "value"
+            df.to_pickle(f"{features_path}/{feature_name}.pkl")
+        cnt += 1
 
 
 if __name__ == "__main__":
