@@ -5,7 +5,7 @@ from pandas.api.types import is_object_dtype
 import pandas as pd
 
 from common import get_data_path
-from data_processing.write_feature_jobs import FEATURE_PARAMS, FEATURE_REGISTRY
+from data_processing.feature_database import FEATURE_PARAMS, FEATURE_REGISTRY
 
 
 def calculate_features(processed_path, file_names, feature_name, feature_calculation, feature_args):
@@ -42,11 +42,10 @@ def main(data_type, feature_name, source=None, sample=None):
     else:
         print(source, sample)
         features_path = get_data_path(data_type, f"features/{feature_name}")
-        save_loc = f"{features_path}/{sample}.pkl"
+        save_loc = f"{features_path}/{source} {sample}.pkl"
         file_names = [f"{source} {sample}.csv"]
-    
-    rows = calculate_features(processed_path, file_names, feature_name, feature_calculation, feature_args)
 
+    rows = calculate_features(processed_path, file_names, feature_name, feature_calculation, feature_args)
     df = pd.DataFrame(rows)
     if is_object_dtype(df[feature_name]):
         if feature_calculation.__name__.endswith("dist"):
