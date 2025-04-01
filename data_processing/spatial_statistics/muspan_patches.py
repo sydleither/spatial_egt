@@ -1,13 +1,7 @@
 import muspan as ms
 import numpy as np
 
-
-def create_muspan_domain(df):
-    domain = ms.domain("sample")
-    points = np.asarray([df["x"], df["y"]])
-    domain.add_points(points.T, "cells")
-    domain.add_labels("type", df["type"])
-    return domain
+from data_processing.spatial_statistics.muspan import create_muspan_domain
 
 
 def create_patches(df, alpha):

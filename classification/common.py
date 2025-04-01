@@ -1,6 +1,5 @@
 import pandas as pd
-from scipy.sparse.csgraph import connected_components
-from scipy.sparse import csr_matrix
+from scipy.sparse import csgraph, csr_matrix
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -17,23 +16,16 @@ def df_to_xy(df, feature_names, label_name):
     return X, y, int_to_class
 
 
-def remove_correlated(df, feature_names, verbose=False):
+def remove_correlated(df, feature_names):
     corr_matrix = df[feature_names].corr(method="spearman")
     high_corr = ((corr_matrix >= 0.9) | (corr_matrix <= -0.9)) & (corr_matrix != 1.0)
 
-    adj_matrix = csr_matrix(high_corr.values)
-    _, labels = connected_components(csgraph=adj_matrix, directed=False)
-    clusters = dict()
-    for i, label in enumerate(labels.tolist()):
-        if label not in clusters:
-            clusters[label] = []
+    adj_matrix = csr_matrix(high_corr)
+    _, labels = csgraph.connected_components(csgraph=adj_matrix, directed=False)
+    clusters = [[] for _ in range(len(set(labels)))]
+    for i, label in enumerate(labels):
         clusters[label].append(feature_names[i])
-    features_to_keep = [x[0] for x in clusters.values()]
-
-    if verbose:
-        print("Correlated Clusters")
-        for c in clusters.values():
-            print("\t", c)
+    features_to_keep = [x[0] for x in clusters]
 
     return features_to_keep
 

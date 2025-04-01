@@ -3,12 +3,14 @@ import sys
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as grid_spec
+import networkx as nx
 import numpy as np
 from scipy import stats
+from scipy.sparse import csgraph, csr_matrix
 import seaborn as sns
 
-from classification.common import get_feature_data, remove_correlated
-from common import game_colors
+from classification.common import get_feature_data
+from common import game_colors, theme_colors
 
 
 def feature_pairplot(save_loc, df, label_hue):
@@ -71,7 +73,7 @@ def feature_correlation(save_loc, df, feature_names):
     ax.set_title("Correlation Matrix")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    fig.savefig(f"{save_loc}/correlations.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/corr_matrix.png", bbox_inches="tight")
     plt.close()
 
 
@@ -85,6 +87,32 @@ def class_balance(df, label_name):
     print(f"\tProportions: {proportions}")
 
 
+def visualize_correlated(save_loc, df, feature_names):
+    corr_matrix = df[feature_names].corr(method="spearman")
+    high_corr = ((corr_matrix >= 0.9) | (corr_matrix <= -0.9)) & (corr_matrix != 1.0)
+    adj_matrix = csr_matrix(high_corr)
+    _, labels = csgraph.connected_components(csgraph=adj_matrix, directed=False)
+    clusters = [[] for _ in range(len(set(labels)))]
+    for i, label in enumerate(labels):
+        clusters[label].append(i)
+
+    print("Correlated Clusters")
+    for c in clusters:
+        print("\t", [feature_names[i] for i in c])
+
+    prop_s = max(clusters, key=len)
+    fig, ax = plt.subplots(figsize=(10,10))
+    graph = nx.Graph(adj_matrix)
+    graph = graph.subgraph(prop_s)
+    labels = labels={i:feature_names[i].replace("_", "\n") for i in prop_s}
+    nx.draw(graph, pos=nx.kamada_kawai_layout(graph), labels=labels,
+            node_size=2000, font_size=8, node_color=theme_colors[0], ax=ax)
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    fig.savefig(f"{save_loc}/corr_ps_graph.png", bbox_inches="tight")
+    plt.close()
+
+
 def main(data_type, feature_names):
     save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
     feature_df = df[feature_names+[label_name]]
@@ -96,7 +124,7 @@ def main(data_type, feature_names):
     # df = df.drop(["source", "sample", "game"], axis=1)
     # features_ridgeplots(save_loc, df, ["cell_type"], c, s)
 
-    remove_correlated(feature_df, feature_names, verbose=True)
+    visualize_correlated(save_loc, df, feature_names)
     features_ridgeplots(save_loc, feature_df, feature_names, label_name, colors)
     class_balance(feature_df, label_name)
     feature_correlation(save_loc, feature_df, feature_names)
