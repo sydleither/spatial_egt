@@ -1,5 +1,7 @@
+import os
 import sys
 
+from common import get_data_path
 from data_processing.spatial_statistics.custom import nc_dist, proportion_s, sfp_dist
 from data_processing.spatial_statistics.muspan import (anni, area_dist, circularity_dist, cpcf,
                                                        cross_k, entropy, fractal_dimension_dist,
@@ -9,12 +11,10 @@ from data_processing.spatial_statistics.muspan import (anni, area_dist, circular
 
 
 FEATURE_REGISTRY = {
-    # Custom
     "NC_Resistant": nc_dist,
     "NC_Sensitive": nc_dist,
     "Proportion_Sensitive": proportion_s,
     "SFP": sfp_dist,
-    # MuSpAn
     "ANNI_Resistant": anni,
     "ANNI_Sensitive": anni,
     "Entropy": entropy,
@@ -31,14 +31,10 @@ FEATURE_REGISTRY = {
     "Local_Morans_i_Sensitive": local_moransi_dist,
     "NN_Resistant": nn_dist,
     "NN_Sensitive": nn_dist,
-    "Patch_Area_Resistant": area_dist,
-    "Patch_Area_Sensitive": area_dist,
-    "Patch_Circularity_Resistant": circularity_dist,
-    "Patch_Circularity_Sensitive": circularity_dist,
-    "Patch_Count_Resistant": patch_count,
-    "Patch_Count_Sensitive": patch_count,
-    "Patch_Fractal_Dimension_Resistant": fractal_dimension_dist,
-    "Patch_Fractal_Dimension_Sensitive": fractal_dimension_dist,
+    "Patch_Area": area_dist,
+    "Patch_Circularity": circularity_dist,
+    "Patch_Count": patch_count,
+    "Patch_Fractal_Dimension": fractal_dimension_dist,
     "SES": qcm,
     "Wasserstein": wasserstein
 }
@@ -63,14 +59,10 @@ FEATURE_PARAMS = {
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 5},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "Patch_Area_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Area_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
-        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 3, "pad":True},
-        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 3, "pad":True},
+        "Patch_Area": {"alpha": 1},
+        "Patch_Count": {"alpha": 1},
+        "Patch_Circularity": {"alpha": 1},
+        "Patch_Fractal_Dimension": {"alpha": 1},
         "SES": {"side_length": 10}
     },
     "in_vitro": {
@@ -91,14 +83,10 @@ FEATURE_PARAMS = {
         "Local_Morans_i_Sensitive": {"cell_type": "sensitive", "side_length": 50},
         "NN_Resistant": {"cell_type1": "resistant", "cell_type2": "sensitive"},
         "NN_Sensitive": {"cell_type1": "sensitive", "cell_type2": "resistant"},
-        "Patch_Area_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Area_Sensitive": {"cell_type": "sensitive", "alpha": 10},
-        "Patch_Count_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Count_Sensitive": {"cell_type": "sensitive", "alpha": 10},
-        "Patch_Circularity_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Circularity_Sensitive": {"cell_type": "sensitive", "alpha": 10},
-        "Patch_Fractal_Dimension_Resistant": {"cell_type": "resistant", "alpha": 10},
-        "Patch_Fractal_Dimension_Sensitive": {"cell_type": "sensitive", "alpha": 10},
+        "Patch_Area": {"alpha": 10},
+        "Patch_Count": {"alpha": 10},
+        "Patch_Circularity": {"alpha": 10},
+        "Patch_Fractal_Dimension": {"alpha": 10},
         "SES": {"side_length": 100}
     }
 }
@@ -118,12 +106,9 @@ FUNCTION_LABELS = {
     "Local_Morans_i_Sensitive": {"x":"Moran's i", "y":"Proportion"},
     "NN_Resistant": {"x":"Distance", "y":"Proportion"},
     "NN_Sensitive": {"x":"Distance", "y":"Proportion"},
-    "Patch_Area_Resistant": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Area_Sensitive": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Circularity_Resistant": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Circularity_Sensitive": {"x":"Patch Circularity", "y":"Proportion"},
-    "Patch_Fractal_Dimension_Resistant": {"x":"Patch Fractal Dimension", "y":"Proportion"},
-    "Patch_Fractal_Dimension_Sensitive": {"x":"Patch Fractal Dimension", "y":"Proportion"}
+    "Patch_Area": {"x":"Patch Circularity", "y":"Proportion"},
+    "Patch_Circularity": {"x":"Patch Circularity", "y":"Proportion"},
+    "Patch_Fractal_Dimension": {"x":"Patch Fractal Dimension", "y":"Proportion"}
 }
 
 DISTRIBUTION_BINS = {
@@ -134,29 +119,62 @@ DISTRIBUTION_BINS = {
     "Local_Morans_i_Sensitive": (-5, 5.5, 0.5),
     "NN_Resistant": (1, 5, 0.2),
     "NN_Sensitive": (1, 5, 0.2),
-    "Patch_Area_Resisant": (0, 105, 5),
-    "Patch_Area_Sensitive": (0, 105, 5),
-    "Patch_Circularity_Resisant": (0, 1.1, 0.1),
-    "Patch_Circularity_Sensitive": (0, 1.1, 0.1),
-    "Patch_Fractal_Dimension_Resistant": (0, 11, 1),
-    "Patch_Fractal_Dimension_Sensitive": (0, 11, 1)
+    "Patch_Area": (0, 105, 5),
+    "Patch_Circularity": (0, 1.1, 0.1),
+    "Patch_Fractal_Dimension": (0, 11, 1)
 }
 
 
-def main(data_type, run_local):
-    run_cmd = "python3 -m" if run_local else "sbatch job.sb"
+def write_individual(run_cmd, python_file, data_type, feature_names):
+    processed_path = get_data_path(data_type, "processed")
+    sample_files = os.listdir(processed_path)
+    sample_files = [x for x in sample_files if x != "payoff.csv"]
+    for feature_name in feature_names:
+        output = []
+        for sample_file in sample_files:
+            source = sample_file.split(" ")[0]
+            sample = sample_file.split(" ")[1][:-4]
+            output.append(f"{run_cmd} {python_file} {data_type} {feature_name} {source} {sample}\n")
+        output_batches = [output[i:i + 900] for i in range(0, len(output), 900)]
+        for i,batch in enumerate(output_batches):
+            with open(f"process_features_{data_type}_{feature_name}_{i}.sh", "w") as f:
+                for output_line in batch:
+                    f.write(output_line)
+        os.mkdir(f"data/{data_type}/features/{feature_name}")
+
+
+def write_aggregated(run_cmd, python_file, data_type, feature_names):
     output = []
-    for feature_name in FEATURE_REGISTRY.keys():
-        output.append(f"{run_cmd} data_processing.processed_to_feature {data_type} {feature_name}\n")
+    for feature_name in feature_names:
+        output.append(f"{run_cmd} {python_file} {data_type} {feature_name}\n")
     with open(f"process_features_{data_type}.sh", "w") as f:
         for output_line in output:
             f.write(output_line)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1], False)
-    elif len(sys.argv) == 3:
-        main(sys.argv[1], True)
+def main(data_type, run_loc, feature_names=None):
+    if run_loc == "hpcc":
+        run_cmd = "sbatch job.sb"
+    elif run_loc == "local":
+        run_cmd = "python3 -m"
     else:
-        print("Please provide the data type and an extra flag if running locally.")
+        print(f"Invalid run location given: {run_loc}")
+        return
+    
+    python_file = "data_processing.processed_to_feature"
+    if feature_names is None:
+        feature_names = FEATURE_REGISTRY.keys()
+        write_aggregated(run_cmd, python_file, data_type, feature_names)
+    else:
+        write_individual(run_cmd, python_file, data_type, feature_names)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
+    else:
+        print("Please provide the data type,")
+        print("'local' or 'hpcc' for where the features will be processed,")
+        print("and (optionally) the feature names if running samples independently.")

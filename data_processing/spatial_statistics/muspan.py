@@ -130,11 +130,12 @@ def kl_divergence(df, mesh_step, cell_type1="sensitive", cell_type2="resistant")
     return kl_div
 
 
-def create_patches(df, cell_type, alpha, pad):
-    if pad:
-        df["x"] = 2*df["x"]
-        df["y"] = 2*df["y"]
+def create_patches(df, alpha):
     domain = create_muspan_domain(df)
+    if len(df[df["type"] == "sensitive"]) > len(df[df["type"] == "resistant"]):
+        cell_type = "resistant"
+    else:
+        cell_type = "sensitive"
     patches = domain.convert_objects(
         population=("type", cell_type),
         collection_name="shape",
@@ -146,27 +147,33 @@ def create_patches(df, cell_type, alpha, pad):
     return domain, patches
 
 
-def patch_count(df, cell_type, alpha, pad=False):
-    _, patches = create_patches(df, cell_type, alpha, pad)
+def patch_count(df, alpha):
+    _, patches = create_patches(df, alpha)
     return len(patches)
 
 
-def area_dist(df, cell_type, alpha, pad=False):
-    domain, _ = create_patches(df, cell_type, alpha, pad)
+def area_dist(df, alpha):
+    domain, patches = create_patches(df, alpha)
+    if len(patches) == 0:
+        return [0]
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     area, _ = ms.geometry.area(domain, population=patch_pop)
     return area
 
 
-def circularity_dist(df, cell_type, alpha, pad=False):
-    domain, _ = create_patches(df, cell_type, alpha, pad)
+def circularity_dist(df, alpha):
+    domain, patches = create_patches(df, alpha)
+    if len(patches) == 0:
+        return [0]
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     circ, _ = ms.geometry.circularity(domain, population=patch_pop)
     return circ
 
 
-def fractal_dimension_dist(df, cell_type, alpha, pad=False):
-    domain, _ = create_patches(df, cell_type, alpha, pad)
+def fractal_dimension_dist(df, alpha):
+    domain, patches = create_patches(df, alpha)
+    if len(patches) == 0:
+        return [0]
     patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
     area, _ = ms.geometry.area(domain, population=patch_pop)
     perim, _ = ms.geometry.perimeter(domain, population=patch_pop)
