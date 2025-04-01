@@ -23,7 +23,8 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
     '''
     num_features = len(feature_names)
     class_names = df[label_name].unique()
-    gs = (grid_spec.GridSpec(len(class_names), num_features))
+    num_classes = len(class_names)
+    gs = (grid_spec.GridSpec(num_classes, num_features))
     fig = plt.figure(figsize=(6*num_features, 8))
     axes = []
     for f,feature_name in enumerate(feature_names):
@@ -37,7 +38,10 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
             rect = axes[-1].patch
             rect.set_alpha(0)
             axes[-1].set_yticklabels([])
-            axes[-1].set_xlabel(feature_name)
+            if c == num_classes-1:
+                axes[-1].set_xlabel(feature_name)
+            else:
+                axes[-1].set(xticklabels=[], xticks=[])
             if f == 0:
                 axes[-1].text(-0.02, 0, class_name, ha="right")
             else:

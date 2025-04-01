@@ -54,6 +54,10 @@ def read_and_clean_feature_df(data_type, label_name):
     features_data_path = get_data_path(data_type, "features")
     df = pd.read_csv(f"{features_data_path}/all.csv")
     df = df[df[label_name] != "Unknown"]
+    len_df = len(df)
+    df = df.dropna()
+    if len_df != len(df):
+        print(f"WARNING: {len_df-len(df)} rows with NA dropped.")
     return df
 
 

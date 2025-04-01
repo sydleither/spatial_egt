@@ -128,13 +128,14 @@ DISTRIBUTION_BINS = {
 def write_individual(run_cmd, python_file, data_type, feature_names):
     processed_path = get_data_path(data_type, "processed")
     sample_files = os.listdir(processed_path)
+    sample_files = [x for x in sample_files if x != "payoff.csv"]
     for feature_name in feature_names:
         output = []
         for sample_file in sample_files:
             source = sample_file.split(" ")[0]
             sample = sample_file.split(" ")[1][:-4]
             output.append(f"{run_cmd} {python_file} {data_type} {feature_name} {source} {sample}\n")
-        output_batches = [output[i:i + 999] for i in range(0, len(output), 999)]
+        output_batches = [output[i:i + 900] for i in range(0, len(output), 900)]
         for i,batch in enumerate(output_batches):
             with open(f"process_features_{data_type}_{feature_name}_{i}.sh", "w") as f:
                 for output_line in batch:
@@ -169,9 +170,9 @@ def main(data_type, run_loc, feature_names=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
-    elif len(sys.argv) == 3:
+    elif len(sys.argv) > 3:
         main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
         print("Please provide the data type,")
