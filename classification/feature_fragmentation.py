@@ -40,7 +40,7 @@ def fragmentation_data(save_loc, df, label_name, feature_set_size):
 
 
 def main(data_type, feature_set_size, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names, "fragmentation")
     feature_df = df[feature_names+[label_name]]
     fragmentation_data(save_loc, feature_df, label_name, int(feature_set_size))
 

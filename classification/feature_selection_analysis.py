@@ -22,7 +22,7 @@ def feature_set_plot(data_path, feature_set_size, df, xlabel, n=10):
 
 def main(data_type, data_source, feature_names):
     feature_dir = "_".join(feature_names)
-    data_path = get_data_path(data_type, f"model/{feature_dir}/{data_source}")
+    data_path = get_data_path(data_type, f"images/model/{feature_dir}/{data_source}")
     df = pd.DataFrame()
     for file in os.listdir(data_path):
         if not file.endswith(".csv"):

@@ -104,7 +104,7 @@ def visualize_correlated(save_loc, df, feature_names):
     fig, ax = plt.subplots(figsize=(10,10))
     graph = nx.Graph(adj_matrix)
     graph = graph.subgraph(prop_s)
-    labels = labels={i:feature_names[i].replace("_", "\n") for i in prop_s}
+    labels = {i:feature_names[i].replace("_", "\n") for i in prop_s}
     nx.draw(graph, pos=nx.kamada_kawai_layout(graph), labels=labels,
             node_size=2000, font_size=8, node_color=theme_colors[0], ax=ax)
     fig.patch.set_alpha(0.0)
@@ -114,7 +114,7 @@ def visualize_correlated(save_loc, df, feature_names):
 
 
 def main(data_type, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names, "features")
     feature_df = df[feature_names+[label_name]]
     colors = {k:v for k,v in game_colors.items() if k in feature_df["game"].unique()}
 

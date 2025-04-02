@@ -10,9 +10,9 @@ from common import get_data_path
 def plot_gamespace(save_loc, save_name, df, hue):
     df["C - A"] = df["c"] - df["a"]
     df["B - D"] = df["b"] - df["d"]
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    sns.scatterplot(data=df, x="C - A", y="B - D",
-                    hue=hue, palette="Set2", ax=ax)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    sns.scatterplot(data=df, x="C - A", y="B - D", s=100, hue=hue, ax=ax,
+                    palette=sns.color_palette("hls", len(df[hue].unique())))
     ax.axvline(0, color="black")
     ax.axhline(0, color="black")
     fig.patch.set_alpha(0.0)
@@ -35,8 +35,12 @@ def get_samples(data_type, source, sample_ids): #TODO combine with plot_function
 def main(data_type, source, sample_ids):
     image_data_path = get_data_path(data_type, "images")
     df = get_samples(data_type, source, sample_ids)
+    df["source"] = df["source"].str.lower()
     hue = "source"
     save_name = "all"
+    if data_type == "in_vitro":
+        df["cell"] = df["source"].str.split("_").str[4]
+        hue = "cell"
     if not source == "":
         save_name = source
     if sample_ids:

@@ -55,7 +55,7 @@ def sfs(save_loc, feature_df, feature_names, num_features_start):
 
 
 def main(data_type, num_features_start, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names, "model_iteration")
     feature_df = df[feature_names+[label_name]]
     sfs(save_loc, feature_df, feature_names, num_features_start)
 

@@ -25,7 +25,7 @@ def remove_correlated(df, feature_names):
     clusters = [[] for _ in range(len(set(labels)))]
     for i, label in enumerate(labels):
         clusters[label].append(feature_names[i])
-    features_to_keep = [x[0] for x in clusters]
+    features_to_keep = ["Proportion_Sensitive" if "Proportion_Sensitive" in x else x[0] for x in clusters]
 
     return features_to_keep
 
@@ -53,10 +53,10 @@ def read_and_clean_feature_df(data_type, label_name):
     return df
 
 
-def get_feature_data(data_type, feature_names):
+def get_feature_data(data_type, feature_names, extra_dir=""):
     label_name = "game"
     data_dir = "_".join(feature_names)
-    save_loc = get_data_path(data_type, f"images/model/{data_dir}/features")
+    save_loc = get_data_path(data_type, f"images/model/{data_dir}/{extra_dir}")
     df = read_and_clean_feature_df(data_type, label_name)
     feature_names = feature_set_to_names(df, feature_names, label_name)
     return save_loc, df, feature_names, label_name

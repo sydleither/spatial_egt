@@ -35,6 +35,7 @@ def plot_feature_selection(save_loc, measurement, condition, df):
     df["Feature"] = df["Feature"].str.replace("_", " ")
     df = df.sort_values(measurement, ascending=False)
     df["Statistic"] = df["Feature"].map(color_by_statistic(df["Feature"].unique()))
+    statistics = df["Statistic"].unique()
 
     if condition is None:
         file_name = f"{measurement}"
@@ -45,8 +46,8 @@ def plot_feature_selection(save_loc, measurement, condition, df):
 
     fig, ax = plt.subplots(figsize=(6, 10))
     sns.barplot(data=df, x=measurement, y="Feature", ax=ax,
-                hue="Statistic", palette=sns.color_palette("Set2"),
-                hue_order=sorted(df["Statistic"].unique()))
+                palette=sns.color_palette("hls", len(statistics)),
+                hue="Statistic", hue_order=sorted(statistics))
     ax.set(title=title)
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
