@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 
 from common import get_data_path, theme_colors
-from classification.feature_pairwise_games import plot_feature_selection
+from classification.feature_plot_utils import format_df, plot_feature_selection
 
 
 def feature_set_plot(data_path, feature_set_size, df, xlabel, n=10):
@@ -32,6 +32,7 @@ def main(data_type, data_source, feature_names):
         df_fs["features"] = df_fs[cols].apply(lambda row: "\n".join(row.values.astype(str)), axis=1)
         df_fs["feature_set_size"] = int(file[:-4])
         df = pd.concat([df, df_fs[["feature_set_size", "features", "value"]]])
+    df = format_df(df)
 
     if data_source == "fragmentation":
         xlabel = "Entropy Shared with Game"

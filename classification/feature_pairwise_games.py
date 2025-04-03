@@ -8,56 +8,7 @@ import seaborn as sns
 from sklearn.preprocessing import scale
 
 from classification.common import df_to_xy, get_feature_data
-
-
-def label_statistic(features, split_char=" "):
-    extra = [
-        "Sensitive", "Resistant",
-        "Local", "Global",
-        "Mean", "SD", "Skew", "Kurtosis",
-        "Min", "Max", "0"
-    ]
-    feature_categories = []
-    feature_to_statistic = dict()
-    for feature in features:
-        feature_category = [x for x in feature.split(split_char) if x not in extra]
-        feature_category = split_char.join(feature_category)
-        if feature_category == "Proportion":
-            feature_category = "Proportion"+split_char+"Sensitive"
-        feature_to_statistic[feature] = feature_category
-        if feature_category not in feature_categories:
-            feature_categories.append(feature_category)
-    return feature_to_statistic
-
-
-def format_df(df):
-    df["Feature"] = df["Feature"].str.replace("_", " ")
-    df["Statistic"] = df["Feature"].map(label_statistic(df["Feature"].unique()))
-    return df
-
-
-def plot_feature_selection(save_loc, measurement, condition, df):
-    df = df.sort_values(measurement, ascending=False)
-    statistics = df["Statistic"].unique()
-
-    if condition is None:
-        file_name = f"{measurement}"
-        title = f"Feature {measurement}"
-    else:
-        file_name = f"{measurement}_{condition}"
-        title = f"Feature {measurement}\n{condition}"
-
-    fig, ax = plt.subplots(figsize=(6, len(df["Feature"].unique())//2))
-    sns.barplot(
-        data=df, x=measurement, y="Feature", ax=ax,
-        palette=sns.color_palette("hls", len(statistics)),
-        hue="Statistic", hue_order=sorted(statistics)
-    )
-    ax.set(title=title)
-    fig.tight_layout()
-    fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
-    plt.close()
+from classification.feature_plot_utils import format_df, plot_feature_selection
 
 
 def label_bars(ax, labels):
@@ -147,9 +98,9 @@ def run_pairwise_distributions(X, y, int_to_class, feature_names):
 
 
 def main(data_type, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
-    feature_df = df[feature_names+[label_name]]
-    X, y, int_to_class = df_to_xy(feature_df, feature_names, label_name)
+    save_loc, df, feature_names, label = get_feature_data(data_type, feature_names, "pairwise")
+    feature_df = df[feature_names+[label]]
+    X, y, int_to_class = df_to_xy(feature_df, feature_names, label)
     X = scale(X, axis=0)
 
     df = run_pairwise_distributions(X, y, int_to_class, feature_names)
@@ -157,7 +108,7 @@ def main(data_type, feature_names):
     df = format_df(df)
     for measurement in measurements:
         for pair in df["Pair"].unique():
-            df_pair = df[df["Pair"] == pair]
+            df_pair = df[df["Pair"] == pair].sort_values(measurement, ascending=False)
             plot_feature_selection(save_loc, measurement, pair, df_pair)
         plot_feature_gamespace(save_loc, measurement, int_to_class, df)
 
