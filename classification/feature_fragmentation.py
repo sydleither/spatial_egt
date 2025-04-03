@@ -2,6 +2,7 @@ from itertools import combinations
 import sys
 
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import matplotlib.colors as mcolors
 import numpy as np
 import pandas as pd
@@ -32,18 +33,20 @@ def joint_entropy_plot(save_loc, df):
         vmin=df["Emergence"].min(),
         vmax=df["Emergence"].max()
     )
+    cmap = cm.PuOr
+    bar_colors = cmap(norm(means))
 
     # plot
     fig = plt.figure(figsize=(6, 6))
     gs = fig.add_gridspec(2, 2, height_ratios=[1, 4], width_ratios=[4, 0.25], hspace=0.05, wspace=0.05)
     ax_hm = fig.add_subplot(gs[1, 0])
     cbar_ax = fig.add_subplot(gs[1, 1])
-    sns.heatmap(df_hm, cmap="PuOr", norm=norm, ax=ax_hm, cbar=True, cbar_ax=cbar_ax)
+    sns.heatmap(df_hm, cmap=cmap, norm=norm, ax=ax_hm, cbar=True, cbar_ax=cbar_ax)
     ax_hm.set(xlabel=None, ylabel=None)
     ax_top = fig.add_subplot(gs[0, 0], sharex=ax_hm)
-    ax_top.bar(range(len(df_hm)), means, color="gray", width=0.9, align="edge")
+    ax_top.bar(range(len(df_hm)), means, width=0.9, align="edge", color=bar_colors)
     ax_top.axis("off")
-    ax_top.set(title="Triple Information")
+    ax_top.set(title="Negative Triple Information")
     fig.figure.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/joint_emergence.png", bbox_inches="tight")
     plt.close()
