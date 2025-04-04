@@ -28,7 +28,7 @@ def label_bars(ax, labels):
 def plot_feature_gamespace(save_loc, measurement, int_to_class, df):
     num_games = len(int_to_class)
     statistics = df["Statistic"].unique()
-    fig, ax = plt.subplots(num_games, num_games, figsize=(3*num_games, 3*num_games))
+    fig, ax = plt.subplots(num_games, num_games, figsize=(2*num_games+2, 2*num_games))
     for i in range(num_games):
         for j in range(num_games):
             if i == num_games-2 and j == 1:

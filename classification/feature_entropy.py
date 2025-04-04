@@ -48,7 +48,7 @@ def joint_entropy_plot(save_loc, df):
     ax_top.axis("off")
     ax_top.set(title="Negative Triple Information")
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/joint_emergence.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/triple_information.png", bbox_inches="tight")
     plt.close()
 
 

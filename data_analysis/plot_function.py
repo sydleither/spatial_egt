@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sns
 
 from common import game_colors, get_data_path
-from data_processing.write_feature_jobs import DISTRIBUTION_BINS, FUNCTION_LABELS
+from data_processing.feature_database import DISTRIBUTION_BINS, FUNCTION_LABELS
 
 
 sns.set_theme()

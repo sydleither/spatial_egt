@@ -87,7 +87,7 @@ def class_balance(df, label_name):
     print(f"\tProportions: {proportions}")
 
 
-def visualize_correlated(save_loc, df, feature_names):
+def visualize_correlated(save_loc, df, feature_names, print_latex=False):
     corr_matrix = df[feature_names].corr(method="spearman")
     high_corr = ((corr_matrix >= 0.9) | (corr_matrix <= -0.9)) & (corr_matrix != 1.0)
     adj_matrix = csr_matrix(high_corr)
@@ -96,21 +96,30 @@ def visualize_correlated(save_loc, df, feature_names):
     for i, label in enumerate(labels):
         clusters[label].append(i)
 
+    feature_names = [x.replace("_", " ") for x in feature_names]
     print("Correlated Clusters")
     for c in clusters:
         print("\t", [feature_names[i] for i in c])
 
-    prop_s = max(clusters, key=len)
-    fig, ax = plt.subplots(figsize=(10,10))
-    graph = nx.Graph(adj_matrix)
-    graph = graph.subgraph(prop_s)
-    labels = {i:feature_names[i].replace("_", "\n") for i in prop_s}
-    nx.draw(graph, pos=nx.kamada_kawai_layout(graph), labels=labels,
-            node_size=2000, font_size=8, node_color=theme_colors[0], ax=ax)
-    fig.patch.set_alpha(0.0)
-    fig.tight_layout()
-    fig.savefig(f"{save_loc}/corr_ps_graph.png", bbox_inches="tight")
-    plt.close()
+    if print_latex:
+        print("\\textbf{Chosen Feature} & \\textbf{Features in Correlated Cluster} \\\\")
+        for c in clusters:
+            print("\hline")
+            print(f"{feature_names[c[0]]} & {', '.join([feature_names[i] for i in c[1:]])} \\\\")
+        print("\hline")
+
+    for cluster in [x for x in clusters if len(x) > 1]:
+        cluster_name = feature_names[cluster[0]]
+        fig, ax = plt.subplots(figsize=(10,10))
+        graph = nx.Graph(adj_matrix)
+        graph = graph.subgraph(cluster)
+        labels = {i:feature_names[i].replace(" ", "\n") for i in cluster}
+        nx.draw(graph, pos=nx.kamada_kawai_layout(graph), labels=labels,
+                node_size=2000, font_size=8, node_color=theme_colors[0], ax=ax)
+        fig.patch.set_alpha(0.0)
+        fig.tight_layout()
+        fig.savefig(f"{save_loc}/corr_graph_{cluster_name}.png", bbox_inches="tight")
+        plt.close()
 
 
 def main(data_type, feature_names):
@@ -124,11 +133,12 @@ def main(data_type, feature_names):
     # df = df.drop(["source", "sample", "game"], axis=1)
     # features_ridgeplots(save_loc, df, ["cell_type"], c, s)
 
-    visualize_correlated(save_loc, df, feature_names)
-    features_ridgeplots(save_loc, feature_df, feature_names, label_name, colors)
+    visualize_correlated(save_loc, df, feature_names, True)
     class_balance(feature_df, label_name)
-    feature_correlation(save_loc, feature_df, feature_names)
-    feature_pairplot(save_loc, feature_df, label_name)
+    if len(feature_names) <= 30:
+        features_ridgeplots(save_loc, feature_df, feature_names, label_name, colors)
+        feature_correlation(save_loc, feature_df, feature_names)
+        feature_pairplot(save_loc, feature_df, label_name)
 
 
 if __name__ == "__main__":

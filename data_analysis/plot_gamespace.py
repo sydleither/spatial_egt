@@ -36,16 +36,18 @@ def main(data_type, source, sample_ids):
     image_data_path = get_data_path(data_type, "images")
     df = get_samples(data_type, source, sample_ids)
     df["source"] = df["source"].str.lower()
-    hue = "source"
+
     save_name = "all"
     if data_type == "in_vitro":
         df["cell"] = df["source"].str.split("_").str[4]
         hue = "cell"
     if not source == "":
+        hue = "source"
         save_name = source
     if sample_ids:
         hue = "sample"
         save_name = source + "_" + "_".join(sample_ids)
+
     plot_gamespace(image_data_path, save_name, df, hue)
 
 
