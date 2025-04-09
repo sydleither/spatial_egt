@@ -9,6 +9,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from classification.common import df_to_xy, get_feature_data
+from common import theme_colors
 
 
 def finetune_layers(save_loc, X, y):
@@ -29,7 +30,7 @@ def finetune_layers(save_loc, X, y):
     print(df[["Number of Nodes", "Accuracy"]].groupby("Number of Nodes").mean().to_string())
 
     fig, ax = plt.subplots()
-    sns.lineplot(df, x="Number of Nodes", y="Accuracy", color="purple", ax=ax)
+    sns.lineplot(df, x="Number of Nodes", y="Accuracy", color=theme_colors[0], ax=ax)
     ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
     fig.patch.set_alpha(0.0)

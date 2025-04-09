@@ -3,9 +3,9 @@ import pandas as pd
 import os
 
 
-game_colors = {"Sensitive Wins":"#4C956C", "Coexistence":"#F97306",
+game_colors = {"Sensitive Wins":"#4C956C", "Coexistence":"#9C6D57",
                "Bistability":"#047495", "Resistant Wins":"#EF7C8E"}
-theme_colors = ["xkcd:faded purple", "xkcd:lemon yellow"]
+theme_colors = ["xkcd:faded purple", "xkcd:yellow orange"]
 
 
 def get_data_path(data_type, data_stage):

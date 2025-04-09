@@ -6,7 +6,7 @@ from sklearn.model_selection import LearningCurveDisplay, StratifiedKFold
 import seaborn as sns
 
 from classification.common import get_model
-from common import game_colors
+from common import game_colors, theme_colors
 
 
 def plot_performance(save_loc, data_set, int_to_name, y_trues, y_preds):
@@ -19,7 +19,7 @@ def plt_heatmap(ax, matrix, labels, title, textcolors=("black", "white")):
     Based on https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html
     '''
     num_labels = len(labels)
-    im = ax.imshow(matrix, cmap="Greens")
+    im = ax.imshow(matrix, cmap="Purples")
     ax.set_xticks(range(num_labels), labels=labels, rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(num_labels), labels=labels)
     threshold = im.norm(matrix.max())/2
@@ -36,12 +36,11 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
     for i in range(len(y_trues)):
         conf_mat = metrics.confusion_matrix(y_trues[i], y_preds[i], normalize="true")
         conf_mats.append(conf_mat)
-    avg_conf_mat = np.mean(conf_mats, axis=0)
-    std_conf_mat = np.std(conf_mats, axis=0)
+    conf_mat = np.mean(conf_mats, axis=0)
 
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    plt_heatmap(ax[0], avg_conf_mat, labels, "Confusion Matrix Mean")
-    plt_heatmap(ax[1], std_conf_mat, labels, "Confusion Matrix Std")
+    fig, ax = plt.subplots(figsize=(5, 5))
+    plt_heatmap(ax, conf_mat, labels, "Mean Confusion Matrix")
+    ax.set(xlabel="Predicted Game", ylabel="True Game")
     fig.tight_layout()
     fig.savefig(f"{save_loc}/confusion_{data_set}.png", bbox_inches="tight", transparent=True)
     plt.close()
@@ -50,7 +49,7 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
 def plot_prediction_distributions(save_loc, data_set, df):
     for feature_name in ["initial_density", "initial_fr", "Stationary Solution"]:
         facet = sns.FacetGrid(df, col="game", col_order=game_colors.keys(), height=6, aspect=1)
-        facet.map_dataframe(sns.violinplot, x="correct", y=feature_name)
+        facet.map_dataframe(sns.kdeplot, x=feature_name, hue="correct")
         facet.set_titles(col_template="{col_name}")
         facet.tight_layout()
         facet.figure.patch.set_alpha(0.0)
@@ -185,7 +184,11 @@ def learning_curve(save_loc, X, y):
     clf = get_model()
     cv = StratifiedKFold(n_splits=5, shuffle=True)
     fig, ax = plt.subplots(figsize=(5, 4))
-    LearningCurveDisplay.from_estimator(clf, X=X, y=y, cv=cv, ax=ax)
+    curves = LearningCurveDisplay.from_estimator(clf, X=X, y=y, cv=cv, ax=ax)
+    curves.lines_[0].set_color(theme_colors[0])
+    curves.fill_between_[0].set_color(theme_colors[0])
+    curves.lines_[1].set_color(theme_colors[1])
+    curves.fill_between_[1].set_color(theme_colors[1])
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
     fig.savefig(f"{save_loc}/learning_curve.png", bbox_inches="tight")

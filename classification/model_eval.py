@@ -40,8 +40,8 @@ def cross_val(X, y):
 
 def flatten_lists(lists):
     flat_lists = []
-    for l in lists:
-        flat_lists.append([x for y in l for x in y])
+    for li in lists:
+        flat_lists.append([x for y in li for x in y])
     return flat_lists
 
 
