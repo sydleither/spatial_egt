@@ -1,6 +1,0 @@
-- Split this repo into separate repos for each project
-- Finish downsampling in data_analysis/spatial.py
-- Fix SPF in 3D
-- Clean up data_analysis/compare_slices.py
-- ~~Clean up data_processing/spatial_statistics.py, maybe split into multiple files
-- Make in vitro data analysis robust to different cell types

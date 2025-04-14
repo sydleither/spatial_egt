@@ -1,7 +1,7 @@
 import muspan as ms
 import numpy as np
 
-from data_processing.spatial_statistics.muspan import create_muspan_domain
+from spatial_egt.data_processing.spatial_statistics.muspan_statistics import create_muspan_domain
 
 
 def create_patches(df, alpha):

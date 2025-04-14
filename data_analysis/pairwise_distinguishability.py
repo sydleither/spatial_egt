@@ -10,7 +10,7 @@ import seaborn as sns
 
 from common import game_colors, get_data_path, theme_colors
 from data_analysis.plot_function import get_data
-from data_processing.write_feature_jobs import DISTRIBUTION_BINS
+from feature_database import DISTRIBUTION_BINS
 
 
 def bin_samples(function_name, samples):
