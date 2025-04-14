@@ -32,7 +32,7 @@ def nn_dist(df, cell_type1="sensitive", cell_type2="resistant"):
 
 def cpcf(df, max_radius, annulus_step, annulus_width, cell_type1="sensitive", cell_type2="resistant"):
     domain = create_muspan_domain(df)
-    _, cpcf = ms.spatial_statistics.cross_pair_correlation_function(
+    _, pcf = ms.spatial_statistics.cross_pair_correlation_function(
         domain=domain,
         population_A=("type", cell_type1),
         population_B=("type", cell_type2),
@@ -40,7 +40,7 @@ def cpcf(df, max_radius, annulus_step, annulus_width, cell_type1="sensitive", ce
         annulus_step=annulus_step,
         annulus_width=annulus_width
     )
-    return cpcf
+    return pcf
 
 
 def cross_k(df, max_radius, step, cell_type1="sensitive", cell_type2="resistant"):
@@ -68,21 +68,21 @@ def j_function(df, cell_type, radius_step):
 
 def anni(df, cell_type1="sensitive", cell_type2="resistant"):
     domain = create_muspan_domain(df)
-    anni, _, _ = ms.spatial_statistics.average_nearest_neighbour_index(
+    a, _, _ = ms.spatial_statistics.average_nearest_neighbour_index(
         domain=domain,
         population_A=("type", cell_type1),
         population_B=("type", cell_type2)
     )
-    return anni
+    return a
 
 
 def entropy(df):
     domain = create_muspan_domain(df)
-    entropy = ms.summary_statistics.label_entropy(
+    ent = ms.summary_statistics.label_entropy(
         domain=domain,
         label_name="type"
     )
-    return entropy
+    return ent
 
 
 def qcm(df, side_length):

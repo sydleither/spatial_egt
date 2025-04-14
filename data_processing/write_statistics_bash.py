@@ -17,7 +17,7 @@ statistic_name: optional
 import os
 import sys
 
-from feature_database import FEATURE_REGISTRY
+from spatial_database import STATISTIC_REGISTRY
 from spatial_egt.common import get_data_path
 
 
@@ -51,7 +51,7 @@ def write_aggregated(run_cmd, python_file, data_type, statistic_names, file_name
 def main(data_type, run_cmd, file_name, python_file, statistic_name=None):
     """Generate and save bash script"""
     if statistic_name is None:
-        write_aggregated(run_cmd, python_file, data_type, FEATURE_REGISTRY.keys(), file_name)
+        write_aggregated(run_cmd, python_file, data_type, STATISTIC_REGISTRY.keys(), file_name)
     else:
         write_individual(run_cmd, python_file, data_type, statistic_name, file_name)
 
