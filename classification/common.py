@@ -4,7 +4,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from common import game_colors, get_data_path
+from spatial_egt.common import game_colors, get_data_path
 
 
 def df_to_xy(df, feature_names, label_name):

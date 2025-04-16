@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from common import game_colors, get_data_path
-from data_processing.feature_database import DISTRIBUTION_BINS, FUNCTION_LABELS
+from spatial_egt.common import game_colors, get_data_path
+from spatial_database import DISTRIBUTION_BINS, FUNCTION_LABELS
 
 
 sns.set_theme()

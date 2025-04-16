@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import get_data_path
+from spatial_egt.common import get_data_path
 
 
 def plot_gamespace(save_loc, save_name, df, hue):

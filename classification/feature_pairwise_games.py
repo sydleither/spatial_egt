@@ -7,8 +7,8 @@ from scipy.stats import wasserstein_distance
 import seaborn as sns
 from sklearn.preprocessing import scale
 
-from classification.common import df_to_xy, get_feature_data
-from classification.feature_plot_utils import format_df, plot_feature_selection
+from spatial_egt.classification.common import df_to_xy, get_feature_data
+from spatial_egt.classification.feature_plot_utils import format_df, plot_feature_selection
 
 
 def label_bars(ax, labels):
@@ -67,6 +67,9 @@ def pairwise_distributions(feature_names, X_i, X_j, game_i, game_j):
     X_j = list(zip(*X_j))
     data = []
     for k,name in enumerate(feature_names):
+        if name == "Proportion_Sensitive":
+            print(game_i, X_i[k])
+            print(game_j, X_j[k])
         feature_i = X_i[k]
         feature_j = X_j[k]
         wass = wasserstein_distance(feature_i, feature_j)
