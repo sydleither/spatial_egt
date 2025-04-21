@@ -43,8 +43,8 @@ def feature_set_to_names(df, feature_names, label_name):
 
 
 def read_and_clean_feature_df(data_type, label_name):
-    features_data_path = get_data_path(data_type, "features")
-    df = pd.read_csv(f"{features_data_path}/all.csv")
+    features_data_path = get_data_path(data_type, "statistics")
+    df = pd.read_csv(f"{features_data_path}/features.csv")
     df = df[df[label_name] != "Unknown"]
     len_df = len(df)
     df = df.dropna()

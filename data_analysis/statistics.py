@@ -2,7 +2,7 @@ import sys
 
 import pandas as pd
 
-from common import get_data_path
+from spatial_egt.common import get_data_path
 
 
 def main(data_type):

@@ -5,8 +5,8 @@ python3 -m spatial_egt.data_processing.write_statistics_bash
     data_type run_cmd file_name python_file (statistic_names)
 
 Where:
-data_type: the parent data dir
-run_cmd: the command to use for running the spatial statistics, eg python3 or job.sb
+data_type: the name of the directory in data/
+run_cmd: the command to use for running the spatial statistics, eg "python3 -m" or "sbatch job.sb"
 file_name: name of resulting bash script
 python_file: which file to run, eg processed_to_statistic
 statistic_name: optional

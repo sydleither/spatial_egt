@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from common import game_colors, get_data_path
+from spatial_egt.common import game_colors, get_data_path
 
 
 def downsample(s_coords, r_coords, ideal_size=(25,20)):

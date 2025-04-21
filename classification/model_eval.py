@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-from classification.common import df_to_xy, get_feature_data, get_model
-from classification.model_eval_utils import (plot_scatter_prob,
+from spatial_egt.classification.common import df_to_xy, get_feature_data, get_model
+from spatial_egt.classification.model_eval_utils import (plot_scatter_prob,
                                              plot_prediction_distributions,
                                              plot_performance,
                                              learning_curve, roc_curve)
-from common import get_data_path, read_payoff_df
+from spatial_egt.common import get_data_path, read_payoff_df
 
 
 def cross_val(X, y):

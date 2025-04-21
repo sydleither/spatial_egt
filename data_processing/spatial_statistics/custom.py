@@ -5,7 +5,7 @@ from scipy.spatial import KDTree
 
 
 # Spatial Subsample
-def sfp_dist(df, sample_length, num_samples=1000, return_fs=True):
+def spatial_subsample_dist(df, sample_length, num_samples=1000, return_fs=True):
     dimensions = list(df.drop("type", axis=1).columns)
     s_coords = df[df["type"] == "sensitive"][dimensions].values
     r_coords = df[df["type"] == "resistant"][dimensions].values

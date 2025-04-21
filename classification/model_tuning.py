@@ -8,8 +8,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from classification.common import df_to_xy, get_feature_data
-from common import theme_colors
+from spatial_egt.classification.common import df_to_xy, get_feature_data
+from spatial_egt.common import theme_colors
 
 
 def finetune_layers(save_loc, X, y):

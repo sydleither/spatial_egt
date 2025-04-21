@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from classification.common import get_feature_data
-from classification.DDIT.DDIT import DDIT
-from classification.feature_plot_utils import format_df, plot_feature_selection
+from spatial_egt.classification.common import get_feature_data
+from spatial_egt.classification.DDIT.DDIT import DDIT
+from spatial_egt.classification.feature_plot_utils import format_df, plot_feature_selection
 
 
 def joint_entropy_plot(save_loc, df):

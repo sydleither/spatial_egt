@@ -1,8 +1,8 @@
 import pickle
 import sys
 
-from classification.common import df_to_xy, get_model, get_feature_data
-from classification.model_eval_utils import plot_performance
+from spatial_egt.classification.common import df_to_xy, get_model, get_feature_data
+from spatial_egt.classification.model_eval_utils import plot_performance
 
 
 def save_model(save_loc, X, y, int_to_name):

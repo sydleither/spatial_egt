@@ -6,7 +6,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from classification.common import get_feature_data
+from spatial_egt.classification.common import get_feature_data
 
 import warnings
 warnings.filterwarnings("ignore")

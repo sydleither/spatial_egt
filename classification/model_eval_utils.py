@@ -5,8 +5,8 @@ from sklearn import metrics
 from sklearn.model_selection import LearningCurveDisplay, StratifiedKFold
 import seaborn as sns
 
-from classification.common import get_model
-from common import game_colors, theme_colors
+from spatial_egt.classification.common import get_model
+from spatial_egt.common import game_colors, theme_colors
 
 
 def plot_performance(save_loc, data_set, int_to_name, y_trues, y_preds):

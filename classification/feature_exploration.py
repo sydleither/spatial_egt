@@ -1,3 +1,19 @@
+"""Exploratory feature analysis
+
+Plots that will be generated:
+    Correlated clusters
+    Feature distribution ridgeplots
+    Correlation matrix
+    Pairplot
+
+Expected usage:
+python3 -m spatial_egt.classification.feature_exploration data_type feature_names
+
+Where:
+data_type: the name of the directory in data/ containing spatial_statistics/features.csv
+feature_names: a list of the feature names to explore, or "all" or "noncorr" which are pre-defined.
+"""
+
 from collections import Counter
 import sys
 
@@ -9,8 +25,8 @@ from scipy import stats
 from scipy.sparse import csgraph, csr_matrix
 import seaborn as sns
 
-from classification.common import get_feature_data
-from common import game_colors, theme_colors
+from spatial_egt.classification.common import get_feature_data
+from spatial_egt.common import game_colors, theme_colors
 
 
 def feature_pairplot(save_loc, df, label_hue):
@@ -26,7 +42,7 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
     num_features = len(feature_names)
     class_names = df[label_name].unique()
     num_classes = len(class_names)
-    gs = (grid_spec.GridSpec(num_classes, num_features))
+    gs = grid_spec.GridSpec(num_classes, num_features)
     fig = plt.figure(figsize=(6*num_features, 8))
     axes = []
     for f,feature_name in enumerate(feature_names):
@@ -104,9 +120,9 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
     if print_latex:
         print("\\textbf{Chosen Feature} & \\textbf{Features in Correlated Cluster} \\\\")
         for c in clusters:
-            print("\hline")
+            print("\\hline")
             print(f"{feature_names[c[0]]} & {', '.join([feature_names[i] for i in c[1:]])} \\\\")
-        print("\hline")
+        print("\\hline")
 
     for cluster in [x for x in clusters if len(x) > 1]:
         cluster_name = feature_names[cluster[0]]
@@ -115,7 +131,7 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
         graph = graph.subgraph(cluster)
         labels = {i:feature_names[i].replace(" ", "\n") for i in cluster}
         nx.draw(graph, pos=nx.kamada_kawai_layout(graph), labels=labels,
-                node_size=2000, font_size=8, node_color=theme_colors[0], ax=ax)
+                node_size=3000, font_size=10, node_color=theme_colors[1], ax=ax)
         fig.patch.set_alpha(0.0)
         fig.tight_layout()
         fig.savefig(f"{save_loc}/corr_graph_{cluster_name}.png", bbox_inches="tight")
@@ -123,7 +139,7 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
 
 
 def main(data_type, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names, "features")
+    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names, "statistics")
     feature_df = df[feature_names+[label_name]]
     colors = {k:v for k,v in game_colors.items() if k in feature_df["game"].unique()}
 

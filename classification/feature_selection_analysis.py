@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from common import get_data_path, theme_colors
-from classification.feature_plot_utils import format_df, plot_feature_selection
+from spatial_egt.common import get_data_path, theme_colors
+from spatial_egt.classification.feature_plot_utils import format_df, plot_feature_selection
 
 
 def feature_set_plot(data_path, feature_set_size, df, xlabel, n=10):
