@@ -18,7 +18,6 @@ sample: optional
 import os
 import sys
 
-from pandas.api.types import is_object_dtype
 import pandas as pd
 
 from spatial_egt.common import get_data_path
@@ -43,18 +42,11 @@ def calculate_statistics(processed_path, file_names, stat_name, stat_calculation
     """
     rows = []
     for file_name in file_names:
-        if file_name == "payoff.csv":
-            continue
         source = file_name.split(" ")[0]
         sample = file_name.split(" ")[1][:-4]
         print(f"{source} {sample}")
         df_sample = pd.read_csv(f"{processed_path}/{file_name}")
-        try:
-            statistic = stat_calculation(df_sample, **stat_args)
-        except Exception as e:
-            print(f"Error: {file_name}")
-            print(e)
-            continue
+        statistic = stat_calculation(df_sample, **stat_args)
         rows.append({"source": source, "sample": sample, stat_name: statistic})
     return pd.DataFrame(rows)
 
@@ -64,10 +56,14 @@ def main(data_type, stat_name, source=None, sample=None):
     processed_path = get_data_path(data_type, "processed")
 
     stat_calculation = STATISTIC_REGISTRY[stat_name]
-    stat_args_datatype = STATISTIC_PARAMS[data_type]
-    stat_args = {}
+    if data_type in STATISTIC_PARAMS:
+        stat_args_datatype = STATISTIC_PARAMS[data_type]
+    else:
+        stat_args_datatype = STATISTIC_PARAMS
     if stat_name in stat_args_datatype:
         stat_args = stat_args_datatype[stat_name]
+    else:
+        stat_args = {}
 
     if source is None and sample is None:
         statistics_path = get_data_path(data_type, "statistics")
@@ -81,13 +77,6 @@ def main(data_type, stat_name, source=None, sample=None):
     df = calculate_statistics(
         processed_path, file_names, stat_name, stat_calculation, stat_args
     )
-    if is_object_dtype(df[stat_name]):
-        if stat_calculation.__name__.endswith("dist"):
-            df["type"] = "distribution"
-        else:
-            df["type"] = "function"
-    else:
-        df["type"] = "value"
     df.to_pickle(save_loc)
 
 

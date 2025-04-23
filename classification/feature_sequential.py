@@ -56,14 +56,14 @@ def sfs(save_loc, feature_df, feature_names, num_features_start):
             f.write(",".join(feature_set)+f",{mean:5.3f}\n")
 
 
-def main(data_type, num_features_start, feature_names):
-    save_loc, df, feature_names, label = get_feature_data(data_type, feature_names, "sfs")
-    feature_df = df[feature_names+[label]]
+def main(data_type, label_name, num_features_start, feature_names):
+    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "sfs")
+    feature_df = df[feature_names+[label_name]]
     sfs(save_loc, feature_df, feature_names, num_features_start)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
+    if len(sys.argv) > 4:
+        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:])
     else:
-        print("Please provide the data type, number of features, and feature set/names.")
+        print("Please provide the data type, label name, number of features, and feature set/names.")

@@ -2,7 +2,9 @@
 
 import os
 
-import pandas as pd
+from pandas.api.types import is_object_dtype
+
+from spatial_database import STATISTIC_REGISTRY
 
 
 game_colors = {"Sensitive Wins":"#4C956C", "Coexistence":"#9C6D57",
@@ -15,7 +17,7 @@ def get_data_path(data_type:str, data_stage:str):
 
     :param data_type: the name of the directory storing the data
     :type data_type: str
-    :param data_stage: the stage of processing the data is at (raw, processed, features, etc)
+    :param data_stage: the stage of processing the data is at (raw, processed, etc)
     :type data_stage: str
     :return: the full path to the data
     :rtype: str
@@ -26,18 +28,13 @@ def get_data_path(data_type:str, data_stage:str):
     return data_path
 
 
-def read_payoff_df(processed_data_path:str):
-    """Read the payoff csv and format for downstream usage
-
-    :param processed_data_path: path to the payoff file (not including payoff.csv)
-    :type processed_data_path: str
-    :return: the payoff dataframe
-    :rtype: Pandas DataFrame
-    """
-    df_payoff = pd.read_csv(f"{processed_data_path}/payoff.csv")
-    df_payoff["sample"] = df_payoff["sample"].astype(str)
-    df_payoff = df_payoff.set_index(["source", "sample"], drop=False)
-    return df_payoff
+def get_spatial_statistic_type(df, spatial_statistic):
+    stat_calculation = STATISTIC_REGISTRY[spatial_statistic]
+    if is_object_dtype(df[spatial_statistic]):
+        if stat_calculation.__name__.endswith("dist"):
+            return "distribution"
+        return "function"
+    return "value"
 
 
 def calculate_game(a:float, b:float, c:float, d:float):

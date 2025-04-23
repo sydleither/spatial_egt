@@ -77,15 +77,15 @@ def fragmentation_data(df, feature_names, label_name, order, value_label):
     return pd.DataFrame(results)
 
 
-def main(data_type, feature_names):
+def main(data_type, label_name, feature_names):
     # get feature data
-    save_loc, df_org, feature_names, label = get_feature_data(data_type, feature_names, "entropy")
+    save_loc, df_org, feature_names = get_feature_data(data_type, label_name, feature_names, "entropy")
     feature_names = sorted(feature_names)
-    feature_df = df_org[feature_names+[label]]
+    feature_df = df_org[feature_names+[label_name]]
     value_label = "Shared Entropy"
 
     # run and plot single-feature shared entropies
-    df1 = fragmentation_data(feature_df, feature_names, label, 1, value_label)
+    df1 = fragmentation_data(feature_df, feature_names, label_name, 1, value_label)
     df1_formatted = format_df(df1.sort_values(value_label, ascending=False))
     plot_feature_selection(save_loc, value_label, None, df1_formatted)
 
@@ -95,7 +95,7 @@ def main(data_type, feature_names):
     df_diff = df_diff[["Feature", "Feature 1", "Entropy Sum"]]
 
     # calculate triple information
-    df2 = fragmentation_data(feature_df, feature_names, label, 2, value_label)
+    df2 = fragmentation_data(feature_df, feature_names, label_name, 2, value_label)
     df = df2.merge(df_diff, on=["Feature", "Feature 1"])
     df["Emergence"] = df[value_label] - df["Entropy Sum"]
 
@@ -104,7 +104,7 @@ def main(data_type, feature_names):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
-        main(sys.argv[1], sys.argv[2:])
+    if len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide the data type and feature set/names.")
+        print("Please provide the data type, label name, and feature set/names.")

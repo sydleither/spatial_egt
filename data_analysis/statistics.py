@@ -5,28 +5,19 @@ import pandas as pd
 from spatial_egt.common import get_data_path
 
 
-def main(data_type):
-    features_data_path = get_data_path(data_type, "features")
-    df = pd.read_csv(f"{features_data_path}/all.csv")
+def main(data_type, label_name):
+    features_data_path = get_data_path(data_type, "spatial_statistics")
+    df = pd.read_csv(f"{features_data_path}/features.csv")
 
     total_samples = len(df)
     print(f"Total Samples: {total_samples}")
-    for game in df["game"].unique():
-        if game == "Unknown":
-            continue
-        df_game = df[df["game"] == game]
-        print(f"\t{game}: {len(df_game)}")
-    unknown = len(df[df["game"] == "Unknown"])
-    print(f"Unknown games: {unknown}")
-    print(f"Total Valid Samples: {total_samples - unknown}")
-    df = df[df["game"] != "Unknown"]
-    for game in df["game"].unique():
-        df_game = df[df["game"] == game]
-        print(f"\t{game}: {len(df_game)}")
+    for label in df[label_name].unique():
+        df_label = df[df[label_name] == label]
+        print(f"\t{label}: {len(df_label)}")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
+    if len(sys.argv) == 3:
+        main(*sys.argv[1:])
     else:
-        print("Please provide the data type.")
+        print("Please provide the data type and label name.")

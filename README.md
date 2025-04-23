@@ -23,4 +23,4 @@ Please note the following when using this library:
 
 - Spatial data must be saved in data/{data_name}/processed. Processed data is named with the convention "{source} {sample_id}.csv". The csv should have the columns x,y,(z optionally),type.
 
-- To calculate and label spatial data with their games, save "payoff.csv" into data/{data_name}/processed. This file should contain the columns source, sample_id, a, b, c, d (the payoff matrix parameters).
+- To calculate and label spatial data with their games, save "payoff.csv" into data/{data_name}/processed. This file should contain the columns source, sample, a, b, c, d (the payoff matrix parameters).

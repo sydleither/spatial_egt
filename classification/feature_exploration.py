@@ -52,7 +52,7 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
             kde = stats.gaussian_kde(feature_class_data)
             axes.append(fig.add_subplot(gs[c:c+1, f:f+1]))
             axes[-1].plot(x, kde(x), color="white")
-            axes[-1].fill_between(x, kde(x), alpha=0.75, color=colors[class_name])
+            axes[-1].fill_between(x, kde(x), alpha=0.75, color=colors[c])
             rect = axes[-1].patch
             rect.set_alpha(0)
             axes[-1].set_yticklabels([])
@@ -138,10 +138,10 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
         plt.close()
 
 
-def main(data_type, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names, "statistics")
+def main(data_type, label_name, feature_names):
+    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "statistics")
     feature_df = df[feature_names+[label_name]]
-    colors = {k:v for k,v in game_colors.items() if k in feature_df["game"].unique()}
+    colors = sns.color_palette("hls", len(df[label_name].unique()))
 
     # df["cell_type"] = df["source"].apply(lambda x: "_".join(x.split("_")[1:-1]).lower())
     # c = {s:"purple" for s in df["cell_type"].unique()}
@@ -158,7 +158,7 @@ def main(data_type, feature_names):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
-        main(sys.argv[1], sys.argv[2:])
+    if len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide the data type and the feature set/names.")
+        print("Please provide the data type, label name, and feature set/names.")

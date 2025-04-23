@@ -37,15 +37,15 @@ def finetune_layers(save_loc, X, y):
     fig.savefig(f"{save_loc}/layersize_tuning.png", bbox_inches="tight")
 
 
-def main(data_type, feature_names):
-    save_loc, df, feature_names, label_name = get_feature_data(data_type, feature_names)
+def main(data_type, label_name, feature_names):
+    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names)
     feature_df = df[feature_names+[label_name]]
     X, y, _ = df_to_xy(feature_df, feature_names, label_name)
     finetune_layers(save_loc, X, y)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
-        main(sys.argv[1], sys.argv[2:])
+    if len(sys.argv) > 3:
+        main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print("Please provide the data type and the feature set/names.")
+        print("Please provide the data type, label name, and feature set/names.")

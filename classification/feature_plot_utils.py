@@ -14,8 +14,6 @@ def label_statistic(features, split_char=" "):
     for feature in features:
         feature_category = [x for x in feature.split(split_char) if x not in extra]
         feature_category = split_char.join(feature_category)
-        if feature_category == "Proportion":
-            feature_category = "Proportion"+split_char+"Sensitive"
         feature_to_statistic[feature] = feature_category
         if feature_category not in feature_categories:
             feature_categories.append(feature_category)

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import kurtosis, skew
 
-from spatial_egt.common import get_data_path, read_payoff_df
+from spatial_egt.common import get_data_path, get_spatial_statistic_type
 
 
 def distribution_to_features(row, name):
@@ -29,30 +29,31 @@ def function_to_features(row, name):
     return row
 
 
-def main(data_type):
-    processed_data_path = get_data_path(data_type, "processed")
+def main(data_type, label_name):
+    data_path = get_data_path(data_type, ".")
     statistics_data_path = get_data_path(data_type, "statistics")
-    df = read_payoff_df(processed_data_path)[["game"]]
+    df = pd.read_csv(f"{data_path}/labels.csv")
+    df["sample"] = df["sample"].astype(str)
+    df = df[["source", "sample", label_name]]
     for statistic_file in os.listdir(statistics_data_path):
         if not statistic_file.endswith(".pkl"):
             continue
         df_feature = pd.read_pickle(f"{statistics_data_path}/{statistic_file}")
         statistic_name = statistic_file[:-4]
-        statistic_type = df_feature["type"].iloc[0]
+        statistic_type = get_spatial_statistic_type(df_feature, statistic_name)
         if statistic_type == "distribution":
             df_feature = df_feature.apply(distribution_to_features, axis=1, args=(statistic_name,))
             df_feature = df_feature.drop(statistic_name, axis=1)
         elif statistic_type == "function":
             df_feature = df_feature.apply(function_to_features, axis=1, args=(statistic_name,))
             df_feature = df_feature.drop(statistic_name, axis=1)
-        df_feature = df_feature.drop("type", axis=1)
         df_feature["sample"] = df_feature["sample"].astype(str)
         df = pd.merge(df, df_feature, on=["source", "sample"], how="outer")
     df.to_csv(f"{statistics_data_path}/features.csv", index=False, na_rep=np.nan)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
+    if len(sys.argv) == 3:
+        main(*sys.argv[1:])
     else:
-        print("Please provide the data type.")
+        print("Please provide the data type and label name.")

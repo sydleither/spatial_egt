@@ -8,7 +8,10 @@ from spatial_egt.common import game_colors, get_data_path
 
 
 def df_to_xy(df, feature_names, label_name):
-    label_classes = list(game_colors.keys())
+    if label_name == "game":
+        label_classes = list(game_colors.keys())
+    else:
+        label_classes = list(df[label_name].unique())
     class_to_int = {lc:i for i,lc in enumerate(label_classes)}
     int_to_class = {i:lc for i,lc in enumerate(label_classes)}
     X = df[feature_names].values.tolist()
@@ -42,10 +45,9 @@ def feature_set_to_names(df, feature_names, label_name):
     return true_features
 
 
-def read_and_clean_feature_df(data_type, label_name):
+def read_and_clean_feature_df(data_type):
     features_data_path = get_data_path(data_type, "statistics")
     df = pd.read_csv(f"{features_data_path}/features.csv")
-    df = df[df[label_name] != "Unknown"]
     len_df = len(df)
     df = df.dropna()
     if len_df != len(df):
@@ -53,13 +55,12 @@ def read_and_clean_feature_df(data_type, label_name):
     return df
 
 
-def get_feature_data(data_type, feature_names, extra_dir=""):
-    label_name = "game"
+def get_feature_data(data_type, label_name, feature_names, extra_dir=""):
     data_dir = "_".join(feature_names)
     save_loc = get_data_path(data_type, f"images/model/{data_dir}/{extra_dir}")
-    df = read_and_clean_feature_df(data_type, label_name)
+    df = read_and_clean_feature_df(data_type)
     feature_names = feature_set_to_names(df, feature_names, label_name)
-    return save_loc, df, feature_names, label_name
+    return save_loc, df, feature_names
 
 
 def get_model():

@@ -61,7 +61,14 @@ def nc_dist(df, radius, return_fs=True):
     return fr
 
 
-def proportion_s(df):
+def proportion_cell(df, cell_type):
     num_sensitive = len(df[df["type"] == "sensitive"])
     num_resistant = len(df[df["type"] == "resistant"])
-    return num_sensitive/(num_resistant+num_sensitive)
+    if cell_type == "sensitive":
+        return num_sensitive/(num_resistant+num_sensitive)
+    else:
+        return num_resistant/(num_resistant+num_sensitive)
+
+
+def num_cell(df, cell_type):
+    return len(df[df["type"] == cell_type])

@@ -17,6 +17,7 @@ def local_moransi_dist(df, cell_type, side_length):
                                      remove_empty_regions=False)
     _, _, lmi, _, _ = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
                                                      label_name=f"region counts: {cell_type}")
+    lmi = lmi[(lmi > 1) | (lmi < -1)] #remove hexes with no cell_type cells
     return lmi
 
 
@@ -128,3 +129,45 @@ def kl_divergence(df, mesh_step, cell_type1="sensitive", cell_type2="resistant")
     )
     kl_div = ms.distribution.kl_divergence(kde1, kde2)
     return kl_div
+
+
+def patch_count(df, cell_type, alpha):
+    domain = create_muspan_domain(df)
+    domain.convert_objects(
+        population=("type", cell_type),
+        collection_name="shape",
+        object_type="shape",
+        conversion_method="alpha shape",
+        conversion_method_kwargs={"alpha": alpha},
+    )
+    patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
+    area, _ = ms.geometry.area(domain, population=patch_pop)
+    return len(area)
+
+
+def area_dist(df, cell_type, alpha):
+    domain = create_muspan_domain(df)
+    domain.convert_objects(
+        population=("type", cell_type),
+        collection_name="shape",
+        object_type="shape",
+        conversion_method="alpha shape",
+        conversion_method_kwargs={"alpha": alpha},
+    )
+    patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
+    area, _ = ms.geometry.area(domain, population=patch_pop)
+    return area
+
+
+def circularity_dist(df, cell_type, alpha):
+    domain = create_muspan_domain(df)
+    domain.convert_objects(
+        population=("type", cell_type),
+        collection_name="shape",
+        object_type="shape",
+        conversion_method="alpha shape",
+        conversion_method_kwargs={"alpha": alpha},
+    )
+    patch_pop = ms.query.query(domain, ("collection",), "is", "shape")
+    circ, _ = ms.geometry.circularity(domain, population=patch_pop)
+    return circ
