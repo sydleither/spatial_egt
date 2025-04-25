@@ -46,7 +46,8 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
     fig = plt.figure(figsize=(6*num_features, 8))
     axes = []
     for f,feature_name in enumerate(feature_names):
-        x = np.linspace(df[feature_name].min(), df[feature_name].max(), 100)
+        min_val = df[feature_name].min()
+        x = np.linspace(min_val, df[feature_name].max(), 100)
         for c,class_name in enumerate(class_names):
             feature_class_data = df.loc[df[label_name] == class_name][feature_name]
             kde = stats.gaussian_kde(feature_class_data)
@@ -61,7 +62,8 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
             else:
                 axes[-1].set(xticklabels=[], xticks=[])
             if f == 0:
-                axes[-1].text(-0.02, 0, class_name, ha="right")
+                sd = np.std(df[feature_name])
+                axes[-1].text(min_val - sd/3, 0, class_name, ha="right")
             else:
                 axes[-1].set(yticklabels=[])
             axes[-1].set(yticks=[])

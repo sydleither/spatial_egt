@@ -28,17 +28,15 @@ def joint_entropy_plot(save_loc, df):
     df_hm = df_hm.reindex(means.index, axis=0).reindex(means.index, axis=1)
 
     # set colorbar to diverge at 0
-    norm = mcolors.TwoSlopeNorm(
-        vcenter=0,
-        vmin=df["Emergence"].min(),
-        vmax=df["Emergence"].max()
-    )
+    norm = mcolors.TwoSlopeNorm(vcenter=0, vmin=df["Emergence"].min(), vmax=df["Emergence"].max())
     cmap = cm.PuOr
     bar_colors = cmap(norm(means))
 
     # plot
     fig = plt.figure(figsize=(6, 6))
-    gs = fig.add_gridspec(2, 2, height_ratios=[1, 4], width_ratios=[4, 0.25], hspace=0.05, wspace=0.05)
+    gs = fig.add_gridspec(
+        2, 2, height_ratios=[1, 4], width_ratios=[4, 0.25], hspace=0.05, wspace=0.05
+    )
     ax_hm = fig.add_subplot(gs[1, 0])
     cbar_ax = fig.add_subplot(gs[1, 1])
     sns.heatmap(df_hm, cmap=cmap, norm=norm, ax=ax_hm, cbar=True, cbar_ax=cbar_ax)
@@ -53,23 +51,25 @@ def joint_entropy_plot(save_loc, df):
 
 
 def fragmentation_data(df, feature_names, label_name, order, value_label):
-    #initializations
+    # initializations
     ddit = DDIT()
 
-    #bin and register features
-    nbins = int(np.log2(len(df)))+1
+    # bin and register features
+    nbins = int(np.log2(len(df))) + 1
     for feature_name in feature_names:
         column_data = df[feature_name].values
-        binned_column_data = pd.qcut(column_data, nbins, labels=False)
+        binned_column_data = pd.qcut(column_data, nbins, labels=False, duplicates="drop")
         ddit.register_column_tuple(feature_name, tuple(binned_column_data))
     ddit.register_column_tuple(label_name, tuple(df[label_name].values))
 
-    #calculate entropies
+    # calculate entropies
     feature_sets = combinations(feature_names, order)
     label_entropy = ddit.H(label_name)
     results = []
     for feature_set in feature_sets:
-        ent = ddit.recursively_solve_formula(label_name+":"+"&".join(feature_set)) / label_entropy
+        ent = (
+            ddit.recursively_solve_formula(label_name + ":" + "&".join(feature_set)) / label_entropy
+        )
         feature_0 = {"Feature": feature_set[0]}
         feature_rest = {f"Feature {i}": feature_set[i] for i in range(1, order)}
         results.append(feature_0 | feature_rest | {value_label: float(ent)})
@@ -79,9 +79,11 @@ def fragmentation_data(df, feature_names, label_name, order, value_label):
 
 def main(data_type, label_name, feature_names):
     # get feature data
-    save_loc, df_org, feature_names = get_feature_data(data_type, label_name, feature_names, "entropy")
+    save_loc, df_org, feature_names = get_feature_data(
+        data_type, label_name, feature_names, "entropy"
+    )
     feature_names = sorted(feature_names)
-    feature_df = df_org[feature_names+[label_name]]
+    feature_df = df_org[feature_names + [label_name]]
     value_label = "Shared Entropy"
 
     # run and plot single-feature shared entropies
@@ -91,7 +93,7 @@ def main(data_type, label_name, feature_names):
 
     # get sum of entropy for each combination of features
     df_diff = df1.merge(df1, how="cross", suffixes=("", " 1"))
-    df_diff["Entropy Sum"] = df_diff[value_label+""]+df_diff[value_label+" 1"]
+    df_diff["Entropy Sum"] = df_diff[value_label + ""] + df_diff[value_label + " 1"]
     df_diff = df_diff[["Feature", "Feature 1", "Entropy Sum"]]
 
     # calculate triple information

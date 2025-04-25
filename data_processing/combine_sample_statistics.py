@@ -1,3 +1,16 @@
+"""Combine individual sample's spatial statistics into one pkl.
+
+For use when processed_to_statistics was run over individual samples.
+
+Expected usage: python3 -m spatial_egt.data_processing.combine_sample_statistics
+    data_type statistic_name
+
+where:
+data_type: the name of the directory in data/
+statisitic_name: the name of directory in data/{data_type}/statisitcs
+    that holds the individual samples
+"""
+
 import os
 import sys
 
@@ -7,6 +20,7 @@ from spatial_egt.common import get_data_path
 
 
 def main(data_type, statistic_name):
+    """Combine individual sample's spatial statistics"""
     save_loc = get_data_path(data_type, "statistics")
     statistics_path = f"{save_loc}/{statistic_name}"
     df = pd.DataFrame()
@@ -18,6 +32,6 @@ def main(data_type, statistic_name):
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
-        main(sys.argv[1], sys.argv[2])
+        main(*sys.argv[1:])
     else:
-        print("Please provide the data type and statistic name.")
+        print("Please see the module docstring for usage instructions.")

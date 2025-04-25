@@ -13,10 +13,11 @@ def create_muspan_domain(df):
 def local_moransi_dist(df, cell_type, side_length):
     domain = create_muspan_domain(df)
     ms.region_based.generate_hexgrid(domain, side_length=side_length,
-                                     regions_collection_name="grids",
-                                     remove_empty_regions=False)
+                                     regions_collection_name="grids")
+    network_kwargs = {"network_type": "Proximity", "min_edge_distance": 0, "max_edge_distance": 1}
     _, _, lmi, _, _ = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
-                                                     label_name=f"region counts: {cell_type}")
+                                                     label_name=f"region counts: {cell_type}",
+                                                     network_kwargs=network_kwargs)
     lmi = lmi[(lmi > 1) | (lmi < -1)] #remove hexes with no cell_type cells
     return lmi
 
@@ -99,11 +100,12 @@ def qcm(df, side_length):
 
 def global_moransi(df, cell_type, side_length):
     domain = create_muspan_domain(df)
+    network_kwargs = {"network_type": "Proximity", "min_edge_distance": 0, "max_edge_distance": 1}
     ms.region_based.generate_hexgrid(domain, side_length=side_length,
-                                     regions_collection_name="grids",
-                                     remove_empty_regions=False)
+                                     regions_collection_name="grids")
     gmi = ms.spatial_statistics.morans_i(domain, population=("Collection", "grids"),
-                                         label_name=f"region counts: {cell_type}")
+                                         label_name=f"region counts: {cell_type}",
+                                         network_kwargs=network_kwargs)
     return gmi[0]
 
 

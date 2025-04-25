@@ -62,8 +62,8 @@ def plot_sample(df, save_loc, sample_id):
     scale = 4
     scaled_grid = np.kron(grid, np.ones((scale, scale)))
     fig, ax = plt.subplots(figsize=(scale*max_x, scale*max_y), dpi=1)
-    cell_colors = [game_colors["sensitive_wins"],
-                   game_colors["resistant_wins"]]
+    cell_colors = [game_colors["Sensitive Wins"],
+                   game_colors["Resistant Wins"]]
     cmap = ListedColormap(["#F0F0F0"]+cell_colors)
     plt.imshow(scaled_grid, cmap=cmap, interpolation="none")
     ax.get_xaxis().set_ticks([])

@@ -44,15 +44,19 @@ def calculate_statistics(processed_path, file_names, stat_name, stat_calculation
     for file_name in file_names:
         source = file_name.split(" ")[0]
         sample = file_name.split(" ")[1][:-4]
-        print(f"{source} {sample}")
         df_sample = pd.read_csv(f"{processed_path}/{file_name}")
-        statistic = stat_calculation(df_sample, **stat_args)
+        try:
+            statistic = stat_calculation(df_sample, **stat_args)
+        except Exception as e:
+            print(f"Error {source} {sample}: {e}")
+            continue
         rows.append({"source": source, "sample": sample, stat_name: statistic})
     return pd.DataFrame(rows)
 
 
 def main(data_type, stat_name, source=None, sample=None):
     """Calculate spatial statistic(s) and save as pkl"""
+    print(stat_name)
     processed_path = get_data_path(data_type, "processed")
 
     stat_calculation = STATISTIC_REGISTRY[stat_name]

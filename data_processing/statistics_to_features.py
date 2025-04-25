@@ -1,28 +1,45 @@
+"""Convert spatial statistics into features and save as features.csv
+
+Features are defined as the single-valued statistics and the summary
+    statistics of the distribution and function statistics.
+
+Features.csv also contains a column with the "class label" for downstream
+    machine learning or analysis.
+
+Expected usage:
+python3 -m spatial_egt.data_processing.statistics_to_features
+    data_type label_name
+
+Where:
+data_type: the name of the directory in data/
+label_name: the class label name, which also exists in data/{data_type}/labels.csv
+"""
+
 import os
 import sys
 
 import numpy as np
 import pandas as pd
-from scipy.stats import kurtosis, skew
+from scipy.stats import skew
 
 from spatial_egt.common import get_data_path, get_spatial_statistic_type
 
 
 def distribution_to_features(row, name):
+    """Distribution summary statistics"""
     dist = row[name]
     row[f"{name}_Mean"] = np.mean(dist)
     sd = np.std(dist)
     row[f"{name}_SD"] = sd
     if sd == 0:
         row[f"{name}_Skew"] = 0
-        row[f"{name}_Kurtosis"] = 0
     else:
         row[f"{name}_Skew"] = skew(dist)
-        row[f"{name}_Kurtosis"] = kurtosis(dist, fisher=True, bias=True)
     return row
 
 
 def function_to_features(row, name):
+    """Function summary statistics"""
     func = row[name]
     row[f"{name}_Min"] = min(func)
     row[f"{name}_Max"] = max(func)
@@ -30,6 +47,7 @@ def function_to_features(row, name):
 
 
 def main(data_type, label_name):
+    """Convert spatial statistics into features"""
     data_path = get_data_path(data_type, ".")
     statistics_data_path = get_data_path(data_type, "statistics")
     df = pd.read_csv(f"{data_path}/labels.csv")
@@ -56,4 +74,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         main(*sys.argv[1:])
     else:
-        print("Please provide the data type and label name.")
+        print("Please see the module docstring for usage instructions.")
