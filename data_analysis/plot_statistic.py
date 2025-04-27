@@ -23,13 +23,11 @@ def plot_funcs(save_loc, file_name, df, label, stat_name, col):
     facet = sns.FacetGrid(
         df,
         col=col,
-        hue="sample",
         col_order=col_order,
         hue_order=col_order,
         palette=colors,
         height=4,
         aspect=1,
-        sharey=False
     )
     facet.map_dataframe(sns.lineplot, x="x", y=stat_name, errorbar="sd")
     facet.set_titles(col_template="{col_name}")
@@ -39,7 +37,6 @@ def plot_funcs(save_loc, file_name, df, label, stat_name, col):
 
 
 def plot_dists(save_loc, file_name, df, label_name, stat_name, col):
-    plot_dists_sep(save_loc, file_name, df, label_name, stat_name, col)
     df = df.explode(stat_name).reset_index()
     order = None
     if label_name == "game":
@@ -62,28 +59,6 @@ def plot_dists(save_loc, file_name, df, label_name, stat_name, col):
     facet.tight_layout()
     facet.figure.patch.set_alpha(0.0)
     facet.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
-
-
-def plot_dists_sep(save_loc, file_name, df, label_name, stat_name, col):
-    df["empty"] = df[stat_name].apply(lambda x: len(x) < 6)
-    df = df[df["empty"] == False]
-    df["same"] = df[stat_name].apply(lambda x: len(set(x)) == 1)
-    df = df[df["same"] == False]
-    min_val = df[stat_name].apply(lambda x: np.min(x)).min()
-    max_val = df[stat_name].apply(lambda x: np.max(x)).max()
-    x = np.linspace(min_val, max_val, 100)
-    fig, ax = plt.subplots(1, len(df[col].unique()), figsize=(4*len(df[col].unique()), 4))
-    for c, col_group in enumerate(sorted(df[col].unique())):
-        col_df = df.loc[df[col] == col_group]
-        for sample in col_df["sample"].unique():
-            sample_data = col_df.loc[col_df["sample"] == sample][stat_name].values[0]
-            kde = stats.gaussian_kde(sample_data)
-            #ax[c].plot(x, kde(x), color="white")
-            ax[c].fill_between(x, kde(x), alpha=0.05, color="black")
-        ax[c].set_title(col_group)
-    fig.tight_layout()
-    fig.figure.patch.set_alpha(0.0)
-    plt.savefig(f"{save_loc}/{file_name}_sep.png", bbox_inches="tight")
 
 
 def plot_values(save_loc, file_name, df, label_name, stat_name, col):

@@ -12,7 +12,7 @@ python3 -m spatial_egt.data_processing.statistics_to_features
 
 Where:
 data_type: the name of the directory in data/
-label_name: the class label name, which also exists in data/{data_type}/labels.csv
+label_name: the class label name, which is also a column in data/{data_type}/labels.csv
 """
 
 import os

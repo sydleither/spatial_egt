@@ -7,11 +7,12 @@ Plots that will be generated:
     Pairplot
 
 Expected usage:
-python3 -m spatial_egt.classification.feature_exploration data_type feature_names
+python3 -m spatial_egt.classification.feature_exploration data_type label_name feature_names
 
 Where:
 data_type: the name of the directory in data/ containing spatial_statistics/features.csv
-feature_names: a list of the feature names to explore, or "all" or "noncorr" which are pre-defined.
+label_name: the class label name, which is also a column in data/{data_type}/labels.csv
+feature_names: a list of the feature names to explore, or "all" or "noncorr" which are pre-defined
 """
 
 from collections import Counter
@@ -26,7 +27,7 @@ from scipy.sparse import csgraph, csr_matrix
 import seaborn as sns
 
 from spatial_egt.classification.common import get_feature_data
-from spatial_egt.common import game_colors, theme_colors
+from spatial_egt.common import theme_colors
 
 
 def feature_pairplot(save_loc, df, label_hue):
@@ -144,12 +145,6 @@ def main(data_type, label_name, feature_names):
     save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "statistics")
     feature_df = df[feature_names+[label_name]]
     colors = sns.color_palette("hls", len(df[label_name].unique()))
-
-    # df["cell_type"] = df["source"].apply(lambda x: "_".join(x.split("_")[1:-1]).lower())
-    # c = {s:"purple" for s in df["cell_type"].unique()}
-    # s = {"cell_type":list(df["cell_type"].unique())}
-    # df = df.drop(["source", "sample", "game"], axis=1)
-    # features_ridgeplots(save_loc, df, ["cell_type"], c, s)
 
     visualize_correlated(save_loc, df, feature_names, True)
     class_balance(feature_df, label_name)
