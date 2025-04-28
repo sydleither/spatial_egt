@@ -8,49 +8,7 @@ import pandas as pd
 from spatial_egt.common import game_colors, get_data_path
 
 
-def downsample(s_coords, r_coords, ideal_size=(25,20)):
-    dims = range(len(s_coords[0]))
-    if isinstance(ideal_size, int):
-        ideal_size = tuple([ideal_size]*len(dims))
-    min_dims = tuple([min(np.min(s_coords[:, i]), np.min(r_coords[:, i])) for i in dims])
-    max_dims = tuple([max(np.max(s_coords[:, i]), np.max(r_coords[:, i]))+1 for i in dims])
-    sample_length = [(max_dims[i]-min_dims[i])//ideal_size[i] for i in dims]
-
-    print(min_dims)
-    print(max_dims)
-    print(sample_length)
-
-    grid = []
-    curr_dims = min_dims
-    while np.all(np.array(curr_dims) < np.array(max_dims)):
-        ld = curr_dims
-        ud = [ld[i]+sample_length[i] for i in dims]
-        subset_s = [(s_coords[:, i] >= ld[i]) & (s_coords[:, i] <= ud[i]) for i in dims]
-        subset_s = np.sum(np.all(subset_s, axis=0))
-        subset_r = [(r_coords[:, i] >= ld[i]) & (r_coords[:, i] <= ud[i]) for i in dims]
-        subset_r = np.sum(np.all(subset_r, axis=0))
-
-    # grid = []
-    # for s in range(len(dim_vals)):
-    #     ld = [dim_vals[i][s] for i in dims]
-    #     ud = [ld[i]+sample_length[i] for i in dims]
-    #     subset_s = [(s_coords[:, i] >= ld[i]) & (s_coords[:, i] <= ud[i]) for i in dims]
-    #     subset_s = np.sum(np.all(subset_s, axis=0))
-    #     subset_r = [(r_coords[:, i] >= ld[i]) & (r_coords[:, i] <= ud[i]) for i in dims]
-    #     subset_r = np.sum(np.all(subset_r, axis=0))
-    #     subset_total = subset_s + subset_r
-    #     if subset_total == 0:
-    #         continue
-    #     fs_counts.append(subset_s/subset_total)
-    # return grid
-
-
 def plot_sample(df, save_loc, sample_id):
-    dimensions = list(df.drop("type", axis=1).columns)
-    s_coords = df.loc[df["type"] == "sensitive"][dimensions].values
-    r_coords = df.loc[df["type"] == "resistant"][dimensions].values
-    #grid = downsample(s_coords, r_coords)
-
     color_map = {"sensitive":1, "resistant":2}
     df["color"] = df["type"].map(color_map)
     max_x = df["x"].max() + 1

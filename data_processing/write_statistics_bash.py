@@ -2,12 +2,11 @@
 
 Expected usage:
 python3 -m spatial_egt.data_processing.write_statistics_bash
-    data_type run_cmd file_name python_file (statistic_names)
+    data_type run_cmd file_name (statistic_name)
 
 Where:
 data_type: the name of the directory in data/
 run_cmd: the command to use for running the spatial statistics, eg "python3 -m" or "sbatch job.sb"
-python_file: which file to run, eg spatial_egt.data_processing.processed_to_statistic
 statistic_name: optional
     if provided the bash script will calculate the spatial statistic separately for each sample
     otherwise the bash script will run each spatial statistic over all samples
@@ -34,7 +33,7 @@ def write_individual(run_cmd, python_file, data_type, statistic):
         with open(f"run_{data_type}_{statistic}_{i}.sh", "w", encoding="UTF-8") as f:
             for output_line in batch:
                 f.write(output_line)
-    os.mkdir(f"data/{data_type}/statistics/{statistic}")
+    get_data_path(data_type, f"statistics/{statistic}")
 
 
 def write_aggregated(run_cmd, python_file, data_type, statistic_names):
@@ -45,10 +44,12 @@ def write_aggregated(run_cmd, python_file, data_type, statistic_names):
     with open(f"run_{data_type}.sh", "w", encoding="UTF-8") as f:
         for output_line in output:
             f.write(output_line)
+    get_data_path(data_type, "statistics")
 
 
-def main(data_type, run_cmd, python_file, statistic_name=None):
+def main(data_type, run_cmd, statistic_name=None):
     """Generate and save bash script"""
+    python_file = "spatial_egt.data_processing.processed_to_statistic"
     if statistic_name is None:
         write_aggregated(run_cmd, python_file, data_type, STATISTIC_REGISTRY.keys())
     else:
@@ -56,7 +57,7 @@ def main(data_type, run_cmd, python_file, statistic_name=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) in (4, 5):
+    if len(sys.argv) in (3, 4):
         main(*sys.argv[1:])
     else:
         print("Please see the module docstring for usage instructions.")
