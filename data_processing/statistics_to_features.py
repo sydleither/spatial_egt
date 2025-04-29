@@ -67,6 +67,7 @@ def main(data_type, label_name):
             df_feature = df_feature.drop(statistic_name, axis=1)
         df_feature["sample"] = df_feature["sample"].astype(str)
         df = pd.merge(df, df_feature, on=["source", "sample"], how="outer")
+    df = df[df[label_name].notna()]
     df.to_csv(f"{statistics_data_path}/features.csv", index=False, na_rep=np.nan)
 
 

@@ -3,12 +3,7 @@ import seaborn as sns
 
 
 def label_statistic(features, split_char=" "):
-    extra = [
-        "Sensitive", "Resistant",
-        "Local", "Global",
-        "Mean", "SD", "Skew", "Kurtosis",
-        "Min", "Max", "0"
-    ]
+    extra = ["Sensitive", "Resistant", "Local", "Global", "Mean", "SD", "Skew", "Min", "Max"]
     feature_categories = []
     feature_to_statistic = dict()
     for feature in features:
@@ -36,11 +31,15 @@ def plot_feature_selection(save_loc, measurement, condition, df):
         file_name = f"{measurement}_{condition}"
         title = f"Feature {measurement}\n{condition}"
 
-    fig, ax = plt.subplots(figsize=(6, len(df["Feature"].unique())//2))
+    fig, ax = plt.subplots(figsize=(6, len(df["Feature"].unique()) // 2))
     sns.barplot(
-        data=df, x=measurement, y="Feature", ax=ax,
+        data=df,
+        x=measurement,
+        y="Feature",
+        ax=ax,
         palette=sns.color_palette("hls", len(statistics)),
-        hue="Statistic", hue_order=sorted(statistics)
+        hue="Statistic",
+        hue_order=sorted(statistics),
     )
     ax.set(title=title)
     fig.tight_layout()

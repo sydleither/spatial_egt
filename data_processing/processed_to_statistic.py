@@ -42,13 +42,13 @@ def calculate_statistics(processed_path, file_names, stat_name, stat_calculation
     """
     rows = []
     for file_name in file_names:
-        source = file_name.split(" ")[0]
-        sample = file_name.split(" ")[1][:-4]
-        df_sample = pd.read_csv(f"{processed_path}/{file_name}")
         try:
+            source = file_name.split(" ")[0]
+            sample = file_name.split(" ")[1][:-4]
+            df_sample = pd.read_csv(f"{processed_path}/{file_name}")
             statistic = stat_calculation(df_sample, **stat_args)
         except Exception as e:
-            print(f"Error {source} {sample}: {e}")
+            print(f"Error {file_name}: {e}")
             continue
         rows.append({"source": source, "sample": sample, stat_name: statistic})
     return pd.DataFrame(rows)
@@ -81,7 +81,8 @@ def main(data_type, stat_name, source=None, sample=None):
     df = calculate_statistics(
         processed_path, file_names, stat_name, stat_calculation, stat_args
     )
-    df.to_pickle(save_loc)
+    if len(df) > 0:
+        df.to_pickle(save_loc)
 
 
 if __name__ == "__main__":

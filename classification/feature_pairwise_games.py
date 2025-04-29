@@ -13,14 +13,15 @@ from spatial_egt.classification.feature_plot_utils import format_df, plot_featur
 
 def label_bars(ax, labels):
     bars = ax.patches
-    sorted_bars = sorted(zip(bars, [b.get_y() for b in bars]), key=lambda x: x[1])
-    sorted_bars = list(zip(*sorted_bars))[0]
-    for b,bar in enumerate(sorted_bars):
-        ax.text(
-            bar.get_width()/2, bar.get_y()+bar.get_height()/2,
-            labels[b], ha="center", va="center",
-            fontsize=10, color="black"
-        )
+    if len(bars) != 0:
+        sorted_bars = sorted(zip(bars, [b.get_y() for b in bars]), key=lambda x: x[1])
+        sorted_bars = list(zip(*sorted_bars))[0]
+        for b,bar in enumerate(sorted_bars):
+            ax.text(
+                bar.get_width()/2, bar.get_y()+bar.get_height()/2,
+                labels[b], ha="center", va="center",
+                fontsize=10, color="black"
+            )
     ax.set(yticklabels=[], ylabel="")
     ax.tick_params(left=False)
 
@@ -67,9 +68,6 @@ def pairwise_distributions(feature_names, X_i, X_j, game_i, game_j):
     X_j = list(zip(*X_j))
     data = []
     for k,name in enumerate(feature_names):
-        if name == "Proportion_Sensitive":
-            print(game_i, X_i[k])
-            print(game_j, X_j[k])
         feature_i = X_i[k]
         feature_j = X_j[k]
         wass = wasserstein_distance(feature_i, feature_j)

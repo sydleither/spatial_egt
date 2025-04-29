@@ -29,7 +29,7 @@ def sbatch(email, name, time, memory, conda_env, path, node):
         f"#SBATCH --mem-per-cpu={memory}",
         f"conda activate {conda_env}",
         f"cd {path}",
-        "python3 -m $*",
+        "python3 -m $*\n",
     ]
     if node is not None:
         sbatch_script.insert(1, f"#SBATCH -A {node}")

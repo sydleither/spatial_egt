@@ -4,15 +4,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from spatial_egt.common import get_data_path
+from spatial_egt.common import game_colors, get_data_path
 
 
 def plot_gamespace(save_loc, save_name, df, hue):
     df["C - A"] = df["c"] - df["a"]
     df["B - D"] = df["b"] - df["d"]
-    palette = sns.color_palette("hls", len(df[hue].unique()))
+    if hue == "game":
+        palette = game_colors.values()
+        hue_order = game_colors.keys()
+    else:
+        palette = sns.color_palette("hls", len(df[hue].unique()))
+        hue_order = sorted(df[hue].unique())
     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-    sns.scatterplot(data=df, x="C - A", y="B - D", s=100, hue=hue, ax=ax, palette=palette)
+    sns.scatterplot(
+        data=df, x="C - A", y="B - D", s=100, hue=hue, palette=palette, hue_order=hue_order, ax=ax
+    )
     ax.axvline(0, color="black")
     ax.axhline(0, color="black")
     fig.patch.set_alpha(0.0)
@@ -45,7 +52,10 @@ def main(data_type, hue, *filter_args):
 
     image_data_path = get_data_path(data_type, "images")
     df = get_samples(data_type, source, sample_ids)
-    plot_gamespace(image_data_path, save_name, df, hue)
+
+    hue_formatted = hue.replace("_", " ").title()
+    df = df.rename({hue:hue_formatted}, axis=1)
+    plot_gamespace(image_data_path, save_name, df, hue_formatted)
 
 
 if __name__ == "__main__":

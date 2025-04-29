@@ -48,10 +48,8 @@ def feature_set_to_names(df, feature_names, label_name):
 def read_and_clean_feature_df(data_type):
     features_data_path = get_data_path(data_type, "statistics")
     df = pd.read_csv(f"{features_data_path}/features.csv")
-    len_df = len(df)
-    df = df.dropna()
-    if len_df != len(df):
-        print(f"WARNING: {len_df-len(df)} rows with NA dropped.")
+    df = df[(df["Proportion_Sensitive"] > 0.01) & (df["Proportion_Sensitive"] < 0.99)]
+    df = df.fillna(0)
     return df
 
 

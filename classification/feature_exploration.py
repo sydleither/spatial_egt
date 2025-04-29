@@ -27,7 +27,7 @@ from scipy.sparse import csgraph, csr_matrix
 import seaborn as sns
 
 from spatial_egt.classification.common import get_feature_data
-from spatial_egt.common import theme_colors
+from spatial_egt.common import game_colors, theme_colors
 
 
 def feature_pairplot(save_loc, df, label_hue):
@@ -36,12 +36,17 @@ def feature_pairplot(save_loc, df, label_hue):
     plt.close()
 
 
-def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
+def features_ridgeplots(save_loc, df, feature_names, label_name):
     '''
     Based on https://matplotlib.org/matplotblog/posts/create-ridgeplots-in-matplotlib/
     '''
+    class_names = sorted(df[label_name].unique())
+    colors = sns.color_palette("hls", len(df[label_name].unique()))
+    if label_name == "game":
+        games = {k:v for k,v in game_colors.items() if k in class_names}
+        colors = list(games.values())
+        class_names = games.keys()
     num_features = len(feature_names)
-    class_names = df[label_name].unique()
     num_classes = len(class_names)
     gs = grid_spec.GridSpec(num_classes, num_features)
     fig = plt.figure(figsize=(6*num_features, 8))
@@ -59,7 +64,7 @@ def features_ridgeplots(save_loc, df, feature_names, label_name, colors):
             rect.set_alpha(0)
             axes[-1].set_yticklabels([])
             if c == num_classes-1:
-                axes[-1].set_xlabel(feature_name)
+                axes[-1].set_xlabel(feature_name.replace("_", " "))
             else:
                 axes[-1].set(xticklabels=[], xticks=[])
             if f == 0:
@@ -94,16 +99,6 @@ def feature_correlation(save_loc, df, feature_names):
     fig.tight_layout()
     fig.savefig(f"{save_loc}/corr_matrix.png", bbox_inches="tight")
     plt.close()
-
-
-def class_balance(df, label_name):
-    print(label_name)
-    counts = dict(Counter(df[label_name]))
-    total = sum(counts.values())
-    proportions = {k:round(v/total, 3) for k,v in counts.items()}
-    print(f"\tTotal: {total}")
-    print(f"\tCounts: {counts}")
-    print(f"\tProportions: {proportions}")
 
 
 def visualize_correlated(save_loc, df, feature_names, print_latex=False):
@@ -144,12 +139,10 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
 def main(data_type, label_name, feature_names):
     save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "statistics")
     feature_df = df[feature_names+[label_name]]
-    colors = sns.color_palette("hls", len(df[label_name].unique()))
 
-    visualize_correlated(save_loc, df, feature_names, True)
-    class_balance(feature_df, label_name)
+    visualize_correlated(save_loc, df, feature_names, False)
     if len(feature_names) <= 30:
-        features_ridgeplots(save_loc, feature_df, feature_names, label_name, colors)
+        features_ridgeplots(save_loc, feature_df, feature_names, label_name)
         feature_correlation(save_loc, feature_df, feature_names)
         feature_pairplot(save_loc, feature_df, label_name)
 

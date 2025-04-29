@@ -1,8 +1,6 @@
 import sys
 
-from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from spatial_egt.common import game_colors, get_data_path
@@ -11,7 +9,9 @@ from spatial_egt.common import game_colors, get_data_path
 def main(data_type, source, *sample_ids):
     processed_data_path = get_data_path(data_type, "processed")
     image_data_path = get_data_path(data_type, "images")
-    fig, ax = plt.subplots(1, len(sample_ids), figsize=(4*len(sample_ids), 4))
+    fig, ax = plt.subplots(1, len(sample_ids), figsize=(5*len(sample_ids), 5))
+    if len(sample_ids) == 1:
+        ax = [ax]
     for s,sample_id in enumerate(sorted(sample_ids)):
         file_name = f"{source} {sample_id}.csv"
         df = pd.read_csv(f"{processed_data_path}/{file_name}")

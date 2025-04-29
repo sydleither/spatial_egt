@@ -6,7 +6,7 @@ from spatial_egt.common import get_data_path
 
 
 def main(data_type, label_name):
-    features_data_path = get_data_path(data_type, "spatial_statistics")
+    features_data_path = get_data_path(data_type, "statistics")
     df = pd.read_csv(f"{features_data_path}/features.csv")
 
     total_samples = len(df)
