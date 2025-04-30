@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from scipy.sparse import csgraph, csr_matrix
 from sklearn.neural_network import MLPClassifier
@@ -10,6 +11,7 @@ from spatial_egt.common import game_colors, get_data_path
 def df_to_xy(df, feature_names, label_name):
     if label_name == "game":
         label_classes = list(game_colors.keys())
+        label_classes = [x for x in label_classes if x in df[label_name].unique()]
     else:
         label_classes = list(df[label_name].unique())
     class_to_int = {lc:i for i,lc in enumerate(label_classes)}
@@ -48,8 +50,11 @@ def feature_set_to_names(df, feature_names, label_name):
 def read_and_clean_feature_df(data_type):
     features_data_path = get_data_path(data_type, "statistics")
     df = pd.read_csv(f"{features_data_path}/features.csv")
+    print(f"Total samples: {len(df)}")
     df = df[(df["Proportion_Sensitive"] > 0.01) & (df["Proportion_Sensitive"] < 0.99)]
+    print(f"Total samples after removing near-fixation: {len(df)}")
     df = df.fillna(0)
+    df = df.replace([np.inf, -np.inf], 0)
     return df
 
 

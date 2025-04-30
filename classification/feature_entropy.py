@@ -23,12 +23,16 @@ def joint_entropy_plot(save_loc, df):
     df = pd.concat([df, df_temp])
 
     # create joint heatmap and sort by mean value
-    df_hm = df.pivot(index="Feature", columns="Feature 1", values="Emergence")
+    df_hm = df.pivot(index="Feature", columns="Feature 1", values="Interaction Information")
     means = df_hm.mean().sort_values(ascending=False)
     df_hm = df_hm.reindex(means.index, axis=0).reindex(means.index, axis=1)
 
     # set colorbar to diverge at 0
-    norm = mcolors.TwoSlopeNorm(vcenter=0, vmin=df["Emergence"].min(), vmax=df["Emergence"].max())
+    norm = mcolors.TwoSlopeNorm(
+        vcenter=0,
+        vmin=df["Interaction Information"].min(),
+        vmax=df["Interaction Information"].max(),
+    )
     cmap = cm.PuOr
     bar_colors = cmap(norm(means))
 
@@ -44,9 +48,9 @@ def joint_entropy_plot(save_loc, df):
     ax_top = fig.add_subplot(gs[0, 0], sharex=ax_hm)
     ax_top.bar(range(len(df_hm)), means, width=0.9, align="edge", color=bar_colors)
     ax_top.axis("off")
-    ax_top.set(title="Negative Triple Information")
+    ax_top.set(title="Interaction Information")
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/triple_information.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/interaction_information.png", bbox_inches="tight")
     plt.close()
 
 
@@ -55,7 +59,7 @@ def fragmentation_data(df, feature_names, label_name, order, value_label):
     ddit = DDIT()
 
     # bin and register features
-    nbins = int(np.log2(len(df))) + 1
+    nbins = int(np.ceil(np.log2(len(df)) + 1))
     for feature_name in feature_names:
         column_data = df[feature_name].values
         binned_column_data = pd.qcut(column_data, nbins, labels=False, duplicates="drop")
@@ -84,10 +88,11 @@ def main(data_type, label_name, feature_names):
     )
     feature_names = sorted(feature_names)
     feature_df = df_org[feature_names + [label_name]]
-    value_label = "Shared Entropy"
+    value_label = "Mutual Information"
 
     # run and plot single-feature shared entropies
     df1 = fragmentation_data(feature_df, feature_names, label_name, 1, value_label)
+    print(df1.sort_values(value_label))
     df1_formatted = format_df(df1.sort_values(value_label, ascending=False))
     plot_feature_selection(save_loc, value_label, None, df1_formatted)
 
@@ -99,7 +104,7 @@ def main(data_type, label_name, feature_names):
     # calculate triple information
     df2 = fragmentation_data(feature_df, feature_names, label_name, 2, value_label)
     df = df2.merge(df_diff, on=["Feature", "Feature 1"])
-    df["Emergence"] = df[value_label] - df["Entropy Sum"]
+    df["Interaction Information"] = df[value_label] - df["Entropy Sum"]
 
     # plot
     joint_entropy_plot(save_loc, df)

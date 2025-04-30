@@ -73,7 +73,7 @@ def pairwise_distributions(feature_names, X_i, X_j, game_i, game_j):
         wass = wasserstein_distance(feature_i, feature_j)
         data.append({
             "Feature": name,
-            "Wasserstein Distance": wass,
+            "Earth Movers Distance": wass,
             "Pair": f"{game_i} - {game_j}",
             "Game i": game_i,
             "Game j": game_j

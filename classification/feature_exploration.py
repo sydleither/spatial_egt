@@ -15,7 +15,6 @@ label_name: the class label name, which is also a column in data/{data_type}/lab
 feature_names: a list of the feature names to explore, or "all" or "noncorr" which are pre-defined
 """
 
-from collections import Counter
 import sys
 
 import matplotlib.pyplot as plt
@@ -141,9 +140,9 @@ def main(data_type, label_name, feature_names):
     feature_df = df[feature_names+[label_name]]
 
     visualize_correlated(save_loc, df, feature_names, False)
+    feature_correlation(save_loc, feature_df, feature_names)
     if len(feature_names) <= 30:
         features_ridgeplots(save_loc, feature_df, feature_names, label_name)
-        feature_correlation(save_loc, feature_df, feature_names)
         feature_pairplot(save_loc, feature_df, label_name)
 
 

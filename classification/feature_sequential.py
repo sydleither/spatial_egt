@@ -28,7 +28,7 @@ def sfs(save_loc, feature_df, feature_names, num_features_start):
     if num_features_start == "0":
         starting_sets = [[]]
     else:
-        previous_results = open(f"{save_loc}/{num_features_start}.csv").read()
+        previous_results = open(f"{save_loc}/{num_features_start}.csv", encoding="UTF-8").read()
         previous_results = [x.split(",") for x in previous_results.split("\n")]
         top_n = 10 if len(previous_results) > 10 else len(previous_results)
         starting_sets = [x[:-1] for x in previous_results[1:top_n+1]]
@@ -50,7 +50,7 @@ def sfs(save_loc, feature_df, feature_names, num_features_start):
     #save the new feature sets and scores
     results = dict(sorted(results.items(), key=lambda x: x[1], reverse=True))
     num_features = int(num_features_start)+1
-    with open(f"{save_loc}/{num_features}.csv", "w") as f:
+    with open(f"{save_loc}/{num_features}.csv", "w", encoding="UTF-8") as f:
         f.write(",".join([str(i) for i in range(num_features)])+","+"Mean Accuracy\n")
         for feature_set, mean in results.items():
             f.write(",".join(feature_set)+f",{mean:5.3f}\n")
