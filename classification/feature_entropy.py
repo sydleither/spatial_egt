@@ -28,12 +28,18 @@ def joint_entropy_plot(save_loc, df):
     df_hm = df_hm.reindex(means.index, axis=0).reindex(means.index, axis=1)
 
     # set colorbar to diverge at 0
-    norm = mcolors.TwoSlopeNorm(
-        vcenter=0,
-        vmin=df["Interaction Information"].min(),
-        vmax=df["Interaction Information"].max(),
-    )
-    cmap = cm.PuOr
+    min_entropy = df["Interaction Information"].min()
+    max_entropy = df["Interaction Information"].max()
+    if min_entropy < 0:
+        norm = mcolors.TwoSlopeNorm(
+            vcenter=0,
+            vmin=min_entropy,
+            vmax=max_entropy,
+        )
+        cmap = cm.PuOr
+    else:
+        norm = mcolors.Normalize(vmin=min_entropy, vmax=max_entropy)
+        cmap = cm.Purples
     bar_colors = cmap(norm(means))
 
     # plot

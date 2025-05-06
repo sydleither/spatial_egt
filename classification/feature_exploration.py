@@ -143,6 +143,7 @@ def main(data_type, label_name, feature_names):
     feature_correlation(save_loc, feature_df, feature_names)
     if len(feature_names) <= 30:
         features_ridgeplots(save_loc, feature_df, feature_names, label_name)
+    if len(feature_names) <= 20:
         feature_pairplot(save_loc, feature_df, label_name)
 
 

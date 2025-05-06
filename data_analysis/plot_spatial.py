@@ -1,3 +1,13 @@
+"""Visualize the coordinates of a list of samples.
+
+Expected usage: python3 -m spatial_egt.data_analysis.plot_spatial data_type source sample_ids
+
+Where:
+data_type: the name of the directory in data/ containing the processed/ data
+source: the name of the source of the data
+sample_ids: a list of the sample_ids to visualize
+"""
+
 import sys
 
 import matplotlib.pyplot as plt
