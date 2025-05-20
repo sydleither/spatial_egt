@@ -4,8 +4,6 @@ import os
 
 from pandas.api.types import is_object_dtype
 
-from spatial_database import STATISTIC_REGISTRY
-
 
 game_colors = {"Sensitive Wins":"#4C956C", "Coexistence":"#9C6D57",
                "Bistability":"#047495", "Resistant Wins":"#EF7C8E"}
@@ -29,6 +27,7 @@ def get_data_path(data_type:str, data_stage:str):
 
 
 def get_spatial_statistic_type(df, spatial_statistic):
+    from spatial_database import STATISTIC_REGISTRY
     stat_calculation = STATISTIC_REGISTRY[spatial_statistic]
     if is_object_dtype(df[spatial_statistic]):
         if stat_calculation.__name__.endswith("dist"):
