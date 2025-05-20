@@ -2,7 +2,6 @@ from itertools import combinations
 import sys
 
 import matplotlib.pyplot as plt
-from matplotlib import cm
 import matplotlib.colors as mcolors
 import numpy as np
 import pandas as pd
@@ -31,15 +30,11 @@ def joint_entropy_plot(save_loc, df):
     min_entropy = df["Interaction Information"].min()
     max_entropy = df["Interaction Information"].max()
     if min_entropy < 0:
-        norm = mcolors.TwoSlopeNorm(
-            vcenter=0,
-            vmin=min_entropy,
-            vmax=max_entropy,
-        )
-        cmap = cm.PuOr
+        norm = mcolors.TwoSlopeNorm(vcenter=0, vmin=min_entropy, vmax=max_entropy)
+        cmap = plt.get_cmap("PuOr")
     else:
         norm = mcolors.Normalize(vmin=min_entropy, vmax=max_entropy)
-        cmap = cm.Purples
+        cmap = plt.get_cmap("Purples")
     bar_colors = cmap(norm(means))
 
     # plot

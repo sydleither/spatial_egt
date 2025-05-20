@@ -32,7 +32,10 @@ def nn_dist(df, cell_type1="sensitive", cell_type2="resistant"):
     return nn
 
 
-def cpcf(df, max_radius, annulus_step, annulus_width, cell_type1="sensitive", cell_type2="resistant"):
+def cpcf(df, max_radius, annulus_step, annulus_width, cell_type1="sensitive", cell_type2="resistant", fix_error=False):
+    if fix_error:
+        df["x"] = 2*df["x"]
+        df["y"] = 2*df["y"]
     domain = create_muspan_domain(df)
     _, pcf = ms.spatial_statistics.cross_pair_correlation_function(
         domain=domain,

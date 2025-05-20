@@ -3,7 +3,9 @@ import seaborn as sns
 
 
 def label_statistic(features, split_char=" "):
-    extra = ["Sensitive", "Resistant", "Local", "Global", "Mean", "SD", "Skew", "Min", "Max"]
+    extra = ["Sensitive", "Resistant", "Local", "Global",
+             "Mean", "SD", "Skew", "Min", "Max",
+             "SS", "SR", "RS", "RR"]
     feature_categories = []
     feature_to_statistic = dict()
     for feature in features:
