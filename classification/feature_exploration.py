@@ -50,7 +50,7 @@ def features_ridgeplots(save_loc, df, feature_names, label_name):
     gs = grid_spec.GridSpec(num_classes, num_features)
     fig = plt.figure(figsize=(6*num_features, 8))
     axes = []
-    for f,feature_name in enumerate(feature_names):
+    for f,feature_name in enumerate(sorted(feature_names)):
         min_val = df[feature_name].min()
         x = np.linspace(min_val, df[feature_name].max(), 100)
         for c,class_name in enumerate(class_names):
@@ -143,7 +143,7 @@ def main(data_type, label_name, feature_names):
     feature_correlation(save_loc, feature_df, feature_names)
     if len(feature_names) <= 30:
         features_ridgeplots(save_loc, feature_df, feature_names, label_name)
-    if len(feature_names) <= 20:
+    if len(feature_names) <= 10:
         feature_pairplot(save_loc, feature_df, label_name)
 
 

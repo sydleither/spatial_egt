@@ -23,7 +23,7 @@ def df_to_xy(df, feature_names, label_name):
 
 def remove_correlated(df, feature_names):
     corr_matrix = df[feature_names].corr(method="spearman")
-    high_corr = ((corr_matrix >= 0.9) | (corr_matrix <= -0.9)) & (corr_matrix != 1.0)
+    high_corr = (corr_matrix >= 0.9) | (corr_matrix <= -0.9)
 
     adj_matrix = csr_matrix(high_corr)
     _, labels = csgraph.connected_components(csgraph=adj_matrix, directed=False)
