@@ -10,14 +10,14 @@ from spatial_egt.common import game_colors, theme_colors
 
 
 def plt_heatmap(ax, matrix, labels, title, textcolors=("black", "white")):
-    '''
+    """
     Based on https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html
-    '''
+    """
     num_labels = len(labels)
     im = ax.imshow(matrix, cmap="Purples")
     ax.set_xticks(range(num_labels), labels=labels, rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(num_labels), labels=labels)
-    threshold = im.norm(matrix.max())/2
+    threshold = im.norm(matrix.max()) / 2
     for i in range(num_labels):
         for j in range(num_labels):
             color = textcolors[int(im.norm(matrix[i, j]) > threshold)]
@@ -32,10 +32,14 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
         conf_mat = metrics.confusion_matrix(y_trues[i], y_preds[i], normalize="true")
         conf_mats.append(conf_mat)
     conf_mat = np.mean(conf_mats, axis=0)
-    #TODO add average accuracy as title
 
     fig, ax = plt.subplots(figsize=(5, 5))
-    plt_heatmap(ax, conf_mat, labels, "Mean Confusion Matrix")
+    plt_heatmap(
+        ax,
+        conf_mat,
+        labels,
+        f"Mean Confusion Matrix\nOverall Accuracy: {np.trace(conf_mat)/np.sum(conf_mat):5.3f}",
+    )
     ax.set(xlabel="Predicted", ylabel="True")
     fig.tight_layout()
     fig.savefig(f"{save_loc}/confusion_{data_set}.png", bbox_inches="tight", transparent=True)
@@ -44,9 +48,9 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
 
 def plot_prediction_distributions(save_loc, label_name, data_set, df):
     if label_name == "game":
-        col_order=game_colors.keys()
+        col_order = game_colors.keys()
     else:
-        col_order=sorted(df[label_name].unique())
+        col_order = sorted(df[label_name].unique())
     for feature_name in ["initial_density", "initial_fr", "Stationary Solution"]:
         facet = sns.FacetGrid(df, col=label_name, col_order=col_order, height=4, aspect=1)
         facet.map_dataframe(sns.kdeplot, x=feature_name, hue="correct")
@@ -81,8 +85,8 @@ def roc_curve(save_loc, label_name, data_set, int_to_name, y_trues, y_probs):
         y_true = y_trues[k]
         y_prob = y_probs[k]
         n = len(y_true)
-        stats = {"fpr":{}, "tpr":{}}
-        for label,cat in int_to_name.items():
+        stats = {"fpr": {}, "tpr": {}}
+        for label, cat in int_to_name.items():
             y_label = [1 if y_true[i] == label else 0 for i in range(n)]
             y_pred_prob_label = y_prob[:, label]
             fpr = []
@@ -90,12 +94,12 @@ def roc_curve(save_loc, label_name, data_set, int_to_name, y_trues, y_probs):
             for thresh in thresholds:
                 y_pred = [1 if y_pred_prob_label[i] > thresh else 0 for i in range(n)]
                 tp, fp, fn, tn = get_binary_confusion_matrix(n, y_label, y_pred)
-                thresh_fpr = 1-(tn/(fp+tn))
-                thresh_tpr = tp/(fn+tp)
+                thresh_fpr = 1 - (tn / (fp + tn))
+                thresh_tpr = tp / (fn + tp)
                 fpr.append(thresh_fpr)
                 tpr.append(thresh_tpr)
-                acc = (tp+tn)/n
-                df_acc_rows.append({"Label":cat, "k":k, "Threshold":thresh, "Accuracy":acc})
+                acc = (tp + tn) / n
+                df_acc_rows.append({"Label": cat, "k": k, "Threshold": thresh, "Accuracy": acc})
             stats["fpr"][cat] = fpr
             stats["tpr"][cat] = tpr
         roc_stats.append(stats)
@@ -103,9 +107,9 @@ def roc_curve(save_loc, label_name, data_set, int_to_name, y_trues, y_probs):
     if label_name == "game":
         colors = game_colors
     else:
-        colors = {x:theme_colors[0] for x in int_to_name.values()}
+        colors = {x: theme_colors[0] for x in int_to_name.values()}
     fig, ax = plt.subplots(1, 4, figsize=(18, 5))
-    for label,cat in int_to_name.items():
+    for label, cat in int_to_name.items():
         fprs = []
         tprs = []
         aucs = []
@@ -133,8 +137,9 @@ def roc_curve(save_loc, label_name, data_set, int_to_name, y_trues, y_probs):
 
     df_acc = pd.DataFrame(df_acc_rows)
     with sns.axes_style("whitegrid"):
-        facet = sns.FacetGrid(df_acc, col=label_name, hue=label_name,
-                              palette=colors.values(), height=4, aspect=1)
+        facet = sns.FacetGrid(
+            df_acc, col="Label", hue="Label", palette=colors.values(), height=4, aspect=1
+        )
         facet.map_dataframe(sns.lineplot, x="Threshold", y="Accuracy", errorbar="sd")
         facet.set_titles(col_template="{col_name}")
         facet.figure.subplots_adjust(top=0.9)

@@ -21,6 +21,10 @@ def joint_entropy_plot(save_loc, df):
     df_temp = df_temp.drop("Feature 0", axis=1)
     df = pd.concat([df, df_temp])
 
+    # format feature names
+    df["Feature"] = df["Feature"].str.replace("_", " ")
+    df["Feature 1"] = df["Feature 1"].str.replace("_", " ")
+
     # create joint heatmap and sort by mean value
     df_hm = df.pivot(index="Feature", columns="Feature 1", values="Interaction Information")
     means = df_hm.mean().sort_values(ascending=False)
@@ -44,7 +48,16 @@ def joint_entropy_plot(save_loc, df):
     )
     ax_hm = fig.add_subplot(gs[1, 0])
     cbar_ax = fig.add_subplot(gs[1, 1])
-    sns.heatmap(df_hm, cmap=cmap, norm=norm, ax=ax_hm, cbar=True, cbar_ax=cbar_ax)
+    sns.heatmap(
+        df_hm,
+        cmap=cmap,
+        norm=norm,
+        ax=ax_hm,
+        cbar=True,
+        cbar_ax=cbar_ax,
+        xticklabels=True,
+        yticklabels=True,
+    )
     ax_hm.set(xlabel=None, ylabel=None)
     ax_top = fig.add_subplot(gs[0, 0], sharex=ax_hm)
     ax_top.bar(range(len(df_hm)), means, width=0.9, align="edge", color=bar_colors)

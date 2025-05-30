@@ -67,6 +67,6 @@ def get_feature_data(data_type, label_name, feature_names, extra_dir=""):
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(80,), max_iter=5000, solver="adam")
+    estimator = MLPClassifier(hidden_layer_sizes=(50,), max_iter=5000, solver="adam")
     clf = make_pipeline(StandardScaler(), estimator)
     return clf

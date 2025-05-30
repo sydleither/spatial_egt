@@ -101,7 +101,7 @@ def main(data_type, label_name, feature_names):
         plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "true_prob")
         plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "correct")
         plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "0_prob")
-        plot_scatter_prob(save_loc, "test", df_test, "initial_fr", "initial_density", "correct")
+        plot_scatter_prob(save_loc, "test", df_test, "initial_fs", "initial_density", "correct")
 
     learning_curve(save_loc, X, y)
 

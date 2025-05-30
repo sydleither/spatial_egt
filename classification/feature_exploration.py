@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as grid_spec
 import networkx as nx
 import numpy as np
+import pandas as pd
 from scipy import stats
 from scipy.sparse import csgraph, csr_matrix
 import seaborn as sns
@@ -36,39 +37,39 @@ def feature_pairplot(save_loc, df, label_hue):
 
 
 def features_ridgeplots(save_loc, df, feature_names, label_name):
-    '''
+    """
     Based on https://matplotlib.org/matplotblog/posts/create-ridgeplots-in-matplotlib/
-    '''
+    """
     class_names = sorted(df[label_name].unique())
     colors = sns.color_palette("hls", len(df[label_name].unique()))
     if label_name == "game":
-        games = {k:v for k,v in game_colors.items() if k in class_names}
+        games = {k: v for k, v in game_colors.items() if k in class_names}
         colors = list(games.values())
         class_names = games.keys()
     num_features = len(feature_names)
     num_classes = len(class_names)
     gs = grid_spec.GridSpec(num_classes, num_features)
-    fig = plt.figure(figsize=(6*num_features, 8))
+    fig = plt.figure(figsize=(6 * num_features, 8))
     axes = []
-    for f,feature_name in enumerate(sorted(feature_names)):
+    for f, feature_name in enumerate(sorted(feature_names)):
         min_val = df[feature_name].min()
         x = np.linspace(min_val, df[feature_name].max(), 100)
-        for c,class_name in enumerate(class_names):
+        for c, class_name in enumerate(class_names):
             feature_class_data = df.loc[df[label_name] == class_name][feature_name]
             kde = stats.gaussian_kde(feature_class_data)
-            axes.append(fig.add_subplot(gs[c:c+1, f:f+1]))
+            axes.append(fig.add_subplot(gs[c : c + 1, f : f + 1]))
             axes[-1].plot(x, kde(x), color="white")
             axes[-1].fill_between(x, kde(x), alpha=0.75, color=colors[c])
             rect = axes[-1].patch
             rect.set_alpha(0)
             axes[-1].set_yticklabels([])
-            if c == num_classes-1:
+            if c == num_classes - 1:
                 axes[-1].set_xlabel(feature_name.replace("_", " "))
             else:
                 axes[-1].set(xticklabels=[], xticks=[])
             if f == 0:
                 sd = np.std(df[feature_name])
-                axes[-1].text(min_val - sd/3, 0, class_name, ha="right")
+                axes[-1].text(min_val - sd / 3, 0, class_name, ha="right")
             else:
                 axes[-1].set(yticklabels=[])
             axes[-1].set(yticks=[])
@@ -82,6 +83,56 @@ def features_ridgeplots(save_loc, df, feature_names, label_name):
     plt.close()
 
 
+def feature_boxplot(save_loc, df, feature_names, label_name):
+    df = df.copy()
+    for feature in feature_names:
+        df[feature] = (df[feature] - df[feature].mean()) / (df[feature].std())
+    df = pd.melt(
+        df,
+        id_vars=label_name,
+        value_vars=feature_names,
+        var_name="feature",
+        value_name="Normalized Value",
+    )
+
+    if label_name == "game":
+        labels = game_colors.keys()
+        palette = game_colors.values()
+    else:
+        labels = sorted(df[label_name].unique())
+        palette = sns.color_palette("hls", len(labels))
+    facet = sns.FacetGrid(
+        df,
+        col="feature",
+        hue=label_name,
+        hue_order=labels,
+        palette=palette,
+        legend_out=False,
+        col_order=sorted(feature_names),
+        col_wrap=4,
+        sharex=False,
+        sharey=False,
+        height=4,
+        aspect=1,
+    )
+    facet.map_dataframe(
+        sns.violinplot,
+        x=label_name,
+        y="Normalized Value",
+        order=labels,
+        cut=0,
+        linewidth=1,
+        linecolor="black",
+    )
+    facet.set_titles(col_template="{col_name}")
+    facet.set_xticklabels(labels=labels, rotation=45)
+    facet.tight_layout()
+    facet.figure.patch.set_alpha(0.0)
+    facet.savefig(f"{save_loc}/feature_violinplot.png", bbox_inches="tight")
+    plt.close()
+    exit()
+
+
 def feature_correlation(save_loc, df, feature_names):
     num_features = len(feature_names)
     fig, ax = plt.subplots(figsize=(12, 12))
@@ -90,9 +141,9 @@ def feature_correlation(save_loc, df, feature_names):
     ax.set_xticks(np.arange(num_features), labels=feature_names)
     ax.set_yticks(np.arange(num_features), labels=feature_names)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
-    for l,name1 in enumerate(feature_names):
-        for j,name2 in enumerate(feature_names):
-            ax.text(j, l, round(correlation_matrix[name1][name2], 2), ha="center", va="center")
+    for i, name1 in enumerate(feature_names):
+        for j, name2 in enumerate(feature_names):
+            ax.text(j, i, round(correlation_matrix[name1][name2], 2), ha="center", va="center")
     ax.set_title("Correlation Matrix")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
@@ -123,12 +174,19 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
 
     for cluster in [x for x in clusters if len(x) > 1]:
         cluster_name = feature_names[cluster[0]]
-        fig, ax = plt.subplots(figsize=(10,10))
+        fig, ax = plt.subplots(figsize=(10, 10))
         graph = nx.Graph(adj_matrix)
         graph = graph.subgraph(cluster)
-        labels = {i:feature_names[i].replace(" ", "\n") for i in cluster}
-        nx.draw(graph, pos=nx.kamada_kawai_layout(graph), labels=labels,
-                node_size=3000, font_size=10, node_color=theme_colors[1], ax=ax)
+        labels = {i: feature_names[i].replace(" ", "\n") for i in cluster}
+        nx.draw(
+            graph,
+            pos=nx.kamada_kawai_layout(graph),
+            labels=labels,
+            node_size=3000,
+            font_size=10,
+            node_color=theme_colors[1],
+            ax=ax,
+        )
         fig.patch.set_alpha(0.0)
         fig.tight_layout()
         fig.savefig(f"{save_loc}/corr_graph_{cluster_name}.png", bbox_inches="tight")
@@ -136,12 +194,15 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
 
 
 def main(data_type, label_name, feature_names):
-    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "statistics")
-    feature_df = df[feature_names+[label_name]]
+    save_loc, df, feature_names = get_feature_data(
+        data_type, label_name, feature_names, "statistics"
+    )
+    feature_df = df[feature_names + [label_name]]
 
     visualize_correlated(save_loc, df, feature_names, False)
     feature_correlation(save_loc, feature_df, feature_names)
-    if len(feature_names) <= 30:
+    feature_boxplot(save_loc, feature_df, feature_names, label_name)
+    if len(feature_names) <= 20:
         features_ridgeplots(save_loc, feature_df, feature_names, label_name)
     if len(feature_names) <= 10:
         feature_pairplot(save_loc, feature_df, label_name)
