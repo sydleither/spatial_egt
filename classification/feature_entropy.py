@@ -33,21 +33,25 @@ def joint_entropy_plot(save_loc, df):
     # set colorbar to diverge at 0
     min_entropy = df["Interaction Information"].min()
     max_entropy = df["Interaction Information"].max()
-    if min_entropy < 0:
-        norm = mcolors.TwoSlopeNorm(vcenter=0, vmin=min_entropy, vmax=max_entropy)
-        cmap = plt.get_cmap("PuOr")
+    if min_entropy < 0 and max_entropy > 0:
+        if abs(min_entropy) > max_entropy:
+            limit = abs(min_entropy)
+        else:
+            limit = max_entropy
+        norm = mcolors.TwoSlopeNorm(vcenter=0, vmin=-limit, vmax=limit)
+        cmap = plt.get_cmap("coolwarm")
     else:
         norm = mcolors.Normalize(vmin=min_entropy, vmax=max_entropy)
         cmap = plt.get_cmap("Purples")
     bar_colors = cmap(norm(means))
 
     # plot
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(7, 6.5))
     gs = fig.add_gridspec(
-        2, 2, height_ratios=[1, 4], width_ratios=[4, 0.25], hspace=0.05, wspace=0.05
+        2, 2, height_ratios=[0.25, 4], width_ratios=[4, 1], hspace=0.1, wspace=0.05
     )
     ax_hm = fig.add_subplot(gs[1, 0])
-    cbar_ax = fig.add_subplot(gs[1, 1])
+    cbar_ax = fig.add_subplot(gs[0, 0])
     sns.heatmap(
         df_hm,
         cmap=cmap,
@@ -55,16 +59,19 @@ def joint_entropy_plot(save_loc, df):
         ax=ax_hm,
         cbar=True,
         cbar_ax=cbar_ax,
+        cbar_kws={"orientation": "horizontal"},
         xticklabels=True,
         yticklabels=True,
     )
+    cbar_ax.set_title("Interaction Information")
     ax_hm.set(xlabel=None, ylabel=None)
-    ax_top = fig.add_subplot(gs[0, 0], sharex=ax_hm)
-    ax_top.bar(range(len(df_hm)), means, width=0.9, align="edge", color=bar_colors)
+    #ax_hm.set_xticklabels(ax_hm.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    ax_top = fig.add_subplot(gs[1, 1], sharey=ax_hm)
+    ax_top.barh(range(len(df_hm)), means, align="edge", color=bar_colors)
     ax_top.axis("off")
-    ax_top.set(title="Interaction Information")
+    ax_top.set_title("Cumulative\nInteraction\nInformation")
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/interaction_information.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/interaction_information.png", bbox_inches="tight", dpi=200)
     plt.close()
 
 
