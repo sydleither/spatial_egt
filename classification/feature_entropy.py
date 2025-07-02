@@ -39,7 +39,7 @@ def joint_entropy_plot(save_loc, df):
         else:
             limit = max_entropy
         norm = mcolors.TwoSlopeNorm(vcenter=0, vmin=-limit, vmax=limit)
-        cmap = plt.get_cmap("coolwarm")
+        cmap = plt.get_cmap("PRGn")
     else:
         norm = mcolors.Normalize(vmin=min_entropy, vmax=max_entropy)
         cmap = plt.get_cmap("Purples")

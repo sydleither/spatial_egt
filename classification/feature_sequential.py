@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 
 def run(X, y):
-    estimator = MLPClassifier(hidden_layer_sizes=(5,), max_iter=1000, solver="lbfgs")
+    estimator = MLPClassifier(hidden_layer_sizes=(10,), max_iter=2000, solver="adam")
     clf = make_pipeline(StandardScaler(), estimator)
     scores = cross_val_score(clf, X, y, cv=5)
     return np.mean(scores)

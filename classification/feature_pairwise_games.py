@@ -2,6 +2,7 @@ import sys
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from scipy.stats import wasserstein_distance
 import seaborn as sns
@@ -17,6 +18,10 @@ def label_bars(ax, labels):
         sorted_bars = sorted(zip(bars, [b.get_y() for b in bars]), key=lambda x: x[1])
         sorted_bars = list(zip(*sorted_bars))[0]
         for b,bar in enumerate(sorted_bars):
+            if len(labels[b]) > 20:
+                space_indices = [i for i, c in enumerate(labels[b]) if c == " "]
+                middle_index = space_indices[len(space_indices) // 2]
+                labels[b] = labels[b][:middle_index] + '\n' + labels[b][middle_index + 1:]
             ax.text(
                 bar.get_width()/2, bar.get_y()+bar.get_height()/2,
                 labels[b], ha="center", va="center",
@@ -29,7 +34,7 @@ def label_bars(ax, labels):
 def plot_feature_gamespace(save_loc, measurement, int_to_class, df):
     num_games = len(int_to_class)
     statistics = df["Statistic"].unique()
-    fig, ax = plt.subplots(num_games, num_games, figsize=(2*num_games+2, 2*num_games))
+    fig, ax = plt.subplots(num_games, num_games, figsize=(3*num_games+2, 3*num_games))
     for i in range(num_games):
         for j in range(num_games):
             if i == num_games-2 and j == 1:
@@ -45,7 +50,8 @@ def plot_feature_gamespace(save_loc, measurement, int_to_class, df):
             i_game = int_to_class[i]
             j_game = int_to_class[j]
             df_pair = df[(df["Game i"] == i_game) & (df["Game j"] == j_game)]
-            df_pair = df_pair.nlargest(3, measurement)
+            df_pair = df_pair[df_pair[measurement] >= np.quantile(df_pair[measurement], 0.90)]
+            df_pair = df_pair.sort_values(by=measurement, ascending=False)
             sns.barplot(
                 data=df_pair, x=measurement, y="Feature", ax=ax[i][j],
                 palette=sns.color_palette("hls", len(statistics)),
@@ -57,9 +63,10 @@ def plot_feature_gamespace(save_loc, measurement, int_to_class, df):
                 ax[i][j].set_title(j_game, fontsize=12)
             if j == i+1:
                 ax[i][j].set_ylabel(i_game, fontsize=12)
-    fig.tight_layout()
+    fig.suptitle("Features Above the 90th Percentile for Each Game Pair", x=0.6, y=0.93)
+    fig.subplots_adjust(wspace=0.15, hspace=0.3)
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/feature_gamespace.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/feature_gamespace.png", bbox_inches="tight", dpi=200)
     plt.close()
 
 
@@ -110,7 +117,7 @@ def main(data_type, label_name, feature_names):
     for measurement in measurements:
         for pair in df["Pair"].unique():
             df_pair = df[df["Pair"] == pair].sort_values(measurement, ascending=False)
-            plot_feature_selection(save_loc, measurement, pair, df_pair)
+            #plot_feature_selection(save_loc, measurement, pair, df_pair)
         plot_feature_gamespace(save_loc, measurement, int_to_class, df)
 
 

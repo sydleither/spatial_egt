@@ -48,5 +48,5 @@ def plot_feature_selection(save_loc, measurement, condition, df):
     ax.set(title=title)
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/{file_name}.png", bbox_inches="tight", dpi=200)
     plt.close()

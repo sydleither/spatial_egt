@@ -34,7 +34,7 @@ def main(data_type, source, *sample_ids):
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
     save_name = source + "_" + "_".join(sample_ids)
-    plt.savefig(f"{image_data_path}/{save_name}.png", bbox_inches="tight")
+    plt.savefig(f"{image_data_path}/{save_name}.png", bbox_inches="tight", dpi=200)
 
 
 if __name__ == "__main__":
