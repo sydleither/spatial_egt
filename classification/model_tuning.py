@@ -14,7 +14,7 @@ from spatial_egt.common import theme_colors
 
 def finetune_layers(save_loc, X, y):
     cv = 5
-    hidden_layer_sizes = [(i,) for i in range(10, 110, 10)]
+    hidden_layer_sizes = [(i,) for i in range(50, 550, 50)]
     params = {"clf__hidden_layer_sizes":hidden_layer_sizes}
 
     pipeline = Pipeline([("scale", StandardScaler()), ("clf", MLPClassifier(max_iter=5000, solver="adam"))])
@@ -34,7 +34,7 @@ def finetune_layers(save_loc, X, y):
     ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/layersize_tuning.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/layersize_tuning.png", bbox_inches="tight", dpi=200)
 
 
 def main(data_type, label_name, feature_names):

@@ -8,7 +8,7 @@ from spatial_egt.classification.model_eval_utils import plot_confusion_matrix
 def save_model(save_loc, X, y, int_to_name):
     clf = get_model().fit(X, y)
     y_pred = clf.predict(X)
-    plot_confusion_matrix(save_loc, int_to_name, [y], [y_pred], "train")
+    plot_confusion_matrix(save_loc, "train", int_to_name, [y], [y_pred])
     with open(f"{save_loc}/model.pkl", "wb") as f:
         pickle.dump(clf, f)
 

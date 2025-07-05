@@ -16,15 +16,18 @@ def plot_gamespace(save_loc, save_name, df, hue):
     else:
         palette = sns.color_palette("hls", len(df[hue].unique()))
         hue_order = sorted(df[hue].unique())
+    hue_formatted = hue.replace("_", " ").title()
+    df = df.rename({hue:hue_formatted}, axis=1)
     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
     sns.scatterplot(
-        data=df, x="C - A", y="B - D", s=100, hue=hue, palette=palette, hue_order=hue_order, ax=ax
+        data=df, x="C - A", y="B - D", s=100, hue=hue_formatted, palette=palette, hue_order=hue_order, ax=ax
     )
     ax.axvline(0, color="black")
     ax.axhline(0, color="black")
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
-    plt.savefig(f"{save_loc}/gamespace_{save_name}.png")
+    plt.savefig(f"{save_loc}/gamespace_{save_name}.png", dpi=200)
+    plt.savefig(f"{save_loc}/gamespace_{save_name}.pdf", dpi=200)    
 
 
 def get_samples(data_type, source, sample_ids):
@@ -52,10 +55,7 @@ def main(data_type, hue, *filter_args):
 
     image_data_path = get_data_path(data_type, "images")
     df = get_samples(data_type, source, sample_ids)
-
-    hue_formatted = hue.replace("_", " ").title()
-    df = df.rename({hue:hue_formatted}, axis=1)
-    plot_gamespace(image_data_path, save_name, df, hue_formatted)
+    plot_gamespace(image_data_path, save_name, df, hue)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,6 @@ from spatial_egt.common import game_colors, get_data_path
 def df_to_xy(df, feature_names, label_name):
     if label_name == "game":
         label_classes = list(game_colors.keys())
-        label_classes = [x for x in label_classes if x in df[label_name].unique()]
     else:
         label_classes = list(df[label_name].unique())
     class_to_int = {lc:i for i,lc in enumerate(label_classes)}
@@ -67,6 +66,6 @@ def get_feature_data(data_type, label_name, feature_names, extra_dir=""):
 
 
 def get_model():
-    estimator = MLPClassifier(hidden_layer_sizes=(50,), max_iter=5000, solver="adam")
+    estimator = MLPClassifier(hidden_layer_sizes=(300,), max_iter=5000, solver="adam")
     clf = make_pipeline(StandardScaler(), estimator)
     return clf

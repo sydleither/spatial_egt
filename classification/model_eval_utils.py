@@ -28,9 +28,12 @@ def plt_heatmap(ax, matrix, labels, title, textcolors=("black", "white")):
 def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
     labels = [int_to_name[i] for i in range(len(int_to_name))]
     conf_mats = []
+    accs = []
     for i in range(len(y_trues)):
-        conf_mat = metrics.confusion_matrix(y_trues[i], y_preds[i], normalize="true")
+        conf_mat = metrics.confusion_matrix(y_trues[i], y_preds[i], labels=range(len(int_to_name)), normalize="true")
         conf_mats.append(conf_mat)
+        acc = metrics.accuracy_score(y_trues[i], y_preds[i])
+        accs.append(acc)
     conf_mat = np.mean(conf_mats, axis=0)
 
     fig, ax = plt.subplots(figsize=(5, 5))
@@ -38,11 +41,11 @@ def plot_confusion_matrix(save_loc, data_set, int_to_name, y_trues, y_preds):
         ax,
         conf_mat,
         labels,
-        f"Mean Confusion Matrix\nOverall Accuracy: {np.trace(conf_mat)/np.sum(conf_mat):5.3f}",
+        f"Mean Confusion Matrix\nOverall Accuracy: {np.mean(accs):5.3f}",
     )
     ax.set(xlabel="Predicted", ylabel="True")
     fig.tight_layout()
-    fig.savefig(f"{save_loc}/confusion_{data_set}.png", bbox_inches="tight", transparent=True)
+    fig.savefig(f"{save_loc}/confusion_{data_set}.png", bbox_inches="tight", transparent=True, dpi=200)
     plt.close()
 
 
@@ -132,7 +135,7 @@ def roc_curve(save_loc, label_name, data_set, int_to_name, y_trues, y_probs):
     fig.supylabel("True Positive Rate")
     fig.tight_layout()
     fig.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/roc_{data_set}.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/roc_{data_set}.png", bbox_inches="tight", dpi=200)
     plt.close()
 
     df_acc = pd.DataFrame(df_acc_rows)

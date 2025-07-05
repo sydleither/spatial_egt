@@ -2,7 +2,6 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from spatial_egt.classification.common import get_feature_data
 from spatial_egt.common import theme_colors
@@ -33,7 +32,7 @@ def plot_score_by_features(save_loc):
     )
     fig.tight_layout()
     fig.figure.patch.set_alpha(0.0)
-    fig.savefig(f"{save_loc}/accuracy_by_features.png", bbox_inches="tight")
+    fig.savefig(f"{save_loc}/accuracy_by_features.png", bbox_inches="tight", dpi=200)
     plt.close()
 
 

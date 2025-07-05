@@ -10,7 +10,9 @@ sample_ids: a list of the sample_ids to visualize
 
 import sys
 
+from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from spatial_egt.common import game_colors, get_data_path
@@ -25,13 +27,19 @@ def main(data_type, source, *sample_ids):
     for s,sample_id in enumerate(sorted(sample_ids)):
         file_name = f"{source} {sample_id}.csv"
         df = pd.read_csv(f"{processed_data_path}/{file_name}")
-        df["color"] = df["type"].map(
-            {"sensitive":game_colors["Sensitive Wins"], "resistant":game_colors["Resistant Wins"]}
+        df["color"] = df["type"].map({"sensitive":1, "resistant":2})
+        grid = np.zeros((df["y"].max()+1, df["x"].max()+1), dtype=int)
+        for x, y, color in df[["x", "y", "color"]].values:
+            grid[y, x] = color
+        colors = ListedColormap(
+            ["#FFFFFF", game_colors["Sensitive Wins"], game_colors["Resistant Wins"]]
         )
-        ax[s].scatter(x=df["x"], y=df["y"], s=2, c=df["color"])
+        ax[s].imshow(grid, cmap=colors, vmin=0, vmax=len(colors.colors)-1)
+        ax[s].get_xaxis().set_visible(False)
+        ax[s].get_yaxis().set_visible(False)
         ax[s].set_title(sample_id)
     fig.suptitle(source)
-    fig.tight_layout()
+    fig.subplots_adjust(wspace=0.04, hspace=0)
     fig.figure.patch.set_alpha(0.0)
     save_name = source + "_" + "_".join(sample_ids)
     plt.savefig(f"{image_data_path}/{save_name}.png", bbox_inches="tight", dpi=200)
