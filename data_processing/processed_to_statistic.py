@@ -71,11 +71,11 @@ def main(data_type, stat_name, time, source=None, sample=None):
         stat_args = {}
 
     if source is None and sample is None:
-        statistics_path = get_data_path(data_type, "statistics")
+        statistics_path = get_data_path(data_type, "statistics", time)
         save_loc = f"{statistics_path}/{stat_name}.pkl"
         file_names = os.listdir(processed_path)
     else:
-        statistics_path = get_data_path(data_type, f"statistics/{stat_name}")
+        statistics_path = get_data_path(data_type, f"statistics/{stat_name}", time)
         save_loc = f"{statistics_path}/{source} {sample}.pkl"
         file_names = [f"{source} {sample}.csv"]
 

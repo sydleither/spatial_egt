@@ -27,10 +27,10 @@ def write_individual(run_cmd, python_file, data_type, time, statistic):
     for sample_file in processed_path:
         source = sample_file.split(" ")[0]
         sample = sample_file.split(" ")[1][:-4]
-        output.append(f"{run_cmd} {python_file} {data_type} {statistic} {source} {sample}\n")
+        output.append(f"{run_cmd} {python_file} {data_type} {statistic} {time} {source} {sample}\n")
     output_batches = [output[i : i + 900] for i in range(0, len(output), 900)]
     for i, batch in enumerate(output_batches):
-        with open(f"run_{data_type}_{statistic}_{i}.sh", "w", encoding="UTF-8") as f:
+        with open(f"run_{data_type}_{time}_{statistic}_{i}.sh", "w", encoding="UTF-8") as f:
             for output_line in batch:
                 f.write(output_line)
     get_data_path(data_type, f"statistics/{statistic}", time)
@@ -40,8 +40,8 @@ def write_aggregated(run_cmd, python_file, data_type, time, statistic_names):
     """Write run for each spatial statistic"""
     output = []
     for statistic_name in statistic_names:
-        output.append(f"{run_cmd} {python_file} {data_type} {statistic_name}\n")
-    with open(f"run_{data_type}.sh", "w", encoding="UTF-8") as f:
+        output.append(f"{run_cmd} {python_file} {data_type} {statistic_name} {time}\n")
+    with open(f"run_{data_type}_{time}.sh", "w", encoding="UTF-8") as f:
         for output_line in output:
             f.write(output_line)
     get_data_path(data_type, "statistics", time)
