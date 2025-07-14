@@ -1,9 +1,10 @@
 """Visualize the coordinates of a list of samples.
 
-Expected usage: python3 -m spatial_egt.data_analysis.plot_spatial data_type source sample_ids
+Expected usage: python3 -m spatial_egt.data_analysis.plot_spatial data_type time source sample_ids
 
 Where:
 data_type: the name of the directory in data/ containing the processed/ data
+time: timepoint
 source: the name of the source of the data
 sample_ids: a list of the sample_ids to visualize
 """
@@ -18,9 +19,9 @@ import pandas as pd
 from spatial_egt.common import game_colors, get_data_path
 
 
-def main(data_type, source, *sample_ids):
-    processed_data_path = get_data_path(data_type, "processed")
-    image_data_path = get_data_path(data_type, "images")
+def main(data_type, time, source, *sample_ids):
+    processed_data_path = get_data_path(data_type, "processed", time)
+    image_data_path = get_data_path(data_type, "images", time)
     fig, ax = plt.subplots(1, len(sample_ids), figsize=(5*len(sample_ids), 5))
     if len(sample_ids) == 1:
         ax = [ax]
@@ -32,7 +33,7 @@ def main(data_type, source, *sample_ids):
         for x, y, color in df[["x", "y", "color"]].values:
             grid[y, x] = color
         colors = ListedColormap(
-            ["#FFFFFF", game_colors["Sensitive Wins"], game_colors["Resistant Wins"]]
+            ["#000000", game_colors["Sensitive Wins"], game_colors["Resistant Wins"]]
         )
         ax[s].imshow(grid, cmap=colors, vmin=0, vmax=len(colors.colors)-1)
         ax[s].get_xaxis().set_visible(False)
@@ -46,7 +47,7 @@ def main(data_type, source, *sample_ids):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], *sys.argv[3:])
+    if len(sys.argv) > 4:
+        main(sys.argv[1], sys.argv[2], sys.argv[3], *sys.argv[4:])
     else:
-        print("Please provide the data type, source, and sample ids to plot.")
+        print("Please provide the data type, time, source, and sample ids to plot.")

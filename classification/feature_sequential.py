@@ -6,7 +6,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from spatial_egt.classification.common import get_feature_data
+from spatial_egt.classification.common import get_feature_data, read_in_data
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -25,7 +25,7 @@ def sfs(save_loc, feature_df, feature_names, num_features_start):
     y = [class_to_int[x] for x in feature_df["game"].values]
 
     #get sets of features already evaluated and keep only the top 10
-    if num_features_start == "0":
+    if num_features_start == 0:
         starting_sets = [[]]
     else:
         previous_results = open(f"{save_loc}/{num_features_start}.csv", encoding="UTF-8").read()
@@ -49,21 +49,22 @@ def sfs(save_loc, feature_df, feature_names, num_features_start):
 
     #save the new feature sets and scores
     results = dict(sorted(results.items(), key=lambda x: x[1], reverse=True))
-    num_features = int(num_features_start)+1
+    num_features = num_features_start+1
     with open(f"{save_loc}/{num_features}.csv", "w", encoding="UTF-8") as f:
         f.write(",".join([str(i) for i in range(num_features)])+","+"Mean Accuracy\n")
         for feature_set, mean in results.items():
             f.write(",".join(feature_set)+f",{mean:5.3f}\n")
 
 
-def main(data_type, label_name, num_features_start, feature_names):
-    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "sfs")
+def main(args):
+    data_type, time, label_name, feature_names = read_in_data(args)
+    save_loc, df, feature_names = get_feature_data(
+        data_type, time, label_name, feature_names, "sfs"
+    )
     feature_df = df[feature_names+[label_name]]
-    sfs(save_loc, feature_df, feature_names, num_features_start)
+    for num_features_start in range(len(feature_names)):
+        sfs(save_loc, feature_df, feature_names, num_features_start)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 4:
-        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:])
-    else:
-        print("Please provide the data type, label name, number of features, and feature set/names.")
+    main(args)

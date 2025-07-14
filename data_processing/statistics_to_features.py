@@ -8,11 +8,12 @@ Features.csv also contains a column with the "class label" for downstream
 
 Expected usage:
 python3 -m spatial_egt.data_processing.statistics_to_features
-    data_type label_name
+    data_type label_name time
 
 Where:
 data_type: the name of the directory in data/
 label_name: the class label name, which is also a column in data/{data_type}/labels.csv
+time: timepoint
 """
 
 import os
@@ -46,10 +47,10 @@ def function_to_features(row, name):
     return row
 
 
-def main(data_type, label_name):
+def main(data_type, label_name, time):
     """Convert spatial statistics into features"""
     data_path = get_data_path(data_type, ".")
-    statistics_data_path = get_data_path(data_type, "statistics")
+    statistics_data_path = get_data_path(data_type, "statistics", time)
     df = pd.read_csv(f"{data_path}/labels.csv")
     df["sample"] = df["sample"].astype(str)
     df = df[["source", "sample", label_name]]
@@ -72,7 +73,7 @@ def main(data_type, label_name):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         main(*sys.argv[1:])
     else:
         print("Please see the module docstring for usage instructions.")

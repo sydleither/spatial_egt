@@ -111,21 +111,21 @@ def get_data(df_stat, data_type, label_name, stat_name, source="", sample_ids=No
     return df
 
 
-def idv_plots(df_stat, data_type, label_name, stat_name, source, plot, *sample_ids):
-    save_loc = get_data_path(data_type, f"images/{stat_name}")
+def idv_plots(df_stat, data_type, time, label_name, stat_name, source, plot, *sample_ids):
+    save_loc = get_data_path(data_type, f"images/{stat_name}", time)
     df = get_data(df_stat, data_type, label_name, stat_name, source=source, sample_ids=sample_ids)
     file_name = stat_name + "_" + source + "_" + "_".join(sample_ids)
     plot(save_loc, file_name, df, label_name, stat_name, "sample")
 
 
-def agg_plot(df_stat, data_type, label_name, stat_name, source, plot):
-    save_loc = get_data_path(data_type, f"images/{stat_name}")
+def agg_plot(df_stat, data_type, time, label_name, stat_name, source, plot):
+    save_loc = get_data_path(data_type, f"images/{stat_name}", time)
     df = get_data(df_stat, data_type, label_name, stat_name, source=source)
     file_name = stat_name + source
     plot(save_loc, file_name, df, label_name, stat_name, label_name)
 
 
-def main(data_type, label_name, stat_name, *filter_args):
+def main(data_type, time, label_name, stat_name, *filter_args):
     features_data_path = get_data_path(data_type, "statistics")
     df_stat = pd.read_pickle(f"{features_data_path}/{stat_name}.pkl")
     function_type = get_spatial_statistic_type(df_stat, stat_name)
@@ -137,18 +137,18 @@ def main(data_type, label_name, stat_name, *filter_args):
         plot = plot_values
 
     if len(filter_args) == 0:
-        agg_plot(df_stat, data_type, label_name, stat_name, "", plot)
+        agg_plot(df_stat, data_type, time, label_name, stat_name, "", plot)
     elif len(filter_args) == 1:
         source = filter_args[0]
-        agg_plot(df_stat, data_type, label_name, stat_name, source, plot)
+        agg_plot(df_stat, data_type, time, label_name, stat_name, source, plot)
     elif len(filter_args) > 1:
         source = filter_args[0]
         sample_ids = filter_args[1:]
-        idv_plots(df_stat, data_type, label_name, stat_name, source, plot, *sample_ids)
+        idv_plots(df_stat, data_type, time, label_name, stat_name, source, plot, *sample_ids)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 4:
         main(*sys.argv[1:])
     else:
         print("Please see the module docstring for usage instructions.")

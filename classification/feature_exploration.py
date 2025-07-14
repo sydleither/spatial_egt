@@ -26,7 +26,7 @@ from scipy import stats
 from scipy.sparse import csgraph, csr_matrix
 import seaborn as sns
 
-from spatial_egt.classification.common import get_feature_data
+from spatial_egt.classification.common import get_feature_data, read_in_data
 from spatial_egt.common import game_colors, theme_colors
 
 
@@ -130,7 +130,6 @@ def feature_boxplot(save_loc, df, feature_names, label_name):
     facet.figure.patch.set_alpha(0.0)
     facet.savefig(f"{save_loc}/feature_violinplot.png", bbox_inches="tight")
     plt.close()
-    exit()
 
 
 def feature_correlation(save_loc, df, feature_names):
@@ -193,9 +192,10 @@ def visualize_correlated(save_loc, df, feature_names, print_latex=False):
         plt.close()
 
 
-def main(data_type, label_name, feature_names):
+def main(args):
+    data_type, time, label_name, feature_names = read_in_data(args)
     save_loc, df, feature_names = get_feature_data(
-        data_type, label_name, feature_names, "statistics"
+        data_type, time, label_name, feature_names, "statistics"
     )
     feature_df = df[feature_names + [label_name]]
 
@@ -209,7 +209,4 @@ def main(data_type, label_name, feature_names):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
-    else:
-        print("Please provide the data type, label name, and feature set/names.")
+    main(sys.argv)

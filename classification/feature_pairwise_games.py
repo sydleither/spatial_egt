@@ -8,7 +8,7 @@ from scipy.stats import wasserstein_distance
 import seaborn as sns
 from sklearn.preprocessing import scale
 
-from spatial_egt.classification.common import df_to_xy, get_feature_data
+from spatial_egt.classification.common import df_to_xy, get_feature_data, read_in_data
 from spatial_egt.classification.feature_plot_utils import format_df, plot_feature_selection
 
 
@@ -105,8 +105,11 @@ def run_pairwise_distributions(X, y, int_to_class, feature_names):
     return pd.DataFrame(rows)
 
 
-def main(data_type, label_name, feature_names):
-    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names, "pairwise")
+def main(args):
+    data_type, time, label_name, feature_names = read_in_data(args)
+    save_loc, df, feature_names = get_feature_data(
+        data_type, time, label_name, feature_names, "pairwise"
+    )
     feature_df = df[feature_names+[label_name]]
     X, y, int_to_class = df_to_xy(feature_df, feature_names, label_name)
     X = scale(X, axis=0)
@@ -117,12 +120,9 @@ def main(data_type, label_name, feature_names):
     for measurement in measurements:
         for pair in df["Pair"].unique():
             df_pair = df[df["Pair"] == pair].sort_values(measurement, ascending=False)
-            #plot_feature_selection(save_loc, measurement, pair, df_pair)
+            plot_feature_selection(save_loc, measurement, pair, df_pair)
         plot_feature_gamespace(save_loc, measurement, int_to_class, df)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
-    else:
-        print("Please provide the data type, label name, and feature set/names.")
+    main(sys.argv)

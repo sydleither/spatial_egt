@@ -3,7 +3,7 @@ import sys
 
 import matplotlib.pyplot as plt
 
-from spatial_egt.classification.common import get_feature_data
+from spatial_egt.classification.common import get_feature_data, read_in_data
 from spatial_egt.common import theme_colors
 
 import warnings
@@ -36,13 +36,13 @@ def plot_score_by_features(save_loc):
     plt.close()
 
 
-def main(data_type, label_name, feature_names):
-    save_loc, _, _ = get_feature_data(data_type, label_name, feature_names, "sfs")
+def main(args):
+    data_type, time, label_name, feature_names = read_in_data(args)
+    save_loc, _, _ = get_feature_data(
+        data_type, time, label_name, feature_names, "sfs"
+    )
     plot_score_by_features(save_loc)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
-    else:
-        print("Please provide the data type, label name, and feature set/names.")
+    main(sys.argv)

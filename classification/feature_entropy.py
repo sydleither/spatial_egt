@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from spatial_egt.classification.common import get_feature_data
+from spatial_egt.classification.common import get_feature_data, read_in_data
 from spatial_egt.classification.DDIT.DDIT import DDIT
 from spatial_egt.classification.feature_plot_utils import format_df, plot_feature_selection
 
@@ -102,10 +102,11 @@ def fragmentation_data(df, feature_names, label_name, order, value_label):
     return pd.DataFrame(results)
 
 
-def main(data_type, label_name, feature_names):
+def main(args):
     # get feature data
+    data_type, time, label_name, feature_names = read_in_data(args)
     save_loc, df_org, feature_names = get_feature_data(
-        data_type, label_name, feature_names, "entropy"
+        data_type, time, label_name, feature_names, "entropy"
     )
     feature_names = sorted(feature_names)
     feature_df = df_org[feature_names + [label_name]]
@@ -132,7 +133,4 @@ def main(data_type, label_name, feature_names):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
-    else:
-        print("Please provide the data type, label name, and feature set/names.")
+    main(sys.argv)

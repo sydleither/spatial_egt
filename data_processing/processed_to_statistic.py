@@ -4,11 +4,12 @@ This script can calculate the spatial statistic for each sample or for individua
 
 Expected usage:
 python3 -m spatial_egt.data_processing.processed_to_statistic
-    data_type stat_name (source) (sample)
+    data_type stat_name time (source) (sample)
 
 Where:
 data_type: the name of the directory in data/ containing the processed/ data
 stat_name: the name of the spatial statistic to calculate, as defined in spatial_database.py
+time: timepoint
 source: optional
     the source of the sample to calculate individually
 sample: optional
@@ -54,10 +55,10 @@ def calculate_statistics(processed_path, file_names, stat_name, stat_calculation
     return pd.DataFrame(rows)
 
 
-def main(data_type, stat_name, source=None, sample=None):
+def main(data_type, stat_name, time, source=None, sample=None):
     """Calculate spatial statistic(s) and save as pkl"""
     print(stat_name)
-    processed_path = get_data_path(data_type, "processed")
+    processed_path = get_data_path(data_type, "processed", time)
 
     stat_calculation = STATISTIC_REGISTRY[stat_name]
     if data_type in STATISTIC_PARAMS:
@@ -86,7 +87,7 @@ def main(data_type, stat_name, source=None, sample=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) in (3, 5):
+    if len(sys.argv) in (4, 6):
         main(*sys.argv[1:])
     else:
         print("Please see the module docstring for usage instructions.")

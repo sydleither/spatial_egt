@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-from spatial_egt.classification.common import df_to_xy, get_feature_data, get_model
+from spatial_egt.classification.common import df_to_xy, get_feature_data, get_model, read_in_data
 from spatial_egt.classification.model_eval_utils import (
     plot_scatter_prob,
     plot_confusion_matrix,
@@ -78,8 +78,11 @@ def result_to_dataframe(data_type, label_name, all_df, indices, y_trues, y_probs
     return df
 
 
-def main(data_type, label_name, feature_names):
-    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names)
+def main(args):
+    data_type, time, label_name, feature_names = read_in_data(args)
+    save_loc, df, feature_names = get_feature_data(
+        data_type, time, label_name, feature_names
+    )
     feature_df = df[feature_names + [label_name]]
     X, y, int_to_class = df_to_xy(feature_df, feature_names, label_name)
 
@@ -107,7 +110,4 @@ def main(data_type, label_name, feature_names):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
-    else:
-        print("Please provide the data type, label name, and feature set/names.")
+    main(sys.argv)

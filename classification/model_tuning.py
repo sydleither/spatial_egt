@@ -8,7 +8,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from spatial_egt.classification.common import df_to_xy, get_feature_data
+from spatial_egt.classification.common import df_to_xy, get_feature_data, read_in_data
 from spatial_egt.common import theme_colors
 
 
@@ -37,15 +37,15 @@ def finetune_layers(save_loc, X, y):
     fig.savefig(f"{save_loc}/layersize_tuning.png", bbox_inches="tight", dpi=200)
 
 
-def main(data_type, label_name, feature_names):
-    save_loc, df, feature_names = get_feature_data(data_type, label_name, feature_names)
+def main(args):
+    data_type, time, label_name, feature_names = read_in_data(args)
+    save_loc, df, feature_names = get_feature_data(
+        data_type, time, label_name, feature_names
+    )
     feature_df = df[feature_names+[label_name]]
     X, y, _ = df_to_xy(feature_df, feature_names, label_name)
     finetune_layers(save_loc, X, y)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3:])
-    else:
-        print("Please provide the data type, label name, and feature set/names.")
+    main(sys.argv)

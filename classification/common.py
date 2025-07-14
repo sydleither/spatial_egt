@@ -57,12 +57,23 @@ def read_and_clean_feature_df(data_type):
     return df
 
 
-def get_feature_data(data_type, label_name, feature_names, extra_dir=""):
+def get_feature_data(data_type, time, label_name, feature_names, extra_dir=""):
     data_dir = "_".join(feature_names)
-    save_loc = get_data_path(data_type, f"images/model/{data_dir}/{extra_dir}")
+    save_loc = get_data_path(data_type, f"images/model/{data_dir}/{extra_dir}", time)
     df = read_and_clean_feature_df(data_type)
     feature_names = feature_set_to_names(df, feature_names, label_name)
     return save_loc, df, feature_names
+
+
+def read_in_data(args):
+    if len(args) < 5:
+        print("Please provide the data type, time, label name, and feature set/names.")
+        exit()
+    data_type = args[1]
+    time = args[2]
+    label_name = args[3]
+    feature_names = args[3:]
+    return data_type, time, label_name, feature_names
 
 
 def get_model():
