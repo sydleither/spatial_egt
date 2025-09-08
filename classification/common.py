@@ -46,13 +46,11 @@ def feature_set_to_names(df, feature_names, label_name):
     return true_features
 
 
-def read_and_clean_feature_df(data_type):
-    features_data_path = get_data_path(data_type, "statistics")
+def read_and_clean_feature_df(data_type, time):
+    features_data_path = get_data_path(data_type, "statistics", time)
     df = pd.read_csv(f"{features_data_path}/features.csv")
-    print(f"Total samples: {len(df)}")
-    df = df[(df["Proportion_Sensitive"] > 0.01) & (df["Proportion_Sensitive"] < 0.99)]
-    print(f"Total samples after removing near-fixation: {len(df)}")
-    df = df.fillna(0)
+    #df = df.fillna(0)
+    df = df.dropna()
     df = df.replace([np.inf, -np.inf], 0)
     return df
 
@@ -60,7 +58,7 @@ def read_and_clean_feature_df(data_type):
 def get_feature_data(data_type, time, label_name, feature_names, extra_dir=""):
     data_dir = "_".join(feature_names)
     save_loc = get_data_path(data_type, f"images/model/{data_dir}/{extra_dir}", time)
-    df = read_and_clean_feature_df(data_type)
+    df = read_and_clean_feature_df(data_type, time)
     feature_names = feature_set_to_names(df, feature_names, label_name)
     return save_loc, df, feature_names
 
@@ -72,7 +70,7 @@ def read_in_data(args):
     data_type = args[1]
     time = args[2]
     label_name = args[3]
-    feature_names = args[3:]
+    feature_names = args[4:]
     return data_type, time, label_name, feature_names
 
 

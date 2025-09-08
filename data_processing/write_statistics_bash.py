@@ -1,20 +1,6 @@
-"""Generate bash script for processing coordinates into spatial statistics.
+"""Generate bash script for processing coordinates into spatial statistics"""
 
-Expected usage:
-python3 -m spatial_egt.data_processing.write_statistics_bash
-    data_type time run_cmd file_name (statistic_name)
-
-Where:
-data_type: the name of the directory in data/
-time: timepoint
-run_cmd: the command to use for running the spatial statistics, eg "python3 -m" or "sbatch job.sb"
-statistic_name: optional
-    if provided the bash script will calculate the spatial statistic separately for each sample
-    otherwise the bash script will run each spatial statistic over all samples
-"""
-
-import os
-import sys
+import argparse
 
 from spatial_database import STATISTIC_REGISTRY
 from spatial_egt.common import get_data_path
@@ -40,24 +26,28 @@ def write_aggregated(run_cmd, python_file, data_type, time, statistic_names):
     """Write run for each spatial statistic"""
     output = []
     for statistic_name in statistic_names:
-        output.append(f"{run_cmd} {python_file} {data_type} {statistic_name} {time}\n")
+        output.append(f"{run_cmd} {python_file} -dir {data_type} -stat {statistic_name} -time {time}\n")
     with open(f"run_{data_type}_{time}.sh", "w", encoding="UTF-8") as f:
         for output_line in output:
             f.write(output_line)
     get_data_path(data_type, "statistics", time)
 
 
-def main(data_type, time, run_cmd, statistic_name=None):
+def main():
     """Generate and save bash script"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-dir", "--data_type", type=str, default="in_silico")
+    parser.add_argument("-time", "--time", type=int, default=72)
+    parser.add_argument("-run_cmd", "--run_cmd", type=str, default="python3 -m")
+    parser.add_argument("-stat", "--statistic", type=str, default=None)
+    args = parser.parse_args()
+
     python_file = "spatial_egt.data_processing.processed_to_statistic"
-    if statistic_name is None:
-        write_aggregated(run_cmd, python_file, data_type, time, STATISTIC_REGISTRY.keys())
+    if args.statistic is None:
+        write_aggregated(args.run_cmd, python_file, args.data_type, args.time, STATISTIC_REGISTRY.keys())
     else:
-        write_individual(run_cmd, python_file, data_type, time, statistic_name)
+        write_individual(args.run_cmd, python_file, args.data_type, args.time, args.statistic)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) in (4, 5):
-        main(*sys.argv[1:])
-    else:
-        print("Please see the module docstring for usage instructions.")
+    main()

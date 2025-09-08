@@ -96,6 +96,7 @@ def main(args):
     plot_confusion_matrix(save_loc, "train", int_to_class, y_train_trues, y_train_preds)
     plot_confusion_matrix(save_loc, "test", int_to_class, y_test_trues, y_test_preds)
     roc_curve(save_loc, label_name, "test", int_to_class, y_test_trues, y_test_probs)
+    learning_curve(save_loc, X, y)
 
     if label_name == "game":
         df_test = result_to_dataframe(
@@ -105,8 +106,6 @@ def main(args):
         plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "correct")
         plot_scatter_prob(save_loc, "test", df_test, "C-A", "B-D", "0_prob")
         plot_scatter_prob(save_loc, "test", df_test, "initial_fs", "initial_density", "correct")
-
-    learning_curve(save_loc, X, y)
 
 
 if __name__ == "__main__":

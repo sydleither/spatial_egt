@@ -3,21 +3,12 @@
 Features are defined as the single-valued statistics and the summary
     statistics of the distribution and function statistics.
 
-Features.csv also contains a column with the "class label" for downstream
+labels.csv also contains a column with the "class label" for downstream
     machine learning or analysis.
-
-Expected usage:
-python3 -m spatial_egt.data_processing.statistics_to_features
-    data_type label_name time
-
-Where:
-data_type: the name of the directory in data/
-label_name: the class label name, which is also a column in data/{data_type}/labels.csv
-time: timepoint
 """
 
+import argparse
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -47,13 +38,20 @@ def function_to_features(row, name):
     return row
 
 
-def main(data_type, label_name, time):
+def main():
     """Convert spatial statistics into features"""
-    data_path = get_data_path(data_type, ".")
-    statistics_data_path = get_data_path(data_type, "statistics", time)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-dir", "--data_type", type=str, default="in_silico")
+    parser.add_argument("-label", "--label_name", type=str, default="game")
+    parser.add_argument("-time", "--time", type=int, default=72)
+    args = parser.parse_args()
+
+    data_path = get_data_path(args.data_type, ".")
+    statistics_data_path = get_data_path(args.data_type, "statistics", args.time)
     df = pd.read_csv(f"{data_path}/labels.csv")
     df["sample"] = df["sample"].astype(str)
-    df = df[["source", "sample", label_name]]
+    df = df[["source", "sample", args.label_name]]
+
     for statistic_file in os.listdir(statistics_data_path):
         if not statistic_file.endswith(".pkl"):
             continue
@@ -68,12 +66,9 @@ def main(data_type, label_name, time):
             df_feature = df_feature.drop(statistic_name, axis=1)
         df_feature["sample"] = df_feature["sample"].astype(str)
         df = pd.merge(df, df_feature, on=["source", "sample"], how="outer")
-    df = df[df[label_name].notna()]
+    df = df[df[args.label_name].notna()]
     df.to_csv(f"{statistics_data_path}/features.csv", index=False, na_rep=np.nan)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        main(*sys.argv[1:])
-    else:
-        print("Please see the module docstring for usage instructions.")
+    main()
