@@ -12,6 +12,18 @@ from spatial_egt.common import get_data_path
 from spatial_database import STATISTIC_PARAMS, STATISTIC_REGISTRY
 
 
+def get_statistic_calculation_arguments(data_type, stat_name):
+    if data_type in STATISTIC_PARAMS:
+        stat_args_datatype = STATISTIC_PARAMS[data_type]
+    else:
+        stat_args_datatype = STATISTIC_PARAMS
+    if stat_name in stat_args_datatype:
+        stat_args = stat_args_datatype[stat_name]
+    else:
+        stat_args = {}
+    return stat_args
+
+
 def calculate_statistics(processed_path, file_names, stat_name, stat_calculation, stat_args):
     """Calulate the spatial statistic of the given sample files"""
     rows = []
@@ -43,14 +55,7 @@ def main():
     print(stat_name)
 
     stat_calculation = STATISTIC_REGISTRY[stat_name]
-    if args.data_type in STATISTIC_PARAMS:
-        stat_args_datatype = STATISTIC_PARAMS[args.data_type]
-    else:
-        stat_args_datatype = STATISTIC_PARAMS
-    if stat_name in stat_args_datatype:
-        stat_args = stat_args_datatype[stat_name]
-    else:
-        stat_args = {}
+    stat_args = get_statistic_calculation_arguments(args.data_type, stat_name)
 
     if args.source is None and args.sample is None:
         statistics_path = get_data_path(args.data_type, "statistics", args.time)
